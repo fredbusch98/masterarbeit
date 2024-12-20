@@ -67,8 +67,15 @@ base_url = "https://www.sign-lang.uni-hamburg.de/meinedgs/ling/"
 # Determine how many entries to process (use all entries if max_entries is -1)
 entries_to_process = len(rows) if max_entries == -1 else min(max_entries, len(rows))
 
+# Track the progress
+print(f"Total entries to process: {entries_to_process}")
+
 # Process each row and download files
 for idx, row in enumerate(rows[:entries_to_process]):  # Only process up to entries_to_process
+    # Show progress as a percentage
+    progress_percentage = (idx + 1) / entries_to_process * 100
+    print(f"Processing entry {idx + 1}/{entries_to_process} ({progress_percentage:.2f}%)")
+
     cells = row.find_all('td')
     
     # Check if SRT link exists (mandatory)
