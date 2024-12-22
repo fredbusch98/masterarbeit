@@ -2,8 +2,10 @@ import os
 import cv2
 import json
 from pysrt import SubRipFile, open as open_srt
+import sys
 
 process_all_folders = True  # Set to True to process all subfolders, False to process just a single test folder
+# Es kann zusätzlich ein cmd argument eingefügt werden, um ab einem bestimmten entry zu starten e.g. python gloss2pose_mapper.py entry_100 
 
 def get_video_fps(video_path):
     """
@@ -187,26 +189,31 @@ def process_folder(folder_path):
     return output  # Return the data to accumulate it for the combined JSON
 
 def main():
-    all_data = {}  # Dictionary to store data from all folders
+    starting_entry = None  # Default value for starting entry
+    
+    # Check if a folder name is passed as an argument
+    if len(sys.argv) > 1:
+        starting_entry = sys.argv[1]
 
     if process_all_folders:
         root_path = "/Volumes/IISY/DGSKorpus/"  # Replace with the root directory containing all subfolders
-        for entry in os.listdir(root_path):
-            entry_path = os.path.join(root_path, entry)
-            if os.path.isdir(entry_path):
-                folder_data = process_folder(entry_path)
-                if folder_data:  # Only add data if it's valid
-                    all_data[entry] = folder_data
+        
+        # Get all entries in the root path
+        entries = [entry for entry in os.listdir(root_path) if os.path.isdir(os.path.join(root_path, entry))]
 
-        # After processing all folders, write combined data to a final JSON file
-        combined_output_path = os.path.join(root_path, "dgs-gloss2pose-combined.json")
-        print(f"[INFO] Writing combined data to {combined_output_path}")
-        try:
-            with open(combined_output_path, 'w') as f:
-                json.dump(all_data, f, indent=4)
-            print(f"[INFO] Combined data written successfully.")
-        except Exception as e:
-            print(f"[ERROR] Could not write combined JSON file: {e}")
+        # If starting_entry is specified, start from that folder
+        if starting_entry:
+            try:
+                start_index = entries.index(starting_entry)
+                entries = entries[start_index:]  # Only process from the starting entry onward
+            except ValueError:
+                print(f"[ERROR] The folder {starting_entry} was not found in {root_path}.")
+                return
+        
+        # Process each folder individually without combining results
+        for entry in entries:
+            entry_path = os.path.join(root_path, entry)
+            process_folder(entry_path)  # Process each folder
 
     else:
         folder_path = "/Volumes/IISY/DGSKorpus/entry_3"  # Replace with your test folder
