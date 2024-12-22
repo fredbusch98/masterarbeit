@@ -3,7 +3,7 @@ import cv2
 import json
 from pysrt import SubRipFile, open as open_srt
 
-process_all_folders = False  # Set to True to process all subfolders, False to process just a single test folder
+process_all_folders = True  # Set to True to process all subfolders, False to process just a single test folder
 
 def get_video_fps(video_path):
     """
@@ -173,7 +173,7 @@ def process_folder(folder_path):
         "data": mapped_data  # Single list for both persons
     }
 
-    output_path = os.path.join(folder_path, "gloss2pose_mapped.json")
+    output_path = os.path.join(folder_path, "gloss2pose.json")
     print(f"[INFO] Writing output to {output_path}")
     try:
         # Open the file with UTF-8 encoding to ensure proper character encoding
