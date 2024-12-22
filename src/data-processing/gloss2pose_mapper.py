@@ -3,6 +3,8 @@ import cv2
 import json
 from pysrt import SubRipFile, open as open_srt
 
+process_all_folders = False  # Set to True to process all subfolders, False to process a single test folder
+
 def get_video_fps(video_path):
     """
     Get the frames per second (FPS) of a video file.
@@ -130,8 +132,6 @@ def process_folder(folder_path):
         print(f"[ERROR] Could not write output file for folder {folder_path}: {e}")
 
 def main():
-    process_all_folders = False  # Set to 1 to process all subfolders, 0 to process a single test folder
-
     if process_all_folders:
         root_path = "/Volumes/IISY/DGSKorpus/"  # Replace with the root directory containing all subfolders
         for entry in os.listdir(root_path):
