@@ -3,7 +3,7 @@ import cv2
 import json
 from pysrt import SubRipFile, open as open_srt
 
-process_all_folders = True  # Set to True to process all subfolders, False to process just a single test folder
+process_all_folders = False  # Set to True to process all subfolders, False to process just a single test folder
 
 def get_video_fps(video_path):
     """
@@ -58,7 +58,7 @@ def map_srt_to_frames(srt_file_path, fps):
             elif sub.text.startswith("B:") and len(sub.text[2:].strip().split()) == 1:
                 srt_entries2frames_personB.append((sub.text[2:].strip(), frames))
 
-        print(f"[INFO] Mapped {len(srt_entries2frames_personA)} entries for Person A and {len(srt_entries2frames_personB)} entries for Person B.")
+        print(f"[INFO] Mapped {len(srt_entries2frames_personA)} transcript entries for Person A and {len(srt_entries2frames_personB)} entries for Person B.")
         return srt_entries2frames_personA, srt_entries2frames_personB
 
     except Exception as e:
@@ -87,13 +87,14 @@ def remove_3d_keypoints(pose_data):
     
     return pose_data
 
-def map_text_to_poses(openpose_file_path, srt_entries):
+def map_text_to_poses(openpose_file_path, srt_entries_personA, srt_entries_personB):
     """
     Map text entries to pose sequences using OpenPose JSON.
 
     Parameters:
         openpose_file_path (str): Path to the OpenPose JSON file.
-        srt_entries (list): List of tuples containing text and frame numbers.
+        srt_entries_personA (list): List of tuples containing text and frame numbers for Person A.
+        srt_entries_personB (list): List of tuples containing text and frame numbers for Person B.
 
     Returns:
         list: List of dictionaries mapping text to pose sequences.
@@ -103,11 +104,15 @@ def map_text_to_poses(openpose_file_path, srt_entries):
         with open(openpose_file_path, 'r') as f:
             pose_data = json.load(f)
 
-        frame_to_people = {int(frame): data["people"] for frame, data in pose_data[0]["frames"].items()}
-
         result = []
-        for text, frames in srt_entries:
+        person_a_pose_count = 0  # Counter for Person A's poses
+        person_b_pose_count = 0  # Counter for Person B's poses
+
+        # Process Person A's entries
+        for text, frames in srt_entries_personA:
             people_data = []
+            frame_to_people = {int(frame): data["people"] for frame, data in pose_data[0]["frames"].items()}
+
             for frame in frames:
                 if frame in frame_to_people:
                     for person in frame_to_people[frame]:
@@ -116,7 +121,27 @@ def map_text_to_poses(openpose_file_path, srt_entries):
                         people_data.append(cleaned_pose)
 
             result.append({"text": text, "poses": people_data})
+            person_a_pose_count += len(people_data)  # Add the number of poses for Person A
 
+        # Process Person B's entries
+        for text, frames in srt_entries_personB:
+            people_data = []
+            frame_to_people = {int(frame): data["people"] for frame, data in pose_data[1]["frames"].items()}
+
+            for frame in frames:
+                if frame in frame_to_people:
+                    for person in frame_to_people[frame]:
+                        # Remove 3D keypoints and keep 2D ones
+                        cleaned_pose = remove_3d_keypoints(person)
+                        people_data.append(cleaned_pose)
+
+            result.append({"text": text, "poses": people_data})
+            person_b_pose_count += len(people_data)  # Add the number of poses for Person B
+
+        # Log the total number of poses mapped for each person
+        print(f"[INFO] Total poses mapped for Person A: {person_a_pose_count}")
+        print(f"[INFO] Total poses mapped for Person B: {person_b_pose_count}")
+        
         print(f"[INFO] Mapped text entries to poses. Total mappings: {len(result)}")
         return result
 
@@ -140,11 +165,8 @@ def process_folder(folder_path):
     # Instead of mapping separately, we'll combine entries for both Person A and Person B
     srt_entries_personA, srt_entries_personB = map_srt_to_frames(srt_path, fps)
 
-    # Combine Person A and Person B entries into one list
-    combined_srt_entries = srt_entries_personA + srt_entries_personB
-
-    # Map the combined text entries to poses
-    mapped_data = map_text_to_poses(openpose_path, combined_srt_entries)
+    # Map the combined text entries to poses for both Person A and Person B
+    mapped_data = map_text_to_poses(openpose_path, srt_entries_personA, srt_entries_personB)
 
     # Individual output for each folder
     output = {
