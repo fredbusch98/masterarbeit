@@ -5,7 +5,7 @@ from pysrt import SubRipFile
 # Define the base path to the DGSKorpus folder
 base_path = "/Volumes/IISY/DGSKorpus/"
 # Define a variable to process all folders
-process_all_folders = False
+process_all_folders = True # Set to True to process all subfolders, False to process just a single test folder
 
 # Function to process a single folder
 def process_folder(folder_path):
@@ -73,7 +73,7 @@ if process_all_folders:
             combined_rows.extend(process_folder(folder_path))
 
     # Write the combined CSV file
-    combined_csv_path = os.path.join(base_path, "text2gloss-combined.csv")
+    combined_csv_path = os.path.join(base_path, "dgs-text2gloss-combined.csv")
     try:
         with open(combined_csv_path, mode='w', newline='', encoding='utf-8') as csv_file:
             csv_writer = csv.writer(csv_file)
