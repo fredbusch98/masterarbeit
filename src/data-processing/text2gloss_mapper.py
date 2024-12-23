@@ -43,7 +43,7 @@ def process_folder(folder_path):
                 word_entries = []
             else:  # This is a single word or an invalid sentence
                 if full_sentence:  # Ensure there is a sentence to map it to
-                    word_entries.append(content)
+                    word_entries.append(content.lstrip("|").rstrip("*"))
 
     # Handle the last sentence and its word entries
     if full_sentence and word_entries:
@@ -85,6 +85,6 @@ if process_all_folders:
         print(f"Error writing combined CSV file: {e}")
 else:
     # Process only the example folder
-    example_folder = os.path.join(base_path, "entry_405")
+    example_folder = os.path.join(base_path, "entry_3")
     print(f"Processing example folder: {example_folder}")
     process_folder(example_folder)

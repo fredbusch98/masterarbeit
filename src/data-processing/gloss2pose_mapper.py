@@ -55,10 +55,13 @@ def map_srt_to_frames(srt_file_path, fps):
             end_frame = int(sub.end.ordinal / 1000 * fps)
             frames = list(range(start_frame, end_frame + 1))
 
-            if sub.text.startswith("A:") and len(sub.text[2:].strip().split()) == 1:
-                srt_entries2frames_personA.append((sub.text[2:].strip(), frames))
-            elif sub.text.startswith("B:") and len(sub.text[2:].strip().split()) == 1:
-                srt_entries2frames_personB.append((sub.text[2:].strip(), frames))
+            if sub.text[:2] in {"A:", "B:"} and len(sub.text[2:].strip().split()) == 1:
+                person = sub.text[0]
+                entry = (sub.text[2:].strip().lstrip('|').lstrip('*').rstrip('|').rstrip('*'), frames)
+                if person == "A":
+                    srt_entries2frames_personA.append(entry)
+                else:
+                    srt_entries2frames_personB.append(entry)
 
         print(f"[INFO] Mapped {len(srt_entries2frames_personA)} transcript entries for Person A and {len(srt_entries2frames_personB)} entries for Person B.")
         return srt_entries2frames_personA, srt_entries2frames_personB
@@ -210,13 +213,13 @@ def main():
                 print(f"[ERROR] The folder {starting_entry} was not found in {root_path}.")
                 return
         
-        # Process each folder individually without combining results
+        # Process each folder individually
         for entry in entries:
             entry_path = os.path.join(root_path, entry)
-            process_folder(entry_path)  # Process each folder
+            process_folder(entry_path)
 
     else:
-        folder_path = "/Volumes/IISY/DGSKorpus/entry_3"  # Replace with your test folder
+        folder_path = "/Volumes/IISY/DGSKorpus/entry_3"
         process_folder(folder_path)
 
 if __name__ == "__main__":
