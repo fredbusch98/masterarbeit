@@ -70,26 +70,79 @@ def map_srt_to_frames(srt_file_path, fps):
         print(f"[ERROR] {e}")
         return [], []
 
-def remove_3d_keypoints(pose_data):
+def normalize_keypoints_2d(keypoints_2d, width, height):
     """
-    Remove 3D keypoints from the pose data while keeping 2D keypoints.
+    Normalize 2D keypoints to a range between 0 and 1 using width and height.
+
+    Parameters:
+        keypoints_2d (list): List of keypoints in the format [x1, y1, c1, x2, y2, c2, ...].
+        width (int): Width of the video/frame.
+        height (int): Height of the video/frame.
+
+    Returns:
+        list: Normalized keypoints.
+    """
+    normalized = []
+    for i in range(0, len(keypoints_2d), 3):  # Step by 3 (x, y, confidence)
+        x = keypoints_2d[i] / width if width > 0 else 0
+        y = keypoints_2d[i + 1] / height if height > 0 else 0
+        c = keypoints_2d[i + 2]  # Confidence remains the same
+        normalized.extend([x, y, c])
+    return normalized
+
+def filter_upper_body_keypoints(keypoints_2d):
+    """
+    Filter only the upper body keypoints from a 2D keypoints list by excluding specific triplets.
+
+    Parameters:
+        keypoints_2d (list): List of keypoints in the format [x1, y1, c1, x2, y2, c2, ...].
+
+    Returns:
+        list: Filtered keypoints with only upper body keypoints.
+    """
+    excluded_triplet_indices = {9, 10, 11, 12, 13, 14, 19, 20, 21, 22, 23, 24}
+    filtered = []
+    for i in range(0, len(keypoints_2d), 3):
+        triplet_index = i // 3
+        if triplet_index not in excluded_triplet_indices:
+            filtered.extend(keypoints_2d[i:i+3])  # Keep this triplet
+    return filtered
+
+def remove_3d_keypoints_and_normalize_2d_keypoints(pose_data, width, height):
+    """
+    Remove 3D keypoints, filter upper body keypoints, and normalize 2D keypoints.
 
     Parameters:
         pose_data (dict): Pose data from OpenPose.
+        width (int): Width of the video/frame.
+        height (int): Height of the video/frame.
 
     Returns:
-        dict: Pose data with 3D keypoints removed.
+        dict: Pose data with 3D keypoints removed, 2D keypoints filtered and normalized.
     """
-    # Remove any 3D keypoints
     keys_to_remove = [
         "pose_keypoints_3d", "face_keypoints_3d",
         "hand_left_keypoints_3d", "hand_right_keypoints_3d"
     ]
-    
+
+    # Remove 3D keypoints
     for key in keys_to_remove:
         if key in pose_data:
             del pose_data[key]
-    
+
+    # Normalize and filter 2D keypoints
+    keys_to_normalize = [
+        "pose_keypoints_2d", "face_keypoints_2d",
+        "hand_left_keypoints_2d", "hand_right_keypoints_2d"
+    ]
+
+    for key in keys_to_normalize:
+        if key in pose_data:
+            if key == "pose_keypoints_2d":
+                pose_data[key] = filter_upper_body_keypoints(pose_data[key])
+
+            pose_data[key] = normalize_keypoints_2d(pose_data[key], width, height)
+
     return pose_data
 
 def map_text_to_poses(openpose_file_path, srt_entries_personA, srt_entries_personB):
@@ -113,6 +166,11 @@ def map_text_to_poses(openpose_file_path, srt_entries_personA, srt_entries_perso
         person_a_pose_count = 0  # Counter for Person A's poses
         person_b_pose_count = 0  # Counter for Person B's poses
 
+        width_camera_a = pose_data[0].get("width", 1)  # Default to 1 to avoid division by zero
+        height_camera_a = pose_data[0].get("height", 1)
+        width_camera_b = pose_data[1].get("width", 1)
+        height_camera_b = pose_data[1].get("height", 1)
+
         # Process Person A's entries
         for text, frames in srt_entries_personA:
             people_data = []
@@ -121,8 +179,8 @@ def map_text_to_poses(openpose_file_path, srt_entries_personA, srt_entries_perso
             for frame in frames:
                 if frame in frame_to_people:
                     for person in frame_to_people[frame]:
-                        # Remove 3D keypoints and keep 2D ones
-                        cleaned_pose = remove_3d_keypoints(person)
+                        # Remove 3D keypoints and normalize 2D keypoints
+                        cleaned_pose = remove_3d_keypoints_and_normalize_2d_keypoints(person, width_camera_a, height_camera_a)
                         people_data.append(cleaned_pose)
 
             result.append({"gloss": text, "pose_sequence": people_data})
@@ -136,8 +194,8 @@ def map_text_to_poses(openpose_file_path, srt_entries_personA, srt_entries_perso
             for frame in frames:
                 if frame in frame_to_people:
                     for person in frame_to_people[frame]:
-                        # Remove 3D keypoints and keep 2D ones
-                        cleaned_pose = remove_3d_keypoints(person)
+                        # Remove 3D keypoints and normalize 2D keypoints
+                        cleaned_pose = remove_3d_keypoints_and_normalize_2d_keypoints(person, width_camera_b, height_camera_b)
                         people_data.append(cleaned_pose)
 
             result.append({"gloss": text, "pose_sequence": people_data})
