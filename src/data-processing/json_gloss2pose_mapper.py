@@ -3,9 +3,33 @@ import cv2
 import json
 from pysrt import SubRipFile, open as open_srt
 import sys
+import csv
 
 process_all_folders = True  # Set to True to process all subfolders, False to process just a single test folder
 # An additional command line argument can be passed to start from a specific entry e.g. python gloss2pose_mapper.py entry_100 will process all subfolders starting from entry_100
+
+def load_gloss_types(csv_path):
+    """
+    Load gloss types from a CSV file.
+
+    Parameters:
+        csv_path (str): Path to the CSV file.
+
+    Returns:
+        set: A set of gloss types.
+    """
+    gloss_types = set()
+    try:
+        with open(csv_path, 'r', encoding='utf-8') as csvfile:
+            reader = csv.reader(csvfile)
+            for row in reader:
+                gloss_types.add(row[0].strip())  # Assuming the gloss types are in the first column
+        print(f"[INFO] Loaded {len(gloss_types)} gloss types from {csv_path}")
+    except Exception as e:
+        print(f"[ERROR] Could not load gloss types from {csv_path}: {e}")
+    return gloss_types
+
+gloss_types = load_gloss_types("/Volumes/IISY/DGSKorpus/all-types-dgs.csv")
 
 def get_video_fps(video_path):
     """
@@ -173,39 +197,43 @@ def map_text_to_poses(openpose_file_path, srt_entries_personA, srt_entries_perso
 
         # Process Person A's entries
         for text, frames in srt_entries_personA:
-            people_data = []
-            frame_to_people = {int(frame): data["people"] for frame, data in pose_data[0]["frames"].items()}
+            # Check if the text matches any gloss type (with or without ^)
+            if any(gloss_type.rstrip('^') == text.rstrip('^') for gloss_type in gloss_types):
+                people_data = []
+                frame_to_people = {int(frame): data["people"] for frame, data in pose_data[0]["frames"].items()}
 
-            for frame in frames:
-                if frame in frame_to_people:
-                    for person in frame_to_people[frame]:
-                        # Remove 3D keypoints and normalize 2D keypoints
-                        cleaned_pose = remove_3d_keypoints_and_normalize_2d_keypoints(person, width_camera_a, height_camera_a)
-                        people_data.append(cleaned_pose)
+                for frame in frames:
+                    if frame in frame_to_people:
+                        for person in frame_to_people[frame]:
+                            # Remove 3D keypoints and normalize 2D keypoints
+                            cleaned_pose = remove_3d_keypoints_and_normalize_2d_keypoints(person, width_camera_a, height_camera_a)
+                            people_data.append(cleaned_pose)
 
-            result.append({"gloss": text, "pose_sequence": people_data})
-            person_a_pose_count += len(people_data)  # Add the number of poses for Person A
+                result.append({"gloss": text, "pose_sequence": people_data})
+                person_a_pose_count += len(people_data)  # Add the number of poses for Person A
 
         # Process Person B's entries
         for text, frames in srt_entries_personB:
-            people_data = []
-            frame_to_people = {int(frame): data["people"] for frame, data in pose_data[1]["frames"].items()}
+            # Check if the text matches any gloss type (with or without ^)
+            if any(gloss_type.rstrip('^') == text.rstrip('^') for gloss_type in gloss_types):
+                people_data = []
+                frame_to_people = {int(frame): data["people"] for frame, data in pose_data[1]["frames"].items()}
 
-            for frame in frames:
-                if frame in frame_to_people:
-                    for person in frame_to_people[frame]:
-                        # Remove 3D keypoints and normalize 2D keypoints
-                        cleaned_pose = remove_3d_keypoints_and_normalize_2d_keypoints(person, width_camera_b, height_camera_b)
-                        people_data.append(cleaned_pose)
+                for frame in frames:
+                    if frame in frame_to_people:
+                        for person in frame_to_people[frame]:
+                            # Remove 3D keypoints and normalize 2D keypoints
+                            cleaned_pose = remove_3d_keypoints_and_normalize_2d_keypoints(person, width_camera_b, height_camera_b)
+                            people_data.append(cleaned_pose)
 
-            result.append({"gloss": text, "pose_sequence": people_data})
-            person_b_pose_count += len(people_data)  # Add the number of poses for Person B
+                result.append({"gloss": text, "pose_sequence": people_data})
+                person_b_pose_count += len(people_data)  # Add the number of poses for Person B
 
         # Log the total number of poses mapped for each person
         print(f"[INFO] Total poses mapped for Person A: {person_a_pose_count}")
         print(f"[INFO] Total poses mapped for Person B: {person_b_pose_count}")
         
-        print(f"[INFO] Mapped text entries to poses. Total mappings: {len(result)}")
+        print(f"[INFO] Total mappings after filtering by all-types: {len(result)}")
         return result
 
     except Exception as e:
@@ -236,7 +264,7 @@ def process_folder(folder_path):
         "data": mapped_data  # Single list for both persons
     }
 
-    output_path = os.path.join(folder_path, "gloss2pose.json")
+    output_path = os.path.join(folder_path, "gloss2pose-filtered-by-all-types.json")
     print(f"[INFO] Writing output to {output_path}")
     try:
         # Open the file with UTF-8 encoding to ensure proper character encoding
