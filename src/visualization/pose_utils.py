@@ -253,22 +253,18 @@ def draw_facepose(canvas: np.ndarray, keypoints: Union[List[Keypoint], None]) ->
     return canvas
 
 # Parse 2D keypoints with normalization
-def parse_keypoints(keypoints, keypoints_length=75, frame_width=1280, frame_height=720):
+def parse_keypoints(keypoints, keypoints_length=75):
     """
-    Parse and normalize keypoints from JSON data.
+    Parse and return keypoints from JSON data.
 
     Args:
         keypoints: A flat list of [x, y, score, ...] from the JSON.
         keypoints_length: The expected number of keypoints.
-        frame_width: The width of the original frame.
-        frame_height: The height of the original frame.
 
     Returns:
-        numpy.ndarray: A 2D array of normalized keypoints [x, y, score].
+        numpy.ndarray: A 2D array of keypoints [x, y, score].
     """
     keypoints = np.array(keypoints, dtype=np.float64).reshape(-1, 3)[:keypoints_length]
-    keypoints[:, 0] /= frame_width  # Normalize x by width
-    keypoints[:, 1] /= frame_height  # Normalize y by height
     return keypoints
 
 # Create and return a pose image using OpenCV
@@ -326,7 +322,7 @@ def create_pose_image(person, frame_id, hands_and_face=False, xinsir=False, save
 
     return pose_img
 
-def create_upper_body_pose_image(person, frame_id, hands_and_face=False, xinsir=False, padding=100, save_dir=None):
+def create_upper_body_pose_image(pose2d, face2d, left2d, right2d, frame_id, hands_and_face=False, xinsir=False, padding=100, save_dir=None):
     """
     Create an image of the upper-body pose, excluding specified keypoints.
 
@@ -343,9 +339,7 @@ def create_upper_body_pose_image(person, frame_id, hands_and_face=False, xinsir=
     excluded_indexes = {9, 10, 11, 12, 13, 14, 19, 20, 21, 22, 23, 24}
     
     # Parse and filter body keypoints
-    pose_keypoints = filter_keypoints(parse_keypoints(
-        person['pose_keypoints_2d'], keypoints_length=25, frame_width=1280, frame_height=720
-    ))
+    pose_keypoints = filter_keypoints(parse_keypoints(pose2d, keypoints_length=25))
     body_keypoint_objects = [
         Keypoint(x=x, y=y, score=c, id=idx) if idx not in excluded_indexes else None
         for idx, (x, y, c) in enumerate(pose_keypoints)
@@ -354,23 +348,17 @@ def create_upper_body_pose_image(person, frame_id, hands_and_face=False, xinsir=
     # Optionally parse and draw hand and face keypoints
     left_hand_keypoint_objects, right_hand_keypoint_objects, face_keypoint_objects = [], [], []
     if hands_and_face:
-        left_hand_keypoints = filter_keypoints(parse_keypoints(
-            person['hand_left_keypoints_2d'], keypoints_length=21, frame_width=1280, frame_height=720
-        ))
+        left_hand_keypoints = filter_keypoints(parse_keypoints(left2d, keypoints_length=21))
         left_hand_keypoint_objects = [
             Keypoint(x=x, y=y, score=c, id=idx) for idx, (x, y, c) in enumerate(left_hand_keypoints)
         ]
 
-        right_hand_keypoints = filter_keypoints(parse_keypoints(
-            person['hand_right_keypoints_2d'], keypoints_length=21, frame_width=1280, frame_height=720
-        ))
+        right_hand_keypoints = filter_keypoints(parse_keypoints(right2d, keypoints_length=21))
         right_hand_keypoint_objects = [
             Keypoint(x=x, y=y, score=c, id=idx) for idx, (x, y, c) in enumerate(right_hand_keypoints)
         ]
 
-        face_keypoints = filter_keypoints(parse_keypoints(
-            person['face_keypoints_2d'], keypoints_length=70, frame_width=1280, frame_height=720
-        ))
+        face_keypoints = filter_keypoints(parse_keypoints(face2d, keypoints_length=70))
         face_keypoint_objects = [
             Keypoint(x=x, y=y, score=c, id=idx) for idx, (x, y, c) in enumerate(face_keypoints)
         ]
