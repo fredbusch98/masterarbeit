@@ -1,15 +1,3 @@
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: my-data-pvc
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 10Gi
----
 apiVersion: v1
 kind: Pod
 metadata:
@@ -17,7 +5,7 @@ metadata:
 spec:
   containers:
   - name: mimicmotion-container
-    image: fredbln98/mimicmotion-conda:latest
+    image: fredbln98/mimicmotion-cuda:latest
     # This command keeps the container alive so you can later exec into it.
     command: ["bash", "-c", "while true; do sleep 30; done"]
     resources:
@@ -25,13 +13,12 @@ spec:
         # Request exactly one GPU (V100) for the container.
         nvidia.com/gpu: "1"
     volumeMounts:
-    - name: data-volume
-      # Mount the external persistent volume to /data to avoid filling the container’s root filesystem.
-      mountPath: /data
+    - name: my-storage-volume
+      mountPath: /storage
   volumes:
-  - name: data-volume
+  - name: my-storage-volume
     persistentVolumeClaim:
-      claimName: my-data-pvc
+      claimName: my-storage-volume
   # Node selector to ensure the pod is scheduled only on nodes with a V100 GPU.
   nodeSelector:
     gpu: v100
