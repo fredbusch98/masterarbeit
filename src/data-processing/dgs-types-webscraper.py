@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
+import re
 
 # URL of the website
 url = "https://www.sign-lang.uni-hamburg.de/meinedgs/ling/types_de.html"
@@ -22,6 +23,16 @@ if response.status_code == 200:
 
     # Iterate over all <p> elements within the div
     for p in div.find_all('p'):
+        # Extract the text content of the <p> element
+        p_text = p.get_text(strip=True)
+
+        # Use regex to find the leading gloss (e.g., ALPHA1, $ALPHA1, etc.)
+        # This assumes the gloss is at the start of the <p> text and ends before any non-gloss characters
+        gloss_match = re.match(r'^([A-Za-z$][\w^-]*)', p_text)
+        if gloss_match:
+            gloss = gloss_match.group(1)
+            unique_elements.add(gloss)
+
         # Check if <p> contains an <a> tag
         a_tag = p.find('a')
         if a_tag and a_tag.text.strip():  # Ensure <a> tag has text
@@ -33,7 +44,7 @@ if response.status_code == 200:
     df = pd.DataFrame(unique_elements_list, columns=["Text"])
 
     # Save the DataFrame to a CSV file with UTF-8 encoding
-    csv_filename = "all-types-dgs.csv"
+    csv_filename = "/Volumes/IISY/DGSKorpus/all-types-dgs.csv"
     df.to_csv(csv_filename, index=False, encoding='utf-8')
 
     print(f"CSV file '{csv_filename}' created with {len(unique_elements_list)} unique elements.")

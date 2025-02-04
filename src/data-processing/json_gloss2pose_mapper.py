@@ -7,6 +7,8 @@ import csv
 
 process_all_folders = True  # Set to True to process all subfolders, False to process just a single test folder
 # An additional command line argument can be passed to start from a specific entry e.g. python gloss2pose_mapper.py entry_100 will process all subfolders starting from entry_100
+fixed_width = 1280
+fixed_height = 720
 
 def load_gloss_types(csv_path):
     """
@@ -100,41 +102,33 @@ def normalize_keypoints_2d(keypoints_2d, width, height):
 
     Parameters:
         keypoints_2d (list): List of keypoints in the format [x1, y1, c1, x2, y2, c2, ...].
-        width (int): Width of the video/frame.
-        height (int): Height of the video/frame.
+        width (int): Original width of the video/frame.
+        height (int): Original height of the video/frame.
 
     Returns:
         list: Normalized keypoints.
     """
     normalized = []
+    scale_x = fixed_width / width
+    scale_y = fixed_height / height
+
     for i in range(0, len(keypoints_2d), 3):  # Step by 3 (x, y, confidence)
-        x = keypoints_2d[i] / width if width > 0 else 0
-        y = keypoints_2d[i + 1] / height if height > 0 else 0
-        c = keypoints_2d[i + 2]  # Confidence remains the same
+        # Scale before normalizing if width and height are different from the fixed dimensions: 1280x720
+        x = keypoints_2d[i] * scale_x
+        y = keypoints_2d[i + 1] * scale_y
+        
+        # Normalize
+        x /= fixed_width
+        y /= fixed_height
+
+        c = keypoints_2d[i + 2]  # Confidence remains unchanged
         normalized.extend([x, y, c])
+
     return normalized
-
-def filter_upper_body_keypoints(keypoints_2d):
-    """
-    Filter only the upper body keypoints from a 2D keypoints list by excluding specific triplets.
-
-    Parameters:
-        keypoints_2d (list): List of keypoints in the format [x1, y1, c1, x2, y2, c2, ...].
-
-    Returns:
-        list: Filtered keypoints with only upper body keypoints.
-    """
-    excluded_triplet_indices = {9, 10, 11, 12, 13, 14, 19, 20, 21, 22, 23, 24}
-    filtered = []
-    for i in range(0, len(keypoints_2d), 3):
-        triplet_index = i // 3
-        if triplet_index not in excluded_triplet_indices:
-            filtered.extend(keypoints_2d[i:i+3])  # Keep this triplet
-    return filtered
 
 def remove_3d_keypoints_and_normalize_2d_keypoints(pose_data, width, height):
     """
-    Remove 3D keypoints, filter upper body keypoints, and normalize 2D keypoints.
+    Remove 3D keypoints and normalize 2D keypoints.
 
     Parameters:
         pose_data (dict): Pose data from OpenPose.
@@ -154,7 +148,7 @@ def remove_3d_keypoints_and_normalize_2d_keypoints(pose_data, width, height):
         if key in pose_data:
             del pose_data[key]
 
-    # Normalize and filter 2D keypoints
+    # Normalize and scale 2D keypoints
     keys_to_normalize = [
         "pose_keypoints_2d", "face_keypoints_2d",
         "hand_left_keypoints_2d", "hand_right_keypoints_2d"
@@ -162,9 +156,6 @@ def remove_3d_keypoints_and_normalize_2d_keypoints(pose_data, width, height):
 
     for key in keys_to_normalize:
         if key in pose_data:
-            if key == "pose_keypoints_2d":
-                pose_data[key] = filter_upper_body_keypoints(pose_data[key])
-
             pose_data[key] = normalize_keypoints_2d(pose_data[key], width, height)
 
     return pose_data
