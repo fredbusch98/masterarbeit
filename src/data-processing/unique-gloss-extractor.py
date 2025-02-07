@@ -5,6 +5,29 @@ from collections import Counter
 
 json_path = 'gloss2pose-filtered-by-all-types.json'
 
+def load_gloss_types(csv_path):
+    """
+    Load gloss types from a CSV file.
+
+    Parameters:
+        csv_path (str): Path to the CSV file.
+
+    Returns:
+        set: A set of gloss types.
+    """
+    gloss_types = set()
+    try:
+        with open(csv_path, 'r', encoding='utf-8') as csvfile:
+            reader = csv.reader(csvfile)
+            for row in reader:
+                gloss_types.add(row[0].strip())  # Assuming the gloss types are in the first column
+        print(f"[INFO] Loaded {len(gloss_types)} gloss types from {csv_path}")
+    except Exception as e:
+        print(f"[ERROR] Could not load gloss types from {csv_path}: {e}")
+    return gloss_types
+
+gloss_types = load_gloss_types("/Volumes/IISY/DGSKorpus/all-types-dgs.csv")
+
 def collect_glosses_and_counts(root_folder):
     unique_glosses = set()  # Using a set to ensure uniqueness
     gloss_counts = Counter()  # Counter to keep track of gloss occurrences
@@ -58,10 +81,20 @@ def save_gloss_counts_to_csv(gloss_counts, output_path):
             writer.writerow([gloss, count])
     print(f"Gloss counts successfully saved to: {output_path}")
 
+def save_missing_glosses_to_csv(missing_glosses, output_path):
+    print(f"Saving missing gloss types to CSV file: {output_path}")
+    with open(output_path, 'w', encoding='utf-8', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(["missing_gloss"])
+        for gloss in sorted(missing_glosses):  # Sort for readability
+            writer.writerow([gloss])
+    print(f"Missing gloss types successfully saved to: {output_path}")
+
 if __name__ == "__main__":
     root_folder = "/Volumes/IISY/DGSKorpus"
     output_csv_unique = os.path.join(root_folder, "all-unique-glosses-from-transcripts-filtered.csv")
     output_csv_counts = os.path.join(root_folder, "all-gloss-counts-from-transcripts-filtered.csv")
+    output_csv_missing = os.path.join(root_folder, "all-missing-gloss-types.csv")
 
     print(f"Starting process to collect unique glosses and counts from: {root_folder}")
     
@@ -74,5 +107,12 @@ if __name__ == "__main__":
     # Save the gloss counts to a CSV file
     save_gloss_counts_to_csv(gloss_counts, output_csv_counts)
 
+    # Find missing gloss types
+    missing_glosses = gloss_types - unique_glosses  # Compute missing glosses
+
+    # Save the missing gloss types to a CSV file
+    save_missing_glosses_to_csv(missing_glosses, output_csv_missing)
+
     print(f"Process completed. Unique glosses have been saved to: {output_csv_unique}")
     print(f"Gloss counts have been saved to: {output_csv_counts}")
+    print(f"Missing gloss types have been saved to: {output_csv_missing}")

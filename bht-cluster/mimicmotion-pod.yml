@@ -2,10 +2,11 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: mimicmotion
+  namespace: s85468
 spec:
   containers:
   - name: mimicmotion-container
-    image: fredbln98/mimicmotion-cuda:latest
+    image: fredbln98/mimicmotion:latest
     # This command keeps the container alive so you can later exec into it.
     command: ["bash", "-c", "while true; do sleep 30; done"]
     resources:

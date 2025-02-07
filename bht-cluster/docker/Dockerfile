@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     curl \
     git \
+    nano \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Miniconda (this will install Miniconda in /opt/miniconda)
@@ -23,9 +24,6 @@ ENV PATH="/opt/miniconda/bin:$PATH"
 
 # Optionally update conda
 RUN conda update -n base -c defaults conda -y
-
-# Set the working directory
-WORKDIR /workspace
 
 # Set the default command to bash
 CMD ["bash"]
