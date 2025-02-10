@@ -1,0 +1,28 @@
+1. Run the shell script to trigger the setup of the pod:
+./setup.sh
+
+2. Start bash in mimicmotion pod:
+kubectl -n s85468 exec -it mimicmotion -- bash
+
+3. Activate conda environment:
+conda activate mimicmotion && cd /storage/MimicMotion
+
+4. Model inference:
+python inference.py --inference_config configs/test.yaml
+python inference.py --inference_config configs/test-openpose.yaml
+
+5. FINALLY - Remove the pod from the cluster:
+exit
+kubectl delete -f mimicmotion-pod.yml
+
+
+###################################################################
+Copying files to/from cluster volume:
+
+1. Copy the results to local device:
+kubectl cp s85468/mimicmotion:/storage/MimicMotion/outputs/[OUTPUT_FILENAME] /Users/frederikbusch/Developer/master-arbeit/mimicmotion/outputs/[OUTPUT_FILENAME]
+
+2. Copying custom files to the volume: 
+kubectl cp /Users/frederikbusch/Developer/MimicMotion/inference.py s85468/mimicmotion:/storage/MimicMotion/inference.py
+kubectl cp /Users/frederikbusch/Developer/MimicMotion/mimicmotion/dwpose/preprocess.py s85468/mimicmotion:/storage/MimicMotion/mimicmotion/dwpose/preprocess.py
+kubectl cp /Users/frederikbusch/Developer/MimicMotion/assets/example_data/videos/openpose.mp4 s85468/mimicmotion:/storage/MimicMotion/assets/example_data/videos/openpose.mp4
