@@ -1,102 +1,43 @@
-from moviepy.video.tools.subtitles import SubtitlesClip
-import moviepy.editor as mp
-from pysrt import SubRipFile
+#!/usr/bin/env python3
+import subprocess
 import os
-from textwrap import wrap
+import sys
+import argparse
 
-def srt_to_moviepy_format(srt_file):
-    """Convert SRT file to MoviePy format with proper handling of overlapping subtitles."""
-    subs = SubRipFile.open(srt_file)
-    subtitle_list = []
+def burn_subtitles(input_video, srt_file, output_video):
+    # Check if the input files exist
+    if not os.path.isfile(input_video):
+        print(f"Error: The video file '{input_video}' does not exist.")
+        sys.exit(1)
+    if not os.path.isfile(srt_file):
+        print(f"Error: The subtitle file '{srt_file}' does not exist.")
+        sys.exit(1)
     
-    for sub in subs:
-        # Clean up any unnecessary symbols or unwanted characters in subtitles
-        clean_text = sub.text.replace('\n', ' ').strip()
+    # Build the FFmpeg command
+    command = [
+        "ffmpeg",
+        "-i", input_video,
+        "-vf", f"subtitles={srt_file}",
+        "-c:a", "copy",
+        output_video
+    ]
 
-        # Here we want to break down the subtitles into segments if they have long durations
-        # Split long duration captions into smaller segments
-        subtitle_list.append(((sub.start.ordinal / 1000, sub.end.ordinal / 1000), clean_text))
+    try:
+        # Run the command
+        subprocess.run(command, check=True)
+        print(f"Success: The output video '{output_video}' has been created with integrated subtitles.")
+    except subprocess.CalledProcessError as e:
+        print("An error occurred while processing the video.")
+        sys.exit(1)
+
+def main():
+    parser = argparse.ArgumentParser(description="Burn subtitles into a video using FFmpeg.")
+    parser.add_argument("input_video", help="Path to the input video file (e.g., video-a.mp4)")
+    parser.add_argument("srt_file", help="Path to the subtitle file (e.g., transcript.srt)")
+    parser.add_argument("output_video", help="Path for the output video file (e.g., output.mp4)")
     
-    # Handle overlapping captions: Merge any that have the same or very close timestamps
-    merged_subtitles = []
-    last_subtitle = None
-    for current_subtitle in subtitle_list:
-        if last_subtitle and current_subtitle[0][0] <= last_subtitle[0][1]:  # Overlap detected
-            # Merge the current subtitle with the last one by extending the text
-            last_subtitle = ((last_subtitle[0][0], current_subtitle[0][1]), last_subtitle[1] + " " + current_subtitle[1])
-        else:
-            if last_subtitle:
-                merged_subtitles.append(last_subtitle)
-            last_subtitle = current_subtitle
+    args = parser.parse_args()
+    burn_subtitles(args.input_video, args.srt_file, args.output_video)
 
-    if last_subtitle:
-        merged_subtitles.append(last_subtitle)
-
-    return merged_subtitles
-
-def wrap_text_to_fit(text, max_width, font_path, font_size):
-    """Wrap text to fit within the screen width."""
-    from PIL import ImageFont
-
-    font = ImageFont.truetype(font_path, font_size)
-    lines = []
-    for line in text.splitlines():
-        wrapped_lines = wrap(line, width=max_width)
-        for wrapped_line in wrapped_lines:
-            # Replace getsize with getbbox (to calculate width correctly)
-            if font.getbbox(wrapped_line)[2] > max_width:
-                words = wrapped_line.split()
-                temp_line = ""
-                for word in words:
-                    # Use getbbox here to measure width
-                    if font.getbbox(temp_line + word + " ")[2] <= max_width:
-                        temp_line += word + " "
-                    else:
-                        lines.append(temp_line.strip())
-                        temp_line = word + " "
-                lines.append(temp_line.strip())
-            else:
-                lines.append(wrapped_line)
-    return "\n".join(lines)
-
-def create_video_with_subtitles(video_path, srt_path, output_path):
-    """Create a new video with subtitles burned in."""
-    # Load the video
-    video = mp.VideoFileClip(video_path)
-
-    # Convert SRT to MoviePy format
-    subtitles = srt_to_moviepy_format(srt_path)
-
-    # Absolute path to the font
-    font_path = os.path.abspath("../resources/fonts/arial/ARIAL.TTF")
-    if not os.path.exists(font_path):
-        raise FileNotFoundError(f"Font file not found at: {font_path}")
-
-    # Define max width for text wrapping (in pixels)
-    max_width = int(video.w * 0.8)  # 80% of the video width
-
-    # Define font size
-    fontsize = 18
-
-    # Generate subtitles clip
-    def generator(txt):
-        wrapped_txt = wrap_text_to_fit(txt, max_width, font_path, fontsize)
-        return mp.TextClip(
-            wrapped_txt, font=font_path, fontsize=fontsize, color='white', align='center'
-        )
-
-    subtitles_clip = SubtitlesClip(subtitles, generator)
-
-    # Overlay subtitles on the video
-    result = mp.CompositeVideoClip([video, subtitles_clip.set_position(('center', 'bottom'))])
-
-    # Write the output video file
-    result.write_videofile(output_path, codec="libx264", audio_codec="aac")
-
-# Specify file paths
-video_file = "../resources/input/video-a1.mp4"
-subtitle_file = "../resources/input/srt1.srt"
-output_file = "../resources/output/videos/output_video_with_subtitles.mp4"
-
-# Run the function
-create_video_with_subtitles(video_file, subtitle_file, output_file)
+if __name__ == "__main__":
+    main()

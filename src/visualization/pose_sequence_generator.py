@@ -14,7 +14,7 @@ def load_json(file_path):
 def generate_videos_from_poses(data, output_dir='output', fps=50):
     os.makedirs(output_dir, exist_ok=True)
     
-    video_path = os.path.join(output_dir, "pose-sequence-test.mp4")
+    video_path = os.path.join(output_dir, "pose-sequence-satz.mp4")
     print(f"Started generating pose sequence video...")
     
     # Define fixed output dimensions
@@ -54,7 +54,7 @@ def generate_videos_from_poses(data, output_dir='output', fps=50):
 
 # Main script
 if __name__ == "__main__":
-    json_file = "../../resources/input/openpose_processed.json"
+    json_file = "../../resources/input/satz-openpose.json"
     output_dir = "../../resources/output/pose-sequences"
 
     data = load_json(json_file)

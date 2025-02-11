@@ -10,6 +10,7 @@ conda activate mimicmotion && cd /storage/MimicMotion
 4. Model inference:
 python inference.py --inference_config configs/test.yaml
 python inference.py --inference_config configs/test-openpose.yaml
+python inference.py --inference_config configs/test-openpose-satz.yaml
 
 5. FINALLY - Remove the pod from the cluster:
 exit
@@ -25,5 +26,6 @@ kubectl cp s85468/mimicmotion:/storage/MimicMotion/outputs/[OUTPUT_FILENAME] /Us
 
 2. Copying custom files to the volume: 
 kubectl cp /Users/frederikbusch/Developer/MimicMotion/inference.py s85468/mimicmotion:/storage/MimicMotion/inference.py
-kubectl cp /Users/frederikbusch/Developer/MimicMotion/mimicmotion/dwpose/preprocess.py s85468/mimicmotion:/storage/MimicMotion/mimicmotion/dwpose/preprocess.py
 kubectl cp /Users/frederikbusch/Developer/MimicMotion/assets/example_data/videos/openpose.mp4 s85468/mimicmotion:/storage/MimicMotion/assets/example_data/videos/openpose.mp4
+kubectl cp /Users/frederikbusch/Developer/master-arbeit/text2gloss2pose/src/mimicmotion/example-input/openpose-satz.mp4 s85468/mimicmotion:/storage/MimicMotion/assets/example_data/videos/openpose-satz.mp4
+kubectl cp /Users/frederikbusch/Developer/master-arbeit/text2gloss2pose/src/mimicmotion/example-input/test-openpose-satz.yaml s85468/mimicmotion:/storage/MimicMotion/configs/test-openpose-satz.yaml
