@@ -17,7 +17,8 @@ kubectl delete -f mimicmotion-pod.yml
 
 
 ###################################################################
-Copying files to/from cluster volume:
+
+Copying files from/to the cluster volume:
 
 1. Copy the results to local device:
 kubectl cp s85468/mimicmotion:/storage/MimicMotion/outputs/[OUTPUT_FILENAME] /Users/frederikbusch/Developer/master-arbeit/mimicmotion/outputs/[OUTPUT_FILENAME]

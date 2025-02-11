@@ -14,7 +14,7 @@ def load_json(file_path):
 def generate_videos_from_poses(data, output_dir='output', fps=50):
     os.makedirs(output_dir, exist_ok=True)
     
-    video_path = os.path.join(output_dir, "pose_sequence-test.mp4")
+    video_path = os.path.join(output_dir, "pose-sequence-test.mp4")
     print(f"Started generating pose sequence video...")
     
     # Define fixed output dimensions
@@ -31,9 +31,8 @@ def generate_videos_from_poses(data, output_dir='output', fps=50):
         hand_right_keypoints = frame_data.get("hand_right_keypoints_2d", [])
 
         # Create the pose image (the function can still add its own padding if needed)
-        pose_image, _ = create_upper_body_pose_image(
-            pose_keypoints, face_keypoints, hand_left_keypoints, hand_right_keypoints,
-            frame_id, hands_and_face=True, padding=0
+        pose_image = create_upper_body_pose_image(
+            pose_keypoints, face_keypoints, hand_left_keypoints, hand_right_keypoints
         )
 
         if pose_image is not None:
