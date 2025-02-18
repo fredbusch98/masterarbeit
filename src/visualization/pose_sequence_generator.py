@@ -4,7 +4,6 @@ import cv2
 import numpy as np
 from pose_utils import create_upper_body_pose_image
 
-
 process_single_file = False
 sentence_path = "../../resources/input/beispielsatz/"
 
@@ -14,7 +13,7 @@ def load_json(file_path):
         data = json.load(f)
     return data['pose_sequence']
 
-def load_data_frames_from_sentence_path(sentence_path):
+def load_data_frames_from_path(sentence_path):
     """
     Loads all JSON files in the specified directory in numeric order (e.g. 1.json, 2.json, ..., 10.json),
     using the load_json function, and returns a list containing the data from each file.
@@ -83,18 +82,16 @@ def generate_videos_from_poses(data, output_dir='output', fps=50):
         video_writer.release()
         print(f"Video created: {video_path}")
 
-def interpolate_keypoints(current_data, next_data):
+def interpolate_keypoints(current_data, next_data, num_intermediate_frames = 7):
     """
     Interpolates between the last frame of current_data and the first frame of next_data.
     For each key in pose_keypoints_2d, face_keypoints_2d, hand_left_keypoints_2d, and hand_right_keypoints_2d,
-    the x and y coordinates are linearly interpolated over 20 frames.
+    the x and y coordinates are linearly interpolated over num_intermediate_frames frames.
     The confidence value is taken from the end frame.
     
     Returns:
         A new list containing all frames from current_data with 20 interpolated frames appended.
     """
-    num_intermediate_frames = 7
-
     # Retrieve the two edge frames to interpolate between
     start_frame = current_data[-1]
     end_frame = next_data[0]
@@ -142,11 +139,11 @@ if __name__ == "__main__":
         generate_videos_from_poses(data, output_dir=output_dir)
 
     else:
-        data_frames = load_data_frames_from_sentence_path(sentence_path)
+        data_frames = load_data_frames_from_path(sentence_path)
         interpolated_pose_sequence = []
         # Iterate over pairs: current and next element
         for current_data, next_data in zip(data_frames, data_frames[1:]):
-            interpolated = interpolate_keypoints(current_data, next_data)
+            interpolated = interpolate_keypoints(current_data, next_data, num_intermediate_frames = 7)
             interpolated_pose_sequence.extend(interpolated)
         
         generate_videos_from_poses(interpolated_pose_sequence, output_dir=output_dir)
