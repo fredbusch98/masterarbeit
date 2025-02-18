@@ -116,3 +116,32 @@ if __name__ == "__main__":
     print(f"Process completed. Unique glosses have been saved to: {output_csv_unique}")
     print(f"Gloss counts have been saved to: {output_csv_counts}")
     print(f"Missing gloss types have been saved to: {output_csv_missing}")
+
+    # Additional logs for deeper insights:
+
+    # 1. Print the top 5 glosses ranked by occurrence count and their respective counts
+    top_5 = gloss_counts.most_common(5)
+    print("\nTop 5 glosses by occurrence count:")
+    for gloss, count in top_5:
+        print(f"{gloss}: {count}")
+
+    # 2. Print the average occurrence count of all unique glosses
+    total_occurrences = sum(gloss_counts.values())
+    average_occurrence = total_occurrences / len(unique_glosses) if unique_glosses else 0
+    print(f"\nAverage occurrence count of all unique glosses: {average_occurrence:.2f}")
+
+    # 3. Count all glosses that have an occurrence count less than 1000 and print the number
+    less_than_1000 = sum(1 for count in gloss_counts.values() if count < 1000)
+    print(f"\nNumber of glosses with occurrence count less than 1000: {less_than_1000}")
+
+    # 4. Count all glosses that have an occurrence count greater than 1000 and print the number
+    greater_than_1000 = sum(1 for count in gloss_counts.values() if count > 1000)
+    print(f"Number of glosses with occurrence count greater than 1000: {greater_than_1000}")
+
+    # 5. Count all glosses that have an occurrence count between 100 and 1000 (inclusive) and print the number
+    between_100_and_1000 = sum(1 for count in gloss_counts.values() if 100 <= count <= 1000)
+    print(f"Number of glosses with occurrence count between 100 and 1000: {between_100_and_1000}")
+
+    # 6. Count all glosses that have an occurrence count less than 100 and print the number
+    less_than_100 = sum(1 for count in gloss_counts.values() if count < 100)
+    print(f"Number of glosses with occurrence count less than 100: {less_than_100}")
