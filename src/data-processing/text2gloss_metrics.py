@@ -40,6 +40,7 @@ longest_example = longest_sentences[0] if longest_sentences else ""
 longest_others = len(longest_sentences) - 1
 
 # Log the results
+print(f"Total sentences: {len(sentences)}")
 print(f"Unique sentences: {unique_count}")
 print(f"Average sentence length (in words): {avg_length:.2f}")
 print(f"Shortest sentence ({min_length} words): \"{shortest_example}\" (and {shortest_others} more with this length)")

@@ -1,3 +1,6 @@
+0. (OPTIONAL) Run the pod without setting everything up automatically:
+kubectl apply -f mimicmotion-pod.yml
+
 1. Run the shell script to trigger the setup of the pod:
 ./setup.sh
 
@@ -11,6 +14,7 @@ conda activate mimicmotion && cd /storage/MimicMotion
 python inference.py --inference_config configs/test.yaml
 python inference.py --inference_config configs/test-openpose.yaml
 python inference.py --inference_config configs/test-openpose-satz.yaml
+python inference.py --inference_config configs/test-interpolated.yaml
 
 5. FINALLY - Remove the pod from the cluster:
 exit

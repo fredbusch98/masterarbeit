@@ -1,30 +1,11 @@
 import os
 import json
 import csv
+import math
 from collections import Counter
+from all_types import load_gloss_types
 
 json_path = 'gloss2pose-filtered-by-all-types.json'
-
-def load_gloss_types(csv_path):
-    """
-    Load gloss types from a CSV file.
-
-    Parameters:
-        csv_path (str): Path to the CSV file.
-
-    Returns:
-        set: A set of gloss types.
-    """
-    gloss_types = set()
-    try:
-        with open(csv_path, 'r', encoding='utf-8') as csvfile:
-            reader = csv.reader(csvfile)
-            for row in reader:
-                gloss_types.add(row[0].strip())  # Assuming the gloss types are in the first column
-        print(f"[INFO] Loaded {len(gloss_types)} gloss types from {csv_path}")
-    except Exception as e:
-        print(f"[ERROR] Could not load gloss types from {csv_path}: {e}")
-    return gloss_types
 
 gloss_types = load_gloss_types("/Volumes/IISY/DGSKorpus/all-types-dgs.csv")
 
@@ -119,6 +100,13 @@ if __name__ == "__main__":
 
     # Additional logs for deeper insights:
 
+    # 0.0. Total number of glosses
+    total_occurrences = sum(gloss_counts.values())
+    print(f"\nTotal number of gloss occurrences (including duplicates): {total_occurrences}")
+
+    # 0.1. Total number of unique glosses
+    print(f"\nTotal number of unique glosses: {len(unique_glosses)}")
+
     # 1. Print the top 5 glosses ranked by occurrence count and their respective counts
     top_5 = gloss_counts.most_common(5)
     print("\nTop 5 glosses by occurrence count:")
@@ -126,9 +114,8 @@ if __name__ == "__main__":
         print(f"{gloss}: {count}")
 
     # 2. Print the average occurrence count of all unique glosses
-    total_occurrences = sum(gloss_counts.values())
     average_occurrence = total_occurrences / len(unique_glosses) if unique_glosses else 0
-    print(f"\nAverage occurrence count of all unique glosses: {average_occurrence:.2f}")
+    print(f"\nAverage occurrence count of all unique glosses: {average_occurrence:.2f} ≈ {math.ceil(average_occurrence)}")
 
     # 3. Count all glosses that have an occurrence count less than 1000 and print the number
     less_than_1000 = sum(1 for count in gloss_counts.values() if count < 1000)
@@ -145,3 +132,19 @@ if __name__ == "__main__":
     # 6. Count all glosses that have an occurrence count less than 100 and print the number
     less_than_100 = sum(1 for count in gloss_counts.values() if count < 100)
     print(f"Number of glosses with occurrence count less than 100: {less_than_100}")
+
+    # 7. Count all glosses that have an occurrence count less or equal than the average and print the number
+    less_or_equal_than_average = sum(1 for count in gloss_counts.values() if count <= math.ceil(average_occurrence))
+    print(f"Number of glosses with occurrence less or equal than {math.ceil(average_occurrence)}: {less_or_equal_than_average}")
+
+    # 8. Count all glosses that have an occurrence count less or equal than 10 and print the number
+    less_or_equal_than_10 = sum(1 for count in gloss_counts.values() if count <= 10)
+    print(f"Number of glosses with occurrence less or equal than 10: {less_or_equal_than_10}")
+
+    # 9. Count all glosses that have an occurrence count less or equal than 2 and print the number
+    less_or_equal_than_2 = sum(1 for count in gloss_counts.values() if count <= 2)
+    print(f"Number of glosses with occurrence less or equal than 2: {less_or_equal_than_2}")
+
+    # 10. Count all glosses that have an occurrence count equal to 1 and print the number
+    equal_to_1 = sum(1 for count in gloss_counts.values() if count == 1)
+    print(f"Number of glosses with occurrence equal to 1: {equal_to_1}")

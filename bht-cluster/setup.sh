@@ -25,7 +25,7 @@ while true; do
     break
   fi
   echo "Current status: $status. Waiting..."
-  sleep 1  # Adjust the sleep duration as needed
+  sleep 2  # Adjust the sleep duration as needed
 done
 
 # Define a helper function to execute commands inside the pod.
