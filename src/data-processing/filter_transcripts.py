@@ -79,18 +79,20 @@ for i, entry in enumerate(entries, start=1):
                     for gloss in gloss_types
                 )
                 
-                # Optionally check if the original text line is a full sentence
-                # Regex Explanation:
-                # ^(?:A:|B:|C:)\s*
-                # Matches one of the prefixes (A:, B:, or C:) at the beginning, followed by any amount of whitespace.
-                # [A-Z][a-z]+
-                # Ensures the first word starts with an uppercase letter and is followed by one or more lowercase letters (so single word sentences like "Yes", "Ok", and "No" all work).
-                # (?:\s+.*)?$
-                # Optionally matches additional words (if present), but also allows the sentence to end right after the first word.
+                r"""
+                Explanation of the regex pattern:
+
+                ^(?:A:|B:|C:)   # Match the beginning of the line (^) and ensure it starts with "A:", "B:", or "C:"
+                \s*             # Allow optional whitespace after the prefix
+                [A-Z][a-z]+\b   # Match a word that starts with an uppercase letter followed by lowercase letters
+                                # \b ensures the word boundary to correctly capture a full word
+                .*$             # Match the rest of the line (any characters, including punctuation), allowing empty or non-empty content
+                """
+                pattern = r"^(?:A:|B:|C:)\s*[A-Z](?![A-Z\s]*$).*$"
                 contains_full_sentence = False
                 if include_sentences:
                     contains_full_sentence = (
-                        re.match(r"^(?:A:|B:|C:)\s*[A-Z][a-z]+(?:\s+.*)?$", original_text_line) and
+                        re.match(pattern, original_text_line) and
                         len(original_text_line.split()) > 2
                     )
                 

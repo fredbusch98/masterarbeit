@@ -34,9 +34,8 @@ def process_folder(folder_path):
             person_label = person_label.strip()
             content = content.strip()
 
-            # Check if it's a full sentence (One or more words, starts with a upper-case letter followed by lower-case letter)
-            words = content.split()
-            if words and len(words[0]) >= 2 and words[0][0].isupper() and words[0][1].islower():
+            # Check if it's a full sentence (more than one word and starts with a capital letter)
+            if len(content.split()) > 1 and content[0].isupper():
                 # Before overwriting, if there's an existing sentence with glosses for this person, save it.
                 if person_label in last_sentence and gloss_entries.get(person_label):
                     rows.append([last_sentence[person_label]] + gloss_entries[person_label])

@@ -46,9 +46,10 @@ def main():
                     # 1: entry number, 2: timestamp, 3: dialogue line
                     if len(lines) >= 3:
                         dialogue = lines[2].strip()
+                        dialogue = dialogue[2:].strip()
+                        dialogue.lstrip("||")
                         if not is_full_sentence(dialogue):
-                            # Check if dialogue contains "||" (this will also catch "*||")
-                            if "||" in dialogue:
+                            if "||" in dialogue and dialogue.isupper():
                                 pipe_count += 1
                             else:
                                 non_pipe_count += 1
