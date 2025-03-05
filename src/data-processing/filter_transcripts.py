@@ -14,11 +14,6 @@ def clean_line(line):
     line = re.sub(r"^(A:|B:)\s*\|+(.*)", r"\1 \2", line)
     return line
 
-# Control whether to include full sentences in addition to glosses
-# - True: Include blocks with either a gloss or a full sentence
-# - False: Include only blocks containing glosses
-include_sentences = True
-
 # Load gloss types and set base path
 gloss_types = load_gloss_types("/Volumes/IISY/DGSKorpus/all-types-dgs.csv")
 base_path = "/Volumes/IISY/DGSKorpus/"
@@ -82,29 +77,28 @@ for i, entry in enumerate(entries, start=1):
                 r"""
                 Explanation of the regex pattern:
 
-                ^(?:A:|B:|C:)   # Match the beginning of the line (^) and ensure it starts with "A:", "B:", or "C:"
-                \s*             # Allow optional whitespace after the prefix
-                [A-Z][a-z]+\b   # Match a word that starts with an uppercase letter followed by lowercase letters
-                                # \b ensures the word boundary to correctly capture a full word
-                .*$             # Match the rest of the line (any characters, including punctuation), allowing empty or non-empty content
+                ^(?:A:|B:|C:)    # Match the beginning of the line (^) and ensure it starts with one of the specified speaker labels ("A:", "B:", or "C:")
+                \s*              # Allow optional whitespace after the prefix
+                [A-Z0-9#]        # Match a single character that can be an uppercase letter, a digit, or a '#' symbol as the first character of the sentence content
+                .*$              # Match the rest of the line (any characters, including punctuation) until the end of the line
                 """
-                pattern = r"^(?:A:|B:|C:)\s*[A-Z](?![A-Z\s]*$).*$"
+                pattern = r"^(?:A:|B:|C:)\s*[A-Z0-9#].*$"
                 contains_full_sentence = False
-                if include_sentences:
-                    contains_full_sentence = (
-                        re.match(pattern, original_text_line) and
-                        len(original_text_line.split()) > 2
-                    )
+                if not contains_gloss:
+                    contains_full_sentence = re.match(pattern, original_text_line)
                 
                 # Include the block if it meets the criteria
                 if contains_gloss or contains_full_sentence:
                     lines[0] = str(new_index)  # Update index
-                    lines[2] = cleaned_text_line  # Use cleaned text
+                    # If it's a full sentence, add the prefix
+                    if contains_full_sentence:
+                        lines[2] = cleaned_text_line + "_FULL_SENTENCE"
+                    else:
+                        lines[2] = cleaned_text_line
                     filtered_blocks.append("\n".join(lines))
                     new_index += 1
         
-        # Determine output filename based on include_sentences setting
-        filtered_filename = "filtered-transcript.srt" if include_sentences else "filtered-transcript-only-gloss.srt"
+        filtered_filename = "filtered-transcript.srt"
         filtered_path = os.path.join(folder_path, filtered_filename)
         
         # Write the filtered blocks to the output file

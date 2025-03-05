@@ -14,6 +14,7 @@ def load_gloss_types(csv_path):
     try:
         with open(csv_path, 'r', encoding='utf-8') as csvfile:
             reader = csv.reader(csvfile)
+            next(reader, None)  # Skip the header row
             for row in reader:
                 gloss_types.add(row[0].strip())
         print(f"[INFO] Loaded {len(gloss_types)} gloss types from {csv_path}")

@@ -34,10 +34,11 @@ def process_folder(folder_path):
             person_label = person_label.strip()
             content = content.strip()
 
-            # Check if it's a full sentence (more than one word and starts with a capital letter)
-            if len(content.split()) > 1 and content[0].isupper():
+            # Check if it's a full sentence
+            if content.endswith("_FULL_SENTENCE"):
                 # Before overwriting, if there's an existing sentence with glosses for this person, save it.
                 if person_label in last_sentence and gloss_entries.get(person_label):
+                    last_sentence[person_label] = last_sentence[person_label].replace("_FULL_SENTENCE", "")
                     rows.append([last_sentence[person_label]] + gloss_entries[person_label])
                 
                 # Update this person's sentence and reset their gloss list.
@@ -50,6 +51,7 @@ def process_folder(folder_path):
     
     # After processing all subtitles, add any remaining entries for each speaker.
     for person, sentence in last_sentence.items():
+        sentence = sentence.replace("_FULL_SENTENCE", "")
         if gloss_entries.get(person):
             rows.append([sentence] + gloss_entries[person])
     
@@ -87,6 +89,6 @@ if process_all_folders:
         print(f"Error writing combined CSV file: {e}")
 else:
     # Process only the example folder
-    example_folder = os.path.join(base_path, "entry_3")
+    example_folder = os.path.join(base_path, "entry_0")
     print(f"Processing example folder: {example_folder}")
     process_folder(example_folder)

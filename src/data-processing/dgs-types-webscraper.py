@@ -28,7 +28,7 @@ if response.status_code == 200:
 
         # Use regex to find the leading gloss (e.g., ALPHA1, $ALPHA1, etc.)
         # This assumes the gloss is at the start of the <p> text and ends before any non-gloss characters
-        gloss_match = re.match(r'^([A-Za-z$][\w^-]*)', p_text)
+        gloss_match = re.match(r'^([^\s(]+)', p_text)
         if gloss_match:
             gloss = gloss_match.group(1)
             unique_elements.add(gloss)
@@ -41,7 +41,7 @@ if response.status_code == 200:
 
     # Convert the set to a list and create a DataFrame
     unique_elements_list = sorted(unique_elements)  # Sort for consistency
-    df = pd.DataFrame(unique_elements_list, columns=["Text"])
+    df = pd.DataFrame(unique_elements_list, columns=["Gloss/Type"])
 
     # Save the DataFrame to a CSV file with UTF-8 encoding
     csv_filename = "/Volumes/IISY/DGSKorpus/all-types-dgs.csv"

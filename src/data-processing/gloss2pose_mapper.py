@@ -58,7 +58,7 @@ def map_srt_to_frames(srt_file_path, fps):
             frames = list(range(start_frame, end_frame + 1))
 
             content = sub.text[2:].strip().split()
-            if sub.text[:2] in {"A:", "B:"} and len(content) == 1 and content[0].isupper():
+            if sub.text[:2] in {"A:", "B:"} and not content.endswith("_FULL_SENTENCE"):
                 person = sub.text[0]
                 gloss = sub.text[2:].strip()
                 entry = (gloss, frames)
