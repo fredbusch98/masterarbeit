@@ -2,7 +2,7 @@ import csv
 from statistics import mean
 
 # Path to your CSV file
-file_path = "/Volumes/IISY/DGSKorpus/dgs-text2gloss-combined-filtered-by-all-types.csv"
+file_path = "/Volumes/IISY/DGSKorpus/dgs-text2gloss-split-speaker-combined.csv"
 
 sentences = []
 

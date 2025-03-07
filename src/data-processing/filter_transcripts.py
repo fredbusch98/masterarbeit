@@ -77,12 +77,20 @@ for i, entry in enumerate(entries, start=1):
                 r"""
                 Explanation of the regex pattern:
 
-                ^(?:A:|B:|C:)    # Match the beginning of the line (^) and ensure it starts with one of the specified speaker labels ("A:", "B:", or "C:")
-                \s*              # Allow optional whitespace after the prefix
-                [A-Z0-9#]        # Match a single character that can be an uppercase letter, a digit, or a '#' symbol as the first character of the sentence content
-                .*$              # Match the rest of the line (any characters, including punctuation) until the end of the line
+                ^(?:A:|B:|C:)      # Ensure the line starts with one of the speaker labels (A:, B:, or C:)
+                \s*                # Allow optional whitespace after the label
+                (?:                # Begin non-capturing group for alternation:
+                    [A-Z].*        #  - If the first character after the label is an uppercase letter, match the rest of the line.
+                    |              #  OR
+                    (?:            #  - If the first character is a digit or '#':
+                        [0-9#]\S*  #    Match the contiguous token starting with a digit or '#' (without spaces)
+                        (?:\s+\S+)+#    Require at least one space followed by one or more non-space characters, ensuring there is more than one word.
+                    )
+                )
+                $                  # End of line.
                 """
-                pattern = r"^(?:A:|B:|C:)\s*[A-Z0-9#].*$"
+                pattern = r"^(?:A:|B:|C:)\s*(?:[A-Z].*|(?:[0-9#]\S*(?:\s+\S+)+))$"
+
                 contains_full_sentence = False
                 if not contains_gloss:
                     contains_full_sentence = re.match(pattern, original_text_line)

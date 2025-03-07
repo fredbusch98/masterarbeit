@@ -253,8 +253,11 @@ def main():
         root_path = "/Volumes/IISY/DGSKorpus/"  # Replace with the root directory containing all subfolders
         
         # Get all entries in the root path
-        entries = [entry for entry in os.listdir(root_path) if os.path.isdir(os.path.join(root_path, entry))]
-
+        entries = [
+            entry for entry in os.listdir(root_path)
+            if os.path.isdir(os.path.join(root_path, entry)) and entry.startswith("entry_")
+        ]
+        
         # If starting_entry is specified, start from that folder
         if starting_entry:
             try:
