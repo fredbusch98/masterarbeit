@@ -26,8 +26,7 @@ def is_full_sentence(text):
 
 def main():
     base_dir = '/Volumes/IISY/DGSKorpus/'
-    non_pipe_count = 0
-    pipe_count = 0
+    dual_gloss_count = 0
 
     # Loop over subfolders named like entry_*
     for folder in os.listdir(base_dir):
@@ -50,17 +49,9 @@ def main():
                         dialogue.lstrip("||")
                         if not is_full_sentence(dialogue):
                             if "||" in dialogue and dialogue.isupper():
-                                pipe_count += 1
-                            else:
-                                non_pipe_count += 1
+                                dual_gloss_count += 1
 
-    total = non_pipe_count + pipe_count
-    percentage = (pipe_count / total * 100) if total > 0 else 0
-
-    print("Single gloss entries: {}".format(non_pipe_count))
-    print("Dual gloss entries: {}".format(pipe_count))
-    print("Total gloss entries: {}".format(total))
-    print("Percentage of dual gloss entries: {:.2f}%".format(percentage))
+    print("Dual gloss entries: {}".format(dual_gloss_count))
 
 if __name__ == "__main__":
     main()

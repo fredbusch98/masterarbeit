@@ -3,6 +3,8 @@ import json
 import csv
 import math
 from collections import Counter
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from all_types import load_gloss_types
 
 json_path = 'gloss2pose-filtered-by-all-types.json'
@@ -62,20 +64,10 @@ def save_gloss_counts_to_csv(gloss_counts, output_path):
             writer.writerow([gloss, count])
     print(f"Gloss counts successfully saved to: {output_path}")
 
-def save_missing_glosses_to_csv(missing_glosses, output_path):
-    print(f"Saving missing gloss types to CSV file: {output_path}")
-    with open(output_path, 'w', encoding='utf-8', newline='') as csvfile:
-        writer = csv.writer(csvfile)
-        writer.writerow(["missing_gloss"])
-        for gloss in sorted(missing_glosses):  # Sort for readability
-            writer.writerow([gloss])
-    print(f"Missing gloss types successfully saved to: {output_path}")
-
 if __name__ == "__main__":
     root_folder = "/Volumes/IISY/DGSKorpus"
-    output_csv_unique = os.path.join(root_folder, "all-unique-glosses-from-transcripts-filtered.csv")
-    output_csv_counts = os.path.join(root_folder, "all-gloss-counts-from-transcripts-filtered.csv")
-    output_csv_missing = os.path.join(root_folder, "all-missing-gloss-types.csv")
+    output_csv_unique = os.path.join(root_folder, "all-unique-glosses-from-gloss2pose.csv")
+    output_csv_counts = os.path.join(root_folder, "all-gloss-counts-from-gloss2pose.csv")
 
     print(f"Starting process to collect unique glosses and counts from: {root_folder}")
     
@@ -88,15 +80,8 @@ if __name__ == "__main__":
     # Save the gloss counts to a CSV file
     save_gloss_counts_to_csv(gloss_counts, output_csv_counts)
 
-    # Find missing gloss types
-    missing_glosses = gloss_types - unique_glosses  # Compute missing glosses
-
-    # Save the missing gloss types to a CSV file
-    save_missing_glosses_to_csv(missing_glosses, output_csv_missing)
-
     print(f"Process completed. Unique glosses have been saved to: {output_csv_unique}")
     print(f"Gloss counts have been saved to: {output_csv_counts}")
-    print(f"Missing gloss types have been saved to: {output_csv_missing}")
 
     # Additional logs for deeper insights:
 
