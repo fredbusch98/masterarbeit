@@ -3,6 +3,7 @@ import re
 import csv
 import math
 from collections import Counter
+import statistics
 
 # Define the main folder path where entry_* folders are located
 main_folder = '/Volumes/IISY/DGSKorpus'
@@ -52,15 +53,20 @@ def process_srt_file(srt_path):
             match = re.match(r'[A-B]:\s', text_line)
             if match:
                 clean_text = text_line[match.end():].strip()
-                if clean_text.endswith('_FULL_SENTENCE'):
-                    after_end_sentence = False
-                elif clean_text.endswith('_END_SENTENCE'):
+                # Integrate the snippet here
+                clean_text_base = clean_text
+                if clean_text.endswith('_END_SENTENCE'):
+                    clean_text_base = clean_text[:-len('_END_SENTENCE')]
                     after_end_sentence = True
+                elif clean_text.endswith('_FULL_SENTENCE'):
+                    after_end_sentence = False
                 else:
-                    # This is a regular gloss
-                    all_glosses.append(clean_text)
+                    after_end_sentence = False
+                    clean_text_base = clean_text
+                if not clean_text.endswith('_FULL_SENTENCE'):
+                    all_glosses.append(clean_text_base)
                     if after_end_sentence:
-                        lost_glosses.append((srt_path, entry[0], clean_text))
+                        lost_glosses.append((srt_path, entry[0], clean_text_base))
             else:
                 print(f"⚠️ Warning: No speaker tag in {srt_path}, entry {entry[0]}")
         else:
@@ -192,6 +198,10 @@ for gloss, count in top_5:
 average_occurrence = total_occurrences / len(unique_glosses) if unique_glosses else 0
 print(f"\nAverage occurrence count of all unique glosses: {average_occurrence:.2f} ≈ {math.ceil(average_occurrence)}")
 
+# 2.5. Median occurrence count of all unique glosses
+median_occurrence = statistics.median(list(all_counter.values()))
+print(f"Median occurrence count of all unique glosses: {median_occurrence}")
+
 # 3. Glosses with occurrence count less than 1000
 less_than_1000 = sum(1 for count in all_counter.values() if count < 1000)
 print(f"Number of glosses with occurrence count less than 1000: {less_than_1000}")
@@ -210,7 +220,11 @@ print(f"Number of glosses with occurrence count less than 100: {less_than_100}")
 
 # 7. Glosses with occurrence count less or equal to the average
 less_or_equal_than_average = sum(1 for count in all_counter.values() if count <= math.ceil(average_occurrence))
-print(f"Number of glosses with occurrence less or equal than {math.ceil(average_occurrence)}: {less_or_equal_than_average}")
+print(f"Number of glosses with occurrence less or equal than the average ({math.ceil(average_occurrence)}): {less_or_equal_than_average}")
+
+# 7.5. Number of glosses with occurrence count less or equal than the median
+less_or_equal_than_median = sum(1 for count in all_counter.values() if count <= median_occurrence)
+print(f"Number of glosses with occurrence count less or equal than the median ({median_occurrence}): {less_or_equal_than_median}")
 
 # 8. Glosses with occurrence count less or equal to 10
 less_or_equal_than_10 = sum(1 for count in all_counter.values() if count <= 10)

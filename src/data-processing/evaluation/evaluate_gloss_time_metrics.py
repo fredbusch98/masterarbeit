@@ -60,10 +60,12 @@ def print_top_occurrences(metric, label, index_field, df, n=5):
     for _, row in sorted_df.tail(n).sort_values(by=metric, ascending=False).iterrows():
         print(f"  {row['gloss']}: {row[metric]:.0f} ms (entry: {row['entry']}, index: {row[index_field]}, {row['speaker']})")
 
+import os
+
 def find_and_save_metrics_threshold(df, metric, threshold, above=True, output_dir="/Volumes/IISY/DGSKorpus/dgs-gloss-times"):
     """
     Save all occurrences of a metric (e.g., "gd") that are above or below a given threshold to a CSV file.
-    Prints only the number of occurrences found.
+    Results are ordered by the time metric value. Prints only the number of occurrences found.
     """
     os.makedirs(output_dir, exist_ok=True)
     if above:
@@ -77,8 +79,12 @@ def find_and_save_metrics_threshold(df, metric, threshold, above=True, output_di
     print(f"\nFound {num_results} occurrences of {metric.upper()} {condition} {threshold} ms.")
 
     if num_results > 0:
+        # Order the results by the metric value (ascending order)
+        filtered = filtered.sort_values(by=metric, ascending=False)
+        
         index_field = f"{metric}_index" if metric in ["igt", "ogt", "tgt"] else "block_index"
         filtered = filtered[["gloss", "entry", index_field, "speaker", metric]]
+        
         filename = f"{metric}_{condition}_{threshold}ms.csv"
         file_path = os.path.join(output_dir, filename)
         filtered.to_csv(file_path, index=False)
@@ -127,6 +133,7 @@ def main():
     
     # Example usage: print all GD occurrences above 2000 ms
     find_and_save_metrics_threshold(df, "gd", 2000, above=True)
+    find_and_save_metrics_threshold(df, "gd", 1000, above=True)
 
 if __name__ == "__main__":
     main()

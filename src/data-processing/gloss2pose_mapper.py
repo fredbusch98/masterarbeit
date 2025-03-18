@@ -57,7 +57,7 @@ def map_srt_to_frames(srt_file_path, fps):
             end_frame = int(sub.end.ordinal / 1000 * fps)
             frames = list(range(start_frame, end_frame + 1))
 
-            content = sub.text[2:].strip().split()
+            content = sub.text[2:].strip()
             if sub.text[:2] in {"A:", "B:"} and not content.endswith("_FULL_SENTENCE"):
                 person = sub.text[0]
                 gloss = sub.text[2:].strip()
@@ -138,9 +138,29 @@ def remove_3d_keypoints_and_normalize_2d_keypoints(pose_data, width, height):
 
     return pose_data
 
+def filter_lower_body_keypoints(pose_data):
+    """
+    Remove lower-body keypoints from pose_keypoints_2d entirely.
+
+    Parameters:
+        pose_data (dict): Pose data dictionary containing keypoints.
+
+    Returns:
+        dict: Modified pose data with only upper-body keypoints in pose_keypoints_2d.
+    """
+    included_indexes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 15, 16, 17, 18]  # Upper-body keypoints
+    if "pose_keypoints_2d" in pose_data:
+        pose_kp = pose_data["pose_keypoints_2d"]
+        new_pose_kp = []
+        for i in included_indexes:
+            start = 3 * i  # Each keypoint has 3 values (x, y, confidence)
+            new_pose_kp.extend(pose_kp[start:start + 3])
+        pose_data["pose_keypoints_2d"] = new_pose_kp
+    return pose_data
+
 def map_text_to_poses(openpose_file_path, srt_entries_personA, srt_entries_personB):
     """
-    Map text entries to pose sequences using OpenPose JSON.
+    Map text entries to pose sequences using OpenPose JSON, including only upper-body keypoints.
 
     Parameters:
         openpose_file_path (str): Path to the OpenPose JSON file.
@@ -148,7 +168,7 @@ def map_text_to_poses(openpose_file_path, srt_entries_personA, srt_entries_perso
         srt_entries_personB (list): List of tuples containing text and frame numbers for Person B.
 
     Returns:
-        list: List of dictionaries mapping text to pose sequences.
+        list: List of dictionaries mapping text to pose sequences with upper-body keypoints only.
     """
     try:
         print(f"[INFO] Loading OpenPose data: {openpose_file_path}")
@@ -174,10 +194,12 @@ def map_text_to_poses(openpose_file_path, srt_entries_personA, srt_entries_perso
                     for person in frame_to_people[frame]:
                         # Remove 3D keypoints and normalize 2D keypoints
                         cleaned_pose = remove_3d_keypoints_and_normalize_2d_keypoints(person, width_camera_a, height_camera_a)
+                        # Filter out lower-body keypoints
+                        cleaned_pose = filter_lower_body_keypoints(cleaned_pose)
                         people_data.append(cleaned_pose)
 
             result.append({"gloss": text, "pose_sequence": people_data})
-            person_a_pose_count += len(people_data)  # Add the number of poses for Person A
+            person_a_pose_count += len(people_data)
 
         # Process Person B's entries
         for text, frames in srt_entries_personB:
@@ -189,15 +211,15 @@ def map_text_to_poses(openpose_file_path, srt_entries_personA, srt_entries_perso
                     for person in frame_to_people[frame]:
                         # Remove 3D keypoints and normalize 2D keypoints
                         cleaned_pose = remove_3d_keypoints_and_normalize_2d_keypoints(person, width_camera_b, height_camera_b)
+                        # Filter out lower-body keypoints
+                        cleaned_pose = filter_lower_body_keypoints(cleaned_pose)
                         people_data.append(cleaned_pose)
 
             result.append({"gloss": text, "pose_sequence": people_data})
-            person_b_pose_count += len(people_data)  # Add the number of poses for Person B
+            person_b_pose_count += len(people_data)
 
-        # Log the total number of poses mapped for each person
         print(f"[INFO] Total single poses mapped for Person A: {person_a_pose_count}")
         print(f"[INFO] Total single poses mapped for Person B: {person_b_pose_count}")
-        
         print(f"[INFO] Total pose-sequence mappings: {len(result)}")
         return result
 
@@ -229,7 +251,7 @@ def process_folder(folder_path):
         "data": mapped_data  # Single list for both persons
     }
 
-    output_path = os.path.join(folder_path, "gloss2pose-filtered-by-all-types.json")
+    output_path = os.path.join(folder_path, "gloss2pose.json")
     print(f"[INFO] Writing output to {output_path}")
     try:
         # Open the file with UTF-8 encoding to ensure proper character encoding

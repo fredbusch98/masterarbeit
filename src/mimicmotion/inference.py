@@ -2,6 +2,7 @@ import os
 import argparse
 import logging
 import math
+import time 
 from omegaconf import OmegaConf
 from datetime import datetime
 from pathlib import Path
@@ -167,6 +168,8 @@ def run_pipeline(pipeline: MimicMotionPipeline, image_pixels, pose_pixels, devic
 
 @torch.no_grad()
 def main(args):
+    start_time = time.time()  # Start timer
+
     if not args.no_use_float16:
         torch.set_default_dtype(torch.float16)
 
@@ -211,6 +214,12 @@ def main(args):
     outputfile = output_files[0].split("/")[-1]
     logger.info(f"--- Finished processing, output files: {', '.join(output_files)} ---")
     logger.info(f"kubectl cp s85468/mimicmotion:/storage/MimicMotion/outputs/{outputfile} /Users/frederikbusch/Developer/master-arbeit/mimicmotion/outputs/{outputfile}")
+
+    # Calculate and display the elapsed time
+    elapsed = time.time() - start_time
+    minutes = int(elapsed // 60)
+    seconds = int(elapsed % 60)
+    print(f"Inference took {minutes} minutes and {seconds} seconds!")
 
 
 def set_logger(log_file=None, log_level=logging.INFO):

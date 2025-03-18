@@ -3,13 +3,8 @@ import json
 import csv
 import math
 from collections import Counter
-import sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from all_types import load_gloss_types
 
-json_path = 'gloss2pose-filtered-by-all-types.json'
-
-gloss_types = load_gloss_types("/Volumes/IISY/DGSKorpus/all-types-dgs.csv")
+json_path = 'gloss2pose.json'
 
 def collect_glosses_and_counts(root_folder):
     unique_glosses = set()  # Using a set to ensure uniqueness
@@ -102,13 +97,13 @@ if __name__ == "__main__":
     average_occurrence = total_occurrences / len(unique_glosses) if unique_glosses else 0
     print(f"\nAverage occurrence count of all unique glosses: {average_occurrence:.2f} ≈ {math.ceil(average_occurrence)}")
 
-    # 3. Count all glosses that have an occurrence count less than 1000 and print the number
-    less_than_1000 = sum(1 for count in gloss_counts.values() if count < 1000)
-    print(f"\nNumber of glosses with occurrence count less than 1000: {less_than_1000}")
-
-    # 4. Count all glosses that have an occurrence count greater than 1000 and print the number
+    # 3. Count all glosses that have an occurrence count greater than 1000 and print the number
     greater_than_1000 = sum(1 for count in gloss_counts.values() if count > 1000)
     print(f"Number of glosses with occurrence count greater than 1000: {greater_than_1000}")
+
+    # 4. Count all glosses that have an occurrence count less than 1000 and print the number
+    less_than_1000 = sum(1 for count in gloss_counts.values() if count < 1000)
+    print(f"\nNumber of glosses with occurrence count less than 1000: {less_than_1000}")
 
     # 5. Count all glosses that have an occurrence count between 100 and 1000 (inclusive) and print the number
     between_100_and_1000 = sum(1 for count in gloss_counts.values() if 100 <= count <= 1000)

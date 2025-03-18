@@ -27,8 +27,10 @@ def process_sentence_blocks(blocks, gloss_types, raw_rows):
     if main_blocks:
         if len(main_blocks) == 1:
             block = main_blocks[0]
+            block_text = block["text"].replace("_END_SENTENCE", "")
+            block_text = block_text.split(":")[0]
             for gloss in gloss_types:
-                if gloss in block["text"]:
+                if gloss == block_text:
                     gd = block["duration_ms"]
                     igt = 0
                     ogt = 0
@@ -86,8 +88,10 @@ def process_sentence_blocks(blocks, gloss_types, raw_rows):
                     tgt_index = current_group_index
                 
                 for block in group_blocks:
+                    block_text = block["text"].replace("_END_SENTENCE", "")
+                    block_text = block_text.split(":")[0]
                     for gloss in gloss_types:
-                        if gloss in block["text"]:
+                        if gloss == block_text:
                             gd = block["duration_ms"]
                             tgt = current_igt + gd + current_ogt
                             raw_rows.append({
@@ -106,8 +110,10 @@ def process_sentence_blocks(blocks, gloss_types, raw_rows):
                             })
     # --- Process lost gloss blocks: only GD is used.
     for block in lost_blocks:
+        block_text = block["text"].replace("_END_SENTENCE", "")
+        block_text = block_text.split(":")[0]
         for gloss in gloss_types:
-            if gloss in block["text"]:
+            if gloss == block_text:
                 gd = block["duration_ms"]
                 raw_rows.append({
                     "entry": block["entry"],

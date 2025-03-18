@@ -5,7 +5,7 @@ from datetime import datetime
 from pose_utils import create_upper_body_pose_image
 
 process_single_file = False
-sentence_path = "../../resources/input/beispielsatz/"
+sentence_path = "../../resources/input/example-sentence-upper-body-only/"
 
 # Load JSON data
 def load_json(file_path):

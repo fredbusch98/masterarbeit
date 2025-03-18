@@ -10,7 +10,7 @@ def scrape_meaning_to_gloss():
     total_pages = 18
 
     # Prepare the CSV file for writing
-    with open('dgs-gloss-dictionary.csv', 'w', newline='', encoding='utf-8') as csvfile:
+    with open('dgs-bedeutung-konventioneller-gebärden.csv', 'w', newline='', encoding='utf-8') as csvfile:
         csvwriter = csv.writer(csvfile)
 
         # Write the header row
@@ -56,7 +56,7 @@ def scrape_meaning_to_gloss():
                     csvwriter.writerow([text_top_name] + gloss_names)
                     print(f"Extracted: Meaning = {text_top_name}, Glosses = {gloss_names}")
 
-    print("Scraping completed! Data saved to 'gloss-dictionary.csv'.")
+    print("Scraping completed! Data saved to 'dgs-bedeutung-konventioneller-gebärden.csv'.")
 
 if __name__ == "__main__":
     scrape_meaning_to_gloss()
