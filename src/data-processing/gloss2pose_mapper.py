@@ -1,7 +1,7 @@
 import os
 import cv2
 import json
-from pysrt import SubRipFile, open as open_srt
+from pysrt import SubRipFile
 import sys
 
 process_all_folders = True  # Set to True to process all subfolders, False to process just a single test folder
@@ -35,44 +35,46 @@ def get_video_fps(video_path):
         print(f"[ERROR] {e}")
         return None
 
-def map_srt_to_frames(srt_file_path, fps):
+def map_speaker_srt_to_frames(srt_file_path, fps, speaker):
     """
-    Map subtitles in the SRT file to frame numbers using the FPS.
-
-    Parameters:
-        srt_file_path (str): Path to the SRT file.
+    Map subtitles in the speaker's SRT file to frame numbers using the FPS.
+    
+    Args:
+        srt_file_path (str): Path to the speaker's SRT file.
         fps (float): Frames per second of the video.
-
+        speaker (str): Speaker label ("A" or "B").
+    
     Returns:
-        tuple: Two lists containing tuples for Person A and Person B.
+        list: List of tuples containing (gloss, frames).
     """
     try:
-        print(f"[INFO] Parsing SRT file: {srt_file_path}")
-        subs = open_srt(srt_file_path)
-        srt_entries2frames_personA = []
-        srt_entries2frames_personB = []
-
+        print(f"[INFO] Parsing SRT file for speaker {speaker}: {srt_file_path}")
+        subs = SubRipFile.open(srt_file_path)
+        entries = []
+        speaker_tag = f"{speaker}: "
+        
         for sub in subs:
-            start_frame = int(sub.start.ordinal / 1000 * fps)
-            end_frame = int(sub.end.ordinal / 1000 * fps)
-            frames = list(range(start_frame, end_frame + 1))
-
-            content = sub.text[2:].strip()
-            if sub.text[:2] in {"A:", "B:"} and not content.endswith("_FULL_SENTENCE"):
-                person = sub.text[0]
-                gloss = sub.text[2:].strip()
-                entry = (gloss, frames)
-                if person == "A":
-                    srt_entries2frames_personA.append(entry)
-                else:
-                    srt_entries2frames_personB.append(entry)
-
-        print(f"[INFO] Mapped {len(srt_entries2frames_personA)} transcript entries for Person A and {len(srt_entries2frames_personB)} entries for Person B.")
-        return srt_entries2frames_personA, srt_entries2frames_personB
-
+            text = sub.text.strip()
+            if not text:
+                continue
+            if text.startswith(speaker_tag):
+                gloss = text[len(speaker_tag):].strip()
+                if gloss.endswith("_END_SENTENCE"): 
+                    gloss = gloss.replace("_END_SENTENCE", "")
+                if not gloss.endswith("_FULL_SENTENCE"):
+                    start_frame = int(sub.start.ordinal / 1000 * fps)
+                    end_frame = int(sub.end.ordinal / 1000 * fps)
+                    frames = list(range(start_frame, end_frame + 1))
+                    entries.append((gloss, frames))
+            else:
+                print(f"Warning: Subtitle does not start with expected speaker tag '{speaker_tag}' in {srt_file_path}")
+        
+        print(f"[INFO] Mapped {len(entries)} transcript entries for speaker {speaker}.")
+        return entries
+    
     except Exception as e:
         print(f"[ERROR] {e}")
-        return [], []
+        return []
 
 def normalize_keypoints_2d(keypoints_2d, width, height):
     """
@@ -230,7 +232,8 @@ def map_text_to_poses(openpose_file_path, srt_entries_personA, srt_entries_perso
 def process_folder(folder_path):
     video_a_path = os.path.join(folder_path, "video-a.mp4")
     video_b_path = os.path.join(folder_path, "video-b.mp4")
-    srt_path = os.path.join(folder_path, "filtered-transcript.srt")
+    srt_a_path = os.path.join(folder_path, "speaker-a.srt")
+    srt_b_path = os.path.join(folder_path, "speaker-b.srt")
     openpose_path = os.path.join(folder_path, "openpose.json")
 
     print(f"[INFO] Processing folder: {folder_path}")
@@ -240,10 +243,11 @@ def process_folder(folder_path):
         print(f"[ERROR] Could not determine FPS for folder: {folder_path}. Skipping.")
         return None  # Return None if something went wrong
 
-    # Instead of mapping separately, we'll combine entries for both Person A and Person B
-    srt_entries_personA, srt_entries_personB = map_srt_to_frames(srt_path, fps)
+    # Map entries for each speaker using their respective SRT files
+    srt_entries_personA = map_speaker_srt_to_frames(srt_a_path, fps, "A")
+    srt_entries_personB = map_speaker_srt_to_frames(srt_b_path, fps, "B")
 
-    # Map the combined text entries to poses for both Person A and Person B
+    # Map the text entries to poses for both Person A and Person B
     mapped_data = map_text_to_poses(openpose_path, srt_entries_personA, srt_entries_personB)
 
     # Individual output for each folder
@@ -254,9 +258,7 @@ def process_folder(folder_path):
     output_path = os.path.join(folder_path, "gloss2pose.json")
     print(f"[INFO] Writing output to {output_path}")
     try:
-        # Open the file with UTF-8 encoding to ensure proper character encoding
         with open(output_path, 'w', encoding='utf-8') as f:
-            # Ensure characters like ü, ä, ö are written correctly
             json.dump(output, f, indent=4, ensure_ascii=False)
         print(f"[INFO] Process completed successfully for folder: {folder_path}")
     except Exception as e:

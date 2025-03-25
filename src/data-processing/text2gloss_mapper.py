@@ -121,6 +121,23 @@ if process_all_folders:
             folder_rows = process_folder(folder_path)
             combined_rows.extend(folder_rows)
 
+    # --- New code added here ---
+    # Read the only-lost-glosses-output.csv file and append its rows
+    lost_glosses_csv = os.path.join(base_path, "only-lost-glosses-output.csv")
+    if os.path.exists(lost_glosses_csv):
+        try:
+            with open(lost_glosses_csv, 'r', encoding='utf-8') as csv_file:
+                csv_reader = csv.reader(csv_file)
+                # Optionally skip header row if present
+                header = next(csv_reader, None)
+                for row in csv_reader:
+                    combined_rows.append(row)
+            print(f"Appended rows from {lost_glosses_csv}")
+        except Exception as e:
+            print(f"Error reading {lost_glosses_csv}: {e}")
+    else:
+        print(f"File {lost_glosses_csv} not found.")
+        
     # Write the combined CSV file for all folders
     combined_csv_path = os.path.join(base_path, "dgs-text2gloss-combined.csv")
     try:

@@ -4,12 +4,13 @@ import unicodedata
 import pysrt
 from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip, concatenate_videoclips
 from tqdm import tqdm
+import subprocess
 
 # Define base paths and threshold
 threshold = 2000
 base_path = "/Volumes/IISY/DGSKorpus/"
 csv_file = os.path.join(base_path, f"dgs-gloss-times/gd_above_{threshold}ms.csv")
-output_dir = os.path.join(base_path, "dgs-gloss-times/video-snippets")
+output_dir = os.path.join(base_path, "dgs-gloss-times/video-snippets-oral")
 temp_dir = os.path.join(output_dir, "temp_combined")
 
 # Ensure the output and temporary directories exist
@@ -33,6 +34,7 @@ for row in tqdm(rows, total=len(rows), desc="🔄 Processing video snippets"):
     try:
         # Extract data from the row
         gloss = row['gloss']
+        if gloss != "$ORAL": continue
         entry = row['entry']
         block_index = int(row['block_index'])
         speaker = row['speaker'].strip().upper()
@@ -81,7 +83,7 @@ for row in tqdm(rows, total=len(rows), desc="🔄 Processing video snippets"):
         snippet_combined   = clip.subclip(start_time, end_time)
 
         # ----- Create and save individual snippet (gloss as subtitle) -----
-        text_individual = TextClip(gloss, fontsize=50, color='white').set_duration(snippet_individual.duration)
+        text_individual = TextClip(f"{speaker}: {gloss}", fontsize=50, color='white').set_duration(snippet_individual.duration)
         text_individual = text_individual.set_position(('center', 'bottom'))
         composite_individual = CompositeVideoClip([snippet_individual, text_individual])
         if not os.path.exists(output_file):
@@ -95,7 +97,7 @@ for row in tqdm(rows, total=len(rows), desc="🔄 Processing video snippets"):
         composite_individual.close()
 
         # ----- Create composite clip for the combined video (with new subtitle format) -----
-        subtitle_text = f"{entry}, {block_index}: {gloss}"
+        subtitle_text = f"{entry}, {block_index} - {speaker}: {gloss}"
         text_combined = TextClip(subtitle_text, fontsize=20, color='white').set_duration(snippet_combined.duration)
         text_combined = text_combined.set_position(('center', 'bottom'))
         composite_combined = CompositeVideoClip([snippet_combined, text_combined])
@@ -117,33 +119,41 @@ for row in tqdm(rows, total=len(rows), desc="🔄 Processing video snippets"):
 
 print("🏁 All processing completed for individual snippets!")
 
-# ----- Combine all temporary combined snippets into one video -----
+# ----- Combine all temporary combined snippets into one video without loading them all at once -----
 if combined_temp_files:
-    print("📽 Combining all video snippets into one video...")
-    # Load the temporary files as independent VideoFileClip objects
-    final_clips = []
-    for file in combined_temp_files:
-        try:
-            final_clips.append(VideoFileClip(file))
-        except Exception as e:
-            print(f"❌ Error loading temporary file {file}: {e}")
-    if final_clips:
-        final_clip = concatenate_videoclips(final_clips, method="compose")
-        combined_output_file = os.path.join(output_dir, "combined_video.mp4")
-        final_clip.write_videofile(combined_output_file, codec='libx264', audio_codec='aac')
-        final_clip.close()
+    print("📽 Combining all video snippets into one video using FFmpeg...")
+    # Create a file list for FFmpeg's concat demuxer
+    filelist_path = os.path.join(temp_dir, "filelist.txt")
+    with open(filelist_path, "w", encoding="utf-8") as f:
+        for temp_file in combined_temp_files:
+            # FFmpeg expects lines formatted as: file '/path/to/file'
+            f.write(f"file '{temp_file}'\n")
+
+    combined_output_file = os.path.join(output_dir, "combined_video.mp4")
+    # Run FFmpeg to concatenate without re-encoding (using the 'concat' demuxer)
+    ffmpeg_cmd = [
+        "ffmpeg",
+        "-f", "concat",
+        "-safe", "0",
+        "-i", filelist_path,
+        "-c", "copy",
+        combined_output_file
+    ]
+    try:
+        subprocess.run(ffmpeg_cmd, check=True)
         print(f"✅ Combined video saved as {combined_output_file}")
-        # Close all final clip objects
-        for clip in final_clips:
-            clip.close()
-    else:
-        print("⚠️ No valid clips to combine.")
-    
-    # Optionally, remove the temporary files after successful concatenation
+    except subprocess.CalledProcessError as e:
+        print(f"❌ FFmpeg failed with error: {e}")
+
+    # Remove the temporary files after successful concatenation
     for temp_file in combined_temp_files:
         try:
             os.remove(temp_file)
         except Exception as e:
             print(f"⚠️ Could not delete temporary file {temp_file}: {e}")
+    try:
+        os.remove(filelist_path)
+    except Exception as e:
+        print(f"⚠️ Could not delete file list {filelist_path}: {e}")
 else:
     print("⚠️ No clips available for combining.")

@@ -14,6 +14,47 @@ def clean_line(line):
     line = re.sub(r"^(A:|B:)\s*\|+(.*)", r"\1 \2", line)
     return line
 
+def adjust_timestamp(timestamp_line):
+    """
+    Adjusts the end timestamp of an SRT timestamp line if the duration is greater than 2000ms.
+    
+    The timestamp_line should have the format:
+      HH:MM:SS,mmm --> HH:MM:SS,mmm
+      
+    If the difference between end and start is more than 2000ms, the end timestamp
+    will be set to exactly start timestamp + 2000ms.
+    """
+    pattern = r"(\d{2}):(\d{2}):(\d{2}),(\d{3})\s*-->\s*(\d{2}):(\d{2}):(\d{2}),(\d{3})"
+    match = re.match(pattern, timestamp_line)
+    if not match:
+        # If pattern not matched, return original line unmodified
+        return timestamp_line
+    
+    start_h, start_m, start_s, start_ms, end_h, end_m, end_s, end_ms = map(int, match.groups())
+    
+    # Convert start and end times into milliseconds
+    start_total = ((start_h * 3600 + start_m * 60 + start_s) * 1000) + start_ms
+    end_total = ((end_h * 3600 + end_m * 60 + end_s) * 1000) + end_ms
+    
+    duration = end_total - start_total
+    
+    if duration > 2000:
+        # Set duration to exactly 2000ms
+        new_end_total = start_total + 2000
+        new_hours = new_end_total // (3600 * 1000)
+        remainder = new_end_total % (3600 * 1000)
+        new_minutes = remainder // (60 * 1000)
+        remainder %= (60 * 1000)
+        new_seconds = remainder // 1000
+        new_milliseconds = remainder % 1000
+        # Build new end timestamp string
+        new_end_str = f"{new_hours:02d}:{new_minutes:02d}:{new_seconds:02d},{new_milliseconds:03d}"
+        # Build start timestamp string as originally provided
+        start_str = f"{start_h:02d}:{start_m:02d}:{start_s:02d},{start_ms:03d}"
+        return f"{start_str} --> {new_end_str}"
+    else:
+        return timestamp_line
+
 # Load gloss types and set base path
 gloss_types = load_gloss_types("/Volumes/IISY/DGSKorpus/all-types-dgs.csv")
 base_path = "/Volumes/IISY/DGSKorpus/"
@@ -63,6 +104,8 @@ for i, entry in enumerate(entries, start=1):
                     for gloss in glosses:
                         new_text_line = f"{speaker} {gloss.strip()}"
                         new_block = [str(new_index), lines[1], new_text_line]
+                        # For glosses, adjust the timestamp if necessary
+                        new_block[1] = adjust_timestamp(new_block[1])
                         filtered_blocks.append("\n".join(new_block))
                         new_index += 1
                 else:
@@ -75,7 +118,7 @@ for i, entry in enumerate(entries, start=1):
                 )
                 
                 r"""
-                Explanation of the regex pattern:
+                Explanation of the full sentence regex pattern:
 
                 ^(?:A:|B:|C:)      # Ensure the line starts with one of the speaker labels (A:, B:, or C:)
                 \s*                # Allow optional whitespace after the label
@@ -89,11 +132,11 @@ for i, entry in enumerate(entries, start=1):
                 )
                 $                  # End of line.
                 """
-                pattern = r"^(?:A:|B:|C:)\s*(?:[A-Z].*|(?:[0-9#]\S*(?:\s+\S+)+))$"
+                full_sentence_pattern = r"^(?:A:|B:|C:)\s*(?:[A-Z].*|(?:[0-9#]\S*(?:\s+\S+)+))$"
 
                 contains_full_sentence = False
                 if not contains_gloss:
-                    contains_full_sentence = re.match(pattern, original_text_line)
+                    contains_full_sentence = re.match(full_sentence_pattern, original_text_line)
                 
                 # Include the block if it meets the criteria
                 if contains_gloss or contains_full_sentence:
@@ -103,6 +146,8 @@ for i, entry in enumerate(entries, start=1):
                         lines[2] = cleaned_text_line + "_FULL_SENTENCE"
                     else:
                         lines[2] = cleaned_text_line
+                        # For glosses, adjust the timestamp if the duration is > 2000ms
+                        lines[1] = adjust_timestamp(lines[1])
                     filtered_blocks.append("\n".join(lines))
                     new_index += 1
         

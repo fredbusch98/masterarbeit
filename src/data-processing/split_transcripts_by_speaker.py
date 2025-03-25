@@ -4,6 +4,9 @@ import re
 # Define the main folder path where entry_* folders are located
 main_folder = '/Volumes/IISY/DGSKorpus'
 
+# Define a list of glosses that need to be excluded
+excluded_glosses = ["$PROD", "$ORAL", "$ALPHA", "$ORAL^"]
+
 # Timestamp parsing functions
 def parse_timestamp(ts):
     """Convert SRT timestamp (e.g., '00:00:02,160') to milliseconds."""
@@ -52,14 +55,16 @@ def parse_srt(lines):
 def process_entries(entries, speaker):
     """
     Process SRT entries for a given speaker, appending _END_SENTENCE to the last gloss
-    within each _FULL_SENTENCE time period.
+    within each _FULL_SENTENCE time period, and excluding:
+    - Sentences that contain any gloss from the excluded_glosses list.
+    - Non-sentence entries that contain any gloss from the excluded_glosses list.
     
     Args:
         entries (list): List of tuples (timestamp_line, text_lines)
         speaker (str): Speaker identifier ('A' or 'B')
     
     Returns:
-        list: Processed entries with _END_SENTENCE appended to the last gloss of each sentence
+        list: Processed entries with _END_SENTENCE appended and excluded entries removed
     """
     speaker_tag = f"{speaker}: "
     processed_entries = []
@@ -74,35 +79,60 @@ def process_entries(entries, speaker):
         clean_text = full_text[len(speaker_tag):].strip()
         
         if clean_text.endswith("_FULL_SENTENCE"):
-            # Append the full sentence entry
-            processed_entries.append(entry)
-            sentence_end_ms = end_ms
-            
-            # Collect subsequent gloss entries within the sentence's time period
+            # Start of a sentence section
+            sentence_entries = [entry]  # Include the _FULL_SENTENCE entry
+            glosses = []  # To collect glosses within the sentence
             j = i + 1
+            
+            # Collect gloss entries within the sentence's time period
             while j < len(entries):
                 next_entry = entries[j]
                 next_start_ms, _ = parse_srt_timestamp(next_entry[0])
                 next_text = ' '.join([line.strip() for line in next_entry[1]])
                 next_clean = next_text[len(speaker_tag):].strip()
-                # Stop if we hit another _FULL_SENTENCE or an entry beyond the sentence end
-                if next_clean.endswith("_FULL_SENTENCE") or next_start_ms > sentence_end_ms:
+                # Stop at the next _FULL_SENTENCE or if time exceeds sentence end
+                if next_clean.endswith("_FULL_SENTENCE") or next_start_ms > end_ms:
                     break
-                processed_entries.append(next_entry)
+                sentence_entries.append(next_entry)
+                # Extract glosses from the entry (space-separated)
+                next_glosses = next_clean.split()
+                glosses.extend(next_glosses)
                 j += 1
             
-            # If gloss entries were added, append _END_SENTENCE to the last one
-            if j > i + 1:  # At least one gloss entry was added
-                last_gloss_entry = processed_entries[-1]
-                if last_gloss_entry[1]:  # Ensure text_lines is not empty
-                    last_text_line = last_gloss_entry[1][-1]
-                    last_gloss_entry[1][-1] = last_text_line.rstrip() + "_END_SENTENCE\n"
-            
-            i = j  # Move to the next unprocessed entry
+            # Check if any gloss in the sentence is in excluded_glosses
+            if any(
+                gloss in excluded_glosses or 
+                (gloss.startswith('$ALPHA') and '$ALPHA' in excluded_glosses)
+                for gloss in glosses
+            ):
+                # Skip the entire sentence section
+                i = j
+                continue
+            else:
+                # Include the sentence section
+                processed_entries.extend(sentence_entries)
+                # Append _END_SENTENCE to the last gloss entry, if any
+                if len(sentence_entries) > 1:  # Ensure there are gloss entries
+                    last_entry = sentence_entries[-1]
+                    if last_entry[1]:  # Ensure text_lines is not empty
+                        last_text_line = last_entry[1][-1]
+                        last_entry[1][-1] = last_text_line.rstrip() + "_END_SENTENCE\n"
+                i = j
         else:
-            # Append non-sentence entries as is
-            processed_entries.append(entry)
-            i += 1
+            # Non-sentence entry: check if it contains any excluded gloss
+            entry_glosses = clean_text.split()
+            if any(
+                gloss in excluded_glosses or 
+                (gloss.startswith('$ALPHA') and '$ALPHA' in excluded_glosses)
+                for gloss in entry_glosses
+            ):
+                # Exclude the entry
+                i += 1
+                continue
+            else:
+                # Include the entry as is
+                processed_entries.append(entry)
+                i += 1
     
     return processed_entries
 
