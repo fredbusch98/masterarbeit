@@ -1,9 +1,9 @@
 import csv
 
-# This script assumes, that the only-lost-glosses.txt file has been properly preprocessed! Also manually because some entries can NOT be preprocessed using the preprocess_only_lost_glosses script and instead need to be preprocessed by a human!
+# This script assumes, that the only-lost-glosses.txt file has been properly preprocessed manually!
 
 # Define the input and output file paths.
-input_file = '/Volumes/IISY/DGSKorpus/only-lost-glosses-processed.txt'
+input_file = '/Volumes/IISY/DGSKorpus/only-lost-glosses.txt'
 output_file = '/Volumes/IISY/DGSKorpus/only-lost-glosses-output.csv'
 
 with open(input_file, 'r', encoding='utf-8') as infile, \

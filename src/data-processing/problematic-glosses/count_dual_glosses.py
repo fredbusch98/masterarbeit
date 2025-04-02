@@ -1,6 +1,9 @@
 import os
 import re
 
+excluded_glosses = ["$PROD", "$ORAL", "$ALPHA", "$$EXTRA-LING-MAN", "$GEST-OFF", "$PMS"]
+gest = "$GEST"
+
 def is_full_sentence(text):
     """
     Returns True if the text (after removing the speaker tag) 
@@ -27,6 +30,7 @@ def is_full_sentence(text):
 def main():
     base_dir = '/Volumes/IISY/DGSKorpus/'
     dual_gloss_count = 0
+    dual_gloss_excluded_count = 0
 
     # Loop over subfolders named like entry_*
     for folder in os.listdir(base_dir):
@@ -47,11 +51,20 @@ def main():
                         dialogue = lines[2].strip()
                         dialogue = dialogue[2:].strip()
                         dialogue.lstrip("||")
+                        
                         if not is_full_sentence(dialogue):
                             if "||" in dialogue and dialogue.isupper():
                                 dual_gloss_count += 1
-
+                                
+                                # Check if any excluded gloss is present
+                                if any(gloss in dialogue for gloss in excluded_glosses):
+                                    dual_gloss_excluded_count += 1
+ 
+                                if gest == dialogue:
+                                    dual_gloss_excluded_count += 1
+    
     print("Dual gloss entries: {}".format(dual_gloss_count))
+    print("Dual gloss entries with excluded glosses: {}".format(dual_gloss_excluded_count))
 
 if __name__ == "__main__":
     main()

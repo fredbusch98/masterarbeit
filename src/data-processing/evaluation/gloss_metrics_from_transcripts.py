@@ -10,32 +10,24 @@ main_folder = '/Volumes/IISY/DGSKorpus'
 
 def process_srt_file(srt_path):
     """
-    Processes an SRT file to extract both all glosses and those marked as lost.
-    
-    A gloss is the text part after the speaker tag (A: or B:), excluding markers.
-    A lost gloss is a regular gloss that appears after a marker ending with '_END_SENTENCE'
-    and before the next marker ending with '_FULL_SENTENCE'.
+    Processes an SRT file to extract lost sentences, lost glosses, and all glosses.
     
     Args:
         srt_path (str): Path to the SRT file.
         
     Returns:
-        tuple: (lost_glosses, all_glosses)
-            - lost_glosses: list of tuples (srt_path, entry index, gloss text)
-            - all_glosses: list of gloss text for all valid entries (excluding markers)
+        tuple: (lost_glosses, all_glosses, lost_sentences)
     """
-    # Read the SRT file
     with open(srt_path, 'r') as f:
         lines = f.readlines()
 
-    # Parse the SRT into entries
     entries = []
     current_entry = []
     for line in lines:
         if line.strip().isdigit():
             if current_entry:
                 entries.append(current_entry)
-            current_entry = [line.strip()]  # Start with the entry index
+            current_entry = [line.strip()]
         else:
             current_entry.append(line)
     if current_entry:
@@ -43,27 +35,27 @@ def process_srt_file(srt_path):
 
     lost_glosses = []
     all_glosses = []
+    lost_sentences = []
     after_end_sentence = False
 
     for entry in entries:
-        # Check if entry has at least index, timestamp, and one text line
         if len(entry) >= 3:
             text_line = entry[2].strip()
-            # Extract text after speaker tag (A: or B:)
             match = re.match(r'[A-B]:\s', text_line)
             if match:
                 clean_text = text_line[match.end():].strip()
-                # Integrate the snippet here
-                clean_text_base = clean_text
-                if clean_text.endswith('_END_SENTENCE'):
+                if clean_text.endswith('_FULL_SENTENCE_END_SENTENCE'):
+                    gloss_text = clean_text[:-len('_FULL_SENTENCE_END_SENTENCE')]
+                    lost_sentences.append((srt_path, entry[0], gloss_text))
+                    after_end_sentence = False  # Reset flag since it includes _FULL_SENTENCE
+                elif clean_text.endswith('_END_SENTENCE'):
                     clean_text_base = clean_text[:-len('_END_SENTENCE')]
                     after_end_sentence = True
+                    all_glosses.append(clean_text_base)
                 elif clean_text.endswith('_FULL_SENTENCE'):
                     after_end_sentence = False
                 else:
-                    after_end_sentence = False
                     clean_text_base = clean_text
-                if not clean_text.endswith('_FULL_SENTENCE'):
                     all_glosses.append(clean_text_base)
                     if after_end_sentence:
                         lost_glosses.append((srt_path, entry[0], clean_text_base))
@@ -72,7 +64,7 @@ def process_srt_file(srt_path):
         else:
             print(f"⚠️ Warning: Incomplete entry in {srt_path}, entry {entry[0]}")
 
-    return lost_glosses, all_glosses
+    return lost_glosses, all_glosses, lost_sentences
 
 # Get all entry_* folders
 entry_folders = [
@@ -80,21 +72,23 @@ entry_folders = [
     if f.startswith('entry_') and os.path.isdir(os.path.join(main_folder, f))
 ]
 
-# Collect all lost glosses and all glosses across all files
+# Collect all lost glosses, all glosses, and lost sentences across all files
 all_lost_glosses = []
 all_glosses = []
+all_lost_sentences = []
 total_files = len(entry_folders) * 2  # Each entry has two speaker files (a & b)
 processed_files = 0
 
-print("🔍 Scanning for lost glosses...\n")
+print("🔍 Scanning for lost sentences and glosses...\n")
 
 for entry_folder in entry_folders:
     for speaker in ['a', 'b']:
         srt_path = os.path.join(main_folder, entry_folder, f'speaker-{speaker}.srt')
         if os.path.exists(srt_path):
-            lost, glosses = process_srt_file(srt_path)
+            lost, glosses, sentences = process_srt_file(srt_path)
             all_lost_glosses.extend(lost)
             all_glosses.extend(glosses)
+            all_lost_sentences.extend(sentences)
         else:
             print(f"❌ File not found: {srt_path}")
 
@@ -103,6 +97,12 @@ for entry_folder in entry_folders:
         percentage = (processed_files / total_files) * 100
         print(f"📂 Progress: {processed_files}/{total_files} files processed ({percentage:.1f}%)")
 
+# Write lost sentences to a text file
+output_sentences_txt = os.path.join(main_folder, 'lost-sentences.txt')
+with open(output_sentences_txt, 'w') as f:
+    for path, idx, text in all_lost_sentences:
+        f.write(f"In {path}, entry {idx}: {text}\n")
+
 # Write lost glosses to a text file
 output_txt = os.path.join(main_folder, 'lost-glosses.txt')
 with open(output_txt, 'w') as f:
@@ -110,7 +110,11 @@ with open(output_txt, 'w') as f:
         f.write(f"In {path}, entry {idx}: {text}\n")
 
 print("\n✅ Processing complete!")
+print(f"📁 Lost sentences saved to: {output_sentences_txt}")
 print(f"📁 Lost glosses saved to: {output_txt}")
+
+# Print the counts
+print(f"Total lost sentences: {len(all_lost_sentences)}")
 
 # --- Additional Statistics ---
 

@@ -4,8 +4,11 @@ import re
 # Define the main folder path where entry_* folders are located
 main_folder = '/Volumes/IISY/DGSKorpus'
 
-# Define a list of glosses that need to be excluded
-excluded_glosses = ["$PROD", "$ORAL", "$ALPHA", "$ORAL^"]
+# Define a list of glosses that define full sentences and all their corresponding glosses to be exluded
+exclude_sentence_glosses = ["$PROD", "$ORAL", "$ALPHA", "$ORAL^"]
+
+# These glosses need to be excluded but the rest of the sentence can stay in the transcripts
+excluded_glosses = ["$GEST", "$GEST-OFF", "$$EXTRA-LING-MAN", "$PMS"]
 
 # Timestamp parsing functions
 def parse_timestamp(ts):
@@ -53,19 +56,6 @@ def parse_srt(lines):
 
 # Entry processing function
 def process_entries(entries, speaker):
-    """
-    Process SRT entries for a given speaker, appending _END_SENTENCE to the last gloss
-    within each _FULL_SENTENCE time period, and excluding:
-    - Sentences that contain any gloss from the excluded_glosses list.
-    - Non-sentence entries that contain any gloss from the excluded_glosses list.
-    
-    Args:
-        entries (list): List of tuples (timestamp_line, text_lines)
-        speaker (str): Speaker identifier ('A' or 'B')
-    
-    Returns:
-        list: Processed entries with _END_SENTENCE appended and excluded entries removed
-    """
     speaker_tag = f"{speaker}: "
     processed_entries = []
     i = 0
@@ -75,64 +65,69 @@ def process_entries(entries, speaker):
         timestamp_line = entry[0]
         _, end_ms = parse_srt_timestamp(timestamp_line)
         text_lines = entry[1]
-        full_text = ' '.join([line.strip() for line in text_lines])
+        full_text = ' '.join(line.strip() for line in text_lines)
         clean_text = full_text[len(speaker_tag):].strip()
         
+        if any(gloss in clean_text for gloss in excluded_glosses):
+            i += 1
+            continue
+
         if clean_text.endswith("_FULL_SENTENCE"):
-            # Start of a sentence section
-            sentence_entries = [entry]  # Include the _FULL_SENTENCE entry
-            glosses = []  # To collect glosses within the sentence
+            # Begin a sentence block
+            sentence_entries = []
+            # Add the current entry (it passed the extra-gloss check)
+            sentence_entries.append(entry)
             j = i + 1
             
-            # Collect gloss entries within the sentence's time period
+            # Gather subsequent entries belonging to the same sentence period
             while j < len(entries):
                 next_entry = entries[j]
-                next_start_ms, _ = parse_srt_timestamp(next_entry[0])
-                next_text = ' '.join([line.strip() for line in next_entry[1]])
+                next_timestamp_line = next_entry[0]
+                next_start_ms, _ = parse_srt_timestamp(next_timestamp_line)
+                next_text = ' '.join(line.strip() for line in next_entry[1])
                 next_clean = next_text[len(speaker_tag):].strip()
-                # Stop at the next _FULL_SENTENCE or if time exceeds sentence end
+                
+                # Stop if we encounter a new sentence or the time exceeds the sentence block
                 if next_clean.endswith("_FULL_SENTENCE") or next_start_ms > end_ms:
                     break
+
+                # Skip entries with the defined excluded glosses
+                if any(gloss in next_clean for gloss in excluded_glosses):
+                    j += 1
+                    continue
                 sentence_entries.append(next_entry)
-                # Extract glosses from the entry (space-separated)
-                next_glosses = next_clean.split()
-                glosses.extend(next_glosses)
                 j += 1
-            
-            # Check if any gloss in the sentence is in excluded_glosses
+
+            # Before adding the sentence block, check for any excluded gloss (from the list)
+            glosses = []
+            for se in sentence_entries:
+                se_text = ' '.join(line.strip() for line in se[1])
+                se_clean = se_text[len(speaker_tag):].strip()
+                glosses.extend(se_clean.split())
             if any(
-                gloss in excluded_glosses or 
-                (gloss.startswith('$ALPHA') and '$ALPHA' in excluded_glosses)
+                gloss in exclude_sentence_glosses or 
+                (gloss.startswith('$ALPHA'))
                 for gloss in glosses
             ):
-                # Skip the entire sentence section
+                # Skip the entire sentence if any excluded gloss is found
                 i = j
                 continue
             else:
-                # Include the sentence section
                 processed_entries.extend(sentence_entries)
-                # Append _END_SENTENCE to the last gloss entry, if any
-                if len(sentence_entries) > 1:  # Ensure there are gloss entries
+                # Append _END_SENTENCE to the last gloss of the sentence
+                if sentence_entries:
                     last_entry = sentence_entries[-1]
-                    if last_entry[1]:  # Ensure text_lines is not empty
+                    if last_entry[1]:
                         last_text_line = last_entry[1][-1]
                         last_entry[1][-1] = last_text_line.rstrip() + "_END_SENTENCE\n"
                 i = j
         else:
-            # Non-sentence entry: check if it contains any excluded gloss
-            entry_glosses = clean_text.split()
-            if any(
-                gloss in excluded_glosses or 
-                (gloss.startswith('$ALPHA') and '$ALPHA' in excluded_glosses)
-                for gloss in entry_glosses
-            ):
-                # Exclude the entry
+            # Non-sentence entry / lost gloss
+            if any(gloss in clean_text for gloss in exclude_sentence_glosses):
                 i += 1
                 continue
-            else:
-                # Include the entry as is
-                processed_entries.append(entry)
-                i += 1
+            processed_entries.append(entry)
+            i += 1
     
     return processed_entries
 
@@ -172,7 +167,7 @@ for idx, entry_folder in enumerate(entry_folders):
                     elif speaker == 'B':
                         entries_b.append((timestamp, text_lines))
         
-        # Process entries to append _END_SENTENCE to last gloss
+        # Process entries to append _END_SENTENCE to last gloss and apply exclusions
         entries_a = process_entries(entries_a, "A")
         entries_b = process_entries(entries_b, "B")
         
@@ -202,6 +197,6 @@ for idx, entry_folder in enumerate(entry_folders):
     else:
         # Skip if transcript file is missing
         percentage = (idx + 1) / total_folders * 100
-        print(f"⚠️ Skipped folder {entry_folder}: filtered_transcript.srt not found. Progress: {round(percentage)}%")
+        print(f"⚠️ Skipped folder {entry_folder}: filtered-transcript.srt not found. Progress: {round(percentage)}%")
 
 print("🎉 All folders checked successfully! Check the entry_* folders for speaker-a.srt and speaker-b.srt files.")

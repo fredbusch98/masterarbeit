@@ -8,8 +8,9 @@ def clean_line(line):
     """Clean a single text line by removing specific characters and adjusting formatting."""
     # Remove all asterisks
     line = line.replace("*", "")
-    # Remove trailing carets or pipes
-    line = line.strip("|^")
+    line = line.replace("^", "")
+    # Remove trailing pipes
+    line = line.strip("|")
     # Remove leading pipes after A: or B: labels
     line = re.sub(r"^(A:|B:)\s*\|+(.*)", r"\1 \2", line)
     return line
@@ -113,17 +114,18 @@ for i, entry in enumerate(entries, start=1):
             else:
                 # Check if the cleaned line contains a gloss
                 contains_gloss = any(
-                    gloss.rstrip("^") in cleaned_text_line.rstrip("^")
+                    gloss.rstrip("^") in cleaned_text_line
                     for gloss in gloss_types
                 )
                 
+                original_text_line = original_text_line.replace('„', '').replace('“', '').rstrip('/')
                 r"""
                 Explanation of the full sentence regex pattern:
 
                 ^(?:A:|B:|C:)      # Ensure the line starts with one of the speaker labels (A:, B:, or C:)
                 \s*                # Allow optional whitespace after the label
                 (?:                # Begin non-capturing group for alternation:
-                    [A-Z].*        #  - If the first character after the label is an uppercase letter, match the rest of the line.
+                    [A-ZÄÖÜ].*     #  - If the first character after the label is an uppercase letter, match the rest of the line.
                     |              #  OR
                     (?:            #  - If the first character is a digit or '#':
                         [0-9#]\S*  #    Match the contiguous token starting with a digit or '#' (without spaces)
@@ -132,10 +134,10 @@ for i, entry in enumerate(entries, start=1):
                 )
                 $                  # End of line.
                 """
-                full_sentence_pattern = r"^(?:A:|B:|C:)\s*(?:[A-Z].*|(?:[0-9#]\S*(?:\s+\S+)+))$"
+                full_sentence_pattern = r"^(?:A:|B:|C:)\s*(?:[A-ZÄÖÜ].*|(?:[0-9#]\S*(?:\s+\S+)+))$"
 
                 contains_full_sentence = False
-                if not contains_gloss:
+                if not contains_gloss and len(original_text_line) > 4:
                     contains_full_sentence = re.match(full_sentence_pattern, original_text_line)
                 
                 # Include the block if it meets the criteria

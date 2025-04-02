@@ -36,19 +36,16 @@ def process_speaker_transcript(transcript_path, speaker):
             text = text[len(speaker_tag):].strip()
         else:
             print(f"Warning: Subtitle does not start with expected speaker tag '{speaker_tag}' in {transcript_path}")
-            continue  # Skip if the tag doesn't match (optional, adjust as needed)
+            continue  # Skip if the tag doesn't match
         
         # Check if this subtitle marks the start of a new full sentence fragment
         if text.endswith("_FULL_SENTENCE"):
             sentence_fragment = text.replace("_FULL_SENTENCE", "").strip()
-            if mapping_active:
-                # Instead of ignoring, combine the new sentence fragment with the current sentence
-                # This is done because there are occurrences in the transcripts where two full sentences appear directly after each other and are split into two separate subtitles without any glosses in between!
-                current_sentence = f"{current_sentence} {sentence_fragment}"
-            else:
-                current_sentence = sentence_fragment
-                mapping_active = True
-                gloss_entries = []
+            # NEW LOGIC: If multiple _FULL_SENTENCE entries occur consecutively, 
+            # always use the last one. This means we override any previous sentence fragment.
+            current_sentence = sentence_fragment
+            mapping_active = True
+            gloss_entries = []
         elif mapping_active:
             # If the current gloss marks the end of the sentence mapping, process and finalize
             if text.endswith("_END_SENTENCE"):
@@ -121,7 +118,6 @@ if process_all_folders:
             folder_rows = process_folder(folder_path)
             combined_rows.extend(folder_rows)
 
-    # --- New code added here ---
     # Read the only-lost-glosses-output.csv file and append its rows
     lost_glosses_csv = os.path.join(base_path, "only-lost-glosses-output.csv")
     if os.path.exists(lost_glosses_csv):
