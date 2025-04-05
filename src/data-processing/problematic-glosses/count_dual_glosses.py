@@ -1,7 +1,7 @@
 import os
 import re
 
-excluded_glosses = ["$PROD", "$ORAL", "$ALPHA", "$$EXTRA-LING-MAN", "$GEST-OFF", "$PMS"]
+excluded_glosses = ["$PROD", "$ORAL", "$ALPHA", "$$EXTRA-LING-MAN", "$GEST-OFF", "$PMS", "$INDEX1"]
 gest = "$GEST"
 
 def is_full_sentence(text):

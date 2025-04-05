@@ -60,8 +60,8 @@ def draw_bodypose(canvas: np.ndarray, keypoints: List[Keypoint]) -> np.ndarray:
         [16, 18],
     ]
 
-    colors = [[255, 0, 0], [255, 85, 0], [255, 170, 0], [255, 255, 0], [170, 255, 0], [85, 255, 0], [0, 255, 0], \
-              [0, 255, 85], [0, 255, 170], [0, 255, 255], [0, 170, 255], [0, 85, 255], [0, 0, 255], [85, 0, 255], \
+    colors = [[255, 0, 0], [255, 85, 0], [255, 170, 0], [255, 255, 0], [170, 255, 0], [85, 255, 0], [0, 255, 0],
+              [0, 255, 85], [0, 255, 170], [0, 255, 255], [0, 170, 255], [0, 85, 255], [0, 0, 255], [85, 0, 255],
               [170, 0, 255], [255, 0, 255], [255, 0, 170], [255, 0, 85]]
 
     for (k1_index, k2_index), color in zip(limbSeq, colors):
@@ -92,7 +92,7 @@ def draw_bodypose(canvas: np.ndarray, keypoints: List[Keypoint]) -> np.ndarray:
         x = int(x * W)
         y = int(y * H)
         cv2.circle(canvas, (int(x), int(y)), 4, color, thickness=-1)
-
+        
     return canvas
 
 def draw_handpose(canvas: np.ndarray, keypoints: Union[List[Keypoint], None]) -> np.ndarray:
@@ -116,7 +116,7 @@ def draw_handpose(canvas: np.ndarray, keypoints: Union[List[Keypoint], None]) ->
     
     H, W, C = canvas.shape
 
-    edges = [[0, 1], [1, 2], [2, 3], [3, 4], [0, 5], [5, 6], [6, 7], [7, 8], [0, 9], [9, 10], \
+    edges = [[0, 1], [1, 2], [2, 3], [3, 4], [0, 5], [5, 6], [6, 7], [7, 8], [0, 9], [9, 10],
              [10, 11], [11, 12], [0, 13], [13, 14], [14, 15], [15, 16], [0, 17], [17, 18], [18, 19], [19, 20]]
 
     for ie, (e1, e2) in enumerate(edges):
@@ -130,7 +130,7 @@ def draw_handpose(canvas: np.ndarray, keypoints: Union[List[Keypoint], None]) ->
         x2 = int(k2.x * W)
         y2 = int(k2.y * H)
         if x1 > eps and y1 > eps and x2 > eps and y2 > eps:
-            cv2.line(canvas, (x1, y1), (x2, y2), matplotlib.colors.hsv_to_rgb([ie / float(len(edges)), 1.0, 1.0]) * 255, thickness=2)
+            cv2.line(canvas, (x1, y1), (x2, y2), (matplotlib.colors.hsv_to_rgb([ie / float(len(edges)), 1.0, 1.0]) * 255).astype(int).tolist(), thickness=2)
 
     for keypoint in keypoints:
         if keypoint.score < CONFIDENCE_THRESHOLD or (keypoint.x == 0.0 and keypoint.y == 0.0):
@@ -141,7 +141,6 @@ def draw_handpose(canvas: np.ndarray, keypoints: Union[List[Keypoint], None]) ->
         if x > eps and y > eps:
             cv2.circle(canvas, (x, y), 4, (0, 0, 255), thickness=-1)
     return canvas
-
 
 def draw_facepose(canvas: np.ndarray, keypoints: Union[List[Keypoint], None]) -> np.ndarray:
     """
@@ -187,41 +186,70 @@ def parse_keypoints(keypoints, keypoints_length=75):
     keypoints = np.array(keypoints, dtype=np.float64).reshape(-1, 3)[:keypoints_length]
     return keypoints
 
+def normalize_all_keypoints(body: List[Keypoint],
+                            left: List[Keypoint],
+                            right: List[Keypoint],
+                            face: List[Keypoint]) -> Tuple[List[Keypoint], List[Keypoint], List[Keypoint], List[Keypoint]]:
+    """
+    Normalizes all keypoints so that the body keypoint with id==1 is centered at (0.5, 0.5) (i.e., center of a 1280x720 image).
+    The function computes an offset based on keypoint id 1 and applies it to all keypoints.
+
+    Returns:
+        Tuple of updated keypoint lists (body, left, right, face).
+    """
+    # Find the reference keypoint from the body keypoints with id 1.
+    ref_kp = next((kp for kp in body if kp.id == 1 and kp.score >= CONFIDENCE_THRESHOLD), None)
+    if ref_kp is None:
+        # If not found, return keypoints unchanged
+        return body, left, right, face
+
+    # Compute offset in normalized coordinates
+    offset_x = 0.5 - ref_kp.x
+    offset_y = 0.5 - ref_kp.y
+
+    def apply_offset(keypoints: List[Keypoint]) -> List[Keypoint]:
+        return [Keypoint(x=kp.x + offset_x, y=kp.y + offset_y, score=kp.score, id=kp.id) for kp in keypoints]
+
+    return apply_offset(body), apply_offset(left), apply_offset(right), apply_offset(face)
+
 # Create and return a pose image using OpenCV
 def create_pose_image(person):
     # Parse and draw body keypoints
     pose_keypoints = filter_keypoints(parse_keypoints(
-        person['pose_keypoints_2d'], keypoints_length=25, frame_width=1280, frame_height=720
+        person['pose_keypoints_2d'], keypoints_length=25
     ))
     body_keypoint_objects = [
         Keypoint(x=x, y=y, score=c, id=idx) for idx, (x, y, c) in enumerate(pose_keypoints)
     ]
 
     # Optionally parse and draw hand and face keypoints
-    left_hand_keypoint_objects, right_hand_keypoint_objects, face_keypoint_objects = [], [], []
-    # Parse and draw left hand keypoints
     left_hand_keypoints = filter_keypoints(parse_keypoints(
-        person['hand_left_keypoints_2d'], keypoints_length=21, frame_width=1280, frame_height=720
+        person['hand_left_keypoints_2d'], keypoints_length=21
     ))
     left_hand_keypoint_objects = [
         Keypoint(x=x, y=y, score=c, id=idx) for idx, (x, y, c) in enumerate(left_hand_keypoints)
     ]
 
-    # Parse and draw right hand keypoints
     right_hand_keypoints = filter_keypoints(parse_keypoints(
-        person['hand_right_keypoints_2d'], keypoints_length=21, frame_width=1280, frame_height=720
+        person['hand_right_keypoints_2d'], keypoints_length=21
     ))
     right_hand_keypoint_objects = [
         Keypoint(x=x, y=y, score=c, id=idx) for idx, (x, y, c) in enumerate(right_hand_keypoints)
     ]
 
-    # Parse and draw face keypoints
     face_keypoints = filter_keypoints(parse_keypoints(
-        person['face_keypoints_2d'], keypoints_length=70, frame_width=1280, frame_height=720
+        person['face_keypoints_2d'], keypoints_length=70
     ))
     face_keypoint_objects = [
         Keypoint(x=x, y=y, score=c, id=idx) for idx, (x, y, c) in enumerate(face_keypoints)
     ]
+
+    # Normalize all keypoints so that the body keypoint with id==1 is centered.
+    body_keypoint_objects, left_hand_keypoint_objects, right_hand_keypoint_objects, face_keypoint_objects = \
+        normalize_all_keypoints(body_keypoint_objects,
+                                left_hand_keypoint_objects,
+                                right_hand_keypoint_objects,
+                                face_keypoint_objects)
 
     # Draw the pose
     pose_img = draw_pose(
@@ -255,13 +283,11 @@ def create_upper_body_pose_image(pose2d, face2d, left2d, right2d):
         start = 3 * i
         full_pose2d[start:start + 3] = pose2d[3 * idx:3 * idx + 3]
 
-    # Parse and filter body keypoints
     pose_keypoints = filter_keypoints(parse_keypoints(full_pose2d, keypoints_length=25))
     body_keypoint_objects = [
         Keypoint(x=x, y=y, score=c, id=idx) for idx, (x, y, c) in enumerate(pose_keypoints)
     ]
 
-    # Parse and filter hand and face keypoints (unchanged)
     left_hand_keypoints = filter_keypoints(parse_keypoints(left2d, keypoints_length=21))
     left_hand_keypoint_objects = [
         Keypoint(x=x, y=y, score=c, id=idx) for idx, (x, y, c) in enumerate(left_hand_keypoints)
@@ -277,7 +303,13 @@ def create_upper_body_pose_image(pose2d, face2d, left2d, right2d):
         Keypoint(x=x, y=y, score=c, id=idx) for idx, (x, y, c) in enumerate(face_keypoints)
     ]
 
-    # Draw the pose
+    # Normalize all keypoints so that the body keypoint with id==1 is centered.
+    body_keypoint_objects, left_hand_keypoint_objects, right_hand_keypoint_objects, face_keypoint_objects = \
+        normalize_all_keypoints(body_keypoint_objects,
+                                left_hand_keypoint_objects,
+                                right_hand_keypoint_objects,
+                                face_keypoint_objects)
+
     pose_img = draw_pose(
         body_keypoint_objects,
         left_hand_keypoint_objects,
