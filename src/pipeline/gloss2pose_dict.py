@@ -192,13 +192,12 @@ def main():
         print("Example (multiple glosses): python script.py GLOSS1,GLOSS2,GLOSS3")
         sys.exit(1)
     input_sequence = sys.argv[1]
-    # Split input on commas; works for both single and multiple glosses
     gloss_list = [gloss.strip() for gloss in input_sequence.split(',')]
 
     # Clear the output directory before creating new files
     clear_directory(gloss_output_dir)
 
-    # Step 1: Load gloss dictionary and create JSON files for each gloss
+    # Step 1: Load gloss dictionary and create JSON files
     loaded_dict = load_gloss_dictionary(dict_path)
     create_gloss_json_files(gloss_list, loaded_dict, gloss_output_dir)
     print(f"Gloss JSON files created in '{gloss_output_dir}'.")
@@ -209,35 +208,28 @@ def main():
         print("No valid pose sequence JSON files found. Exiting.")
         sys.exit(1)
 
-    # Combine pose sequences:
-    # If only a single gloss was provided, use its sequence directly.
+    # Step 3: Combine pose sequences with interpolation
     if len(data_frames) == 1:
         final_pose_sequence = data_frames[0]
     else:
         final_pose_sequence = []
-        for current_data, next_data in zip(data_frames, data_frames[1:]):
-            # For the first gloss, append its whole sequence
-            if not final_pose_sequence:
-                final_pose_sequence.extend(current_data)
-            else:
-                # Remove duplicate last frame if needed
-                final_pose_sequence = final_pose_sequence[:-1]
-            combined = interpolate_keypoints(current_data, next_data, num_intermediate_frames=7)
-            final_pose_sequence.extend(combined[len(current_data):])
-        # Optionally, ensure the last gloss's sequence is fully added
-        if len(final_pose_sequence) < sum(len(seq) for seq in data_frames):
-            final_pose_sequence.extend(data_frames[-1])
+        for i, current_data in enumerate(data_frames):
+            if i > 0:
+                previous_data = data_frames[i - 1]
+                interpolated = interpolate_keypoints(previous_data, current_data, num_intermediate_frames=7)
+                final_pose_sequence.extend(interpolated[len(previous_data):]) 
+            final_pose_sequence.extend(current_data)
 
-    # Step 3: Generate the video and config YAML from the final pose sequence
-    config_path, video_path, config_filename, video_filename = generate_videos_from_poses_and_create_config_yml(final_pose_sequence, output_dir=final_output_dir)
+    # Step 4: Generate the video and config YAML
+    config_path, video_path, config_filename, video_filename = generate_videos_from_poses_and_create_config_yml(
+        final_pose_sequence, output_dir=final_output_dir
+    )
     
     abs_config_path = os.path.abspath(config_path)
     abs_video_path = os.path.abspath(video_path)
     print("")
     print("Copy video and config to the mimicmotion pod:")
-    print("")
     print(f"kubectl cp {abs_config_path} s85468/mimicmotion:/storage/MimicMotion/configs/{config_filename}")
-    print("")
     print(f"kubectl cp {abs_video_path} s85468/mimicmotion:/storage/MimicMotion/configs/{video_filename}")
     print("")
     print("Start inference with the config on the mimicmotion pod:")

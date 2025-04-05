@@ -5,7 +5,7 @@ from datetime import datetime
 from pose_utils import create_upper_body_pose_image
 
 process_single_file = False
-sentence_path = "../../resources/input/example-sentence-upper-body-only/"
+sentence_path = "../pipeline/gloss2pose_dictionary_output/"
 
 # Load JSON data
 def load_json(file_path):

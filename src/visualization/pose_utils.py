@@ -191,7 +191,7 @@ def normalize_all_keypoints(body: List[Keypoint],
                             right: List[Keypoint],
                             face: List[Keypoint]) -> Tuple[List[Keypoint], List[Keypoint], List[Keypoint], List[Keypoint]]:
     """
-    Normalizes all keypoints so that the body keypoint with id==1 is centered at (0.5, 0.5) (i.e., center of a 1280x720 image).
+    Normalizes all keypoints so that the body keypoint with id==1 is centered at (0.5, 0.4) (i.e., center of a 1280x720 image).
     The function computes an offset based on keypoint id 1 and applies it to all keypoints.
 
     Returns:
@@ -205,7 +205,7 @@ def normalize_all_keypoints(body: List[Keypoint],
 
     # Compute offset in normalized coordinates
     offset_x = 0.5 - ref_kp.x
-    offset_y = 0.5 - ref_kp.y
+    offset_y = 0.4 - ref_kp.y
 
     def apply_offset(keypoints: List[Keypoint]) -> List[Keypoint]:
         return [Keypoint(x=kp.x + offset_x, y=kp.y + offset_y, score=kp.score, id=kp.id) for kp in keypoints]
