@@ -40,9 +40,8 @@ def process_speaker_transcript(transcript_path, speaker):
         
         # Check if this subtitle marks the start of a new full sentence fragment
         if text.endswith("_FULL_SENTENCE"):
+            # Remove the _FULL_SENTENCE tag and then strip extra spaces.
             sentence_fragment = text.replace("_FULL_SENTENCE", "").strip()
-            # NEW LOGIC: If multiple _FULL_SENTENCE entries occur consecutively, 
-            # always use the last one. This means we override any previous sentence fragment.
             current_sentence = sentence_fragment
             mapping_active = True
             gloss_entries = []
@@ -51,7 +50,7 @@ def process_speaker_transcript(transcript_path, speaker):
             if text.endswith("_END_SENTENCE"):
                 cleaned_gloss = text.replace("_END_SENTENCE", "").strip()
                 gloss_entries.append(cleaned_gloss)
-                rows.append([current_sentence] + gloss_entries)
+                rows.append([current_sentence, ",".join(gloss_entries)])
                 # Reset the mapping until a new _FULL_SENTENCE is encountered
                 current_sentence = None
                 gloss_entries = []
@@ -92,8 +91,8 @@ def process_folder(folder_path):
     # Write the combined rows to a CSV file
     try:
         with open(output_csv_path, mode='w', newline='', encoding='utf-8') as csv_file:
-            csv_writer = csv.writer(csv_file)
-            csv_writer.writerow(["Full Sentence", "Words..."])  # Header row
+            csv_writer = csv.writer(csv_file, quoting=csv.QUOTE_ALL)
+            csv_writer.writerow(["full_sentence", "glosses"])  # Header row
             csv_writer.writerows(combined_rows)
         print(f"CSV file created at {output_csv_path}")
     except Exception as e:
@@ -124,8 +123,6 @@ if process_all_folders:
         try:
             with open(lost_glosses_csv, 'r', encoding='utf-8') as csv_file:
                 csv_reader = csv.reader(csv_file)
-                # Optionally skip header row if present
-                header = next(csv_reader, None)
                 for row in csv_reader:
                     combined_rows.append(row)
             print(f"Appended rows from {lost_glosses_csv}")
@@ -138,8 +135,8 @@ if process_all_folders:
     combined_csv_path = os.path.join(base_path, "dgs-text2gloss-combined.csv")
     try:
         with open(combined_csv_path, mode='w', newline='', encoding='utf-8') as csv_file:
-            csv_writer = csv.writer(csv_file)
-            csv_writer.writerow(["Full Sentence", "Words..."])  # Header row
+            csv_writer = csv.writer(csv_file, quoting=csv.QUOTE_ALL)
+            csv_writer.writerow(["full_sentence", "glosses"])  # Header row
             csv_writer.writerows(combined_rows)
         print(f"Combined CSV file created at {combined_csv_path}")
     except Exception as e:
