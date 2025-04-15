@@ -11,11 +11,11 @@ from visualization.pose_utils import create_upper_body_pose_image
 # ---------------------- Configuration ----------------------
 # Path to gloss dictionary JSON
 root_folder = "/Volumes/IISY/DGSKorpus"
-dict_path = os.path.join(root_folder, "gloss_dictionary.json")
+dict_path = "./gloss_dictionary.json"
 # Output directory for the individual gloss JSON files
 gloss_output_dir = "gloss2pose_dictionary_output"
 # Final output directory for video and config
-final_output_dir = "../../resources/output/pose-sequences"
+final_output_dir = "./pose-sequence-videos"
 # Temporary input directory (using the gloss output directory)
 input_sentence_path = gloss_output_dir
 # -----------------------------------------------------------

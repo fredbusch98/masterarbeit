@@ -1,0 +1,94 @@
+2025-04-13 16:22:02,030 - INFO - ========== STARTING PROCESS ==========
+2025-04-13 16:22:02,031 - INFO - Loading dataset from CSV...
+2025-04-13 16:22:02,115 - INFO - Dataset loaded. Train shape: 49451, Validation shape: 5495
+2025-04-13 16:22:02,116 - INFO - Formatting conversations for training and validation...
+2025-04-13 16:22:02,814 - INFO - Dataset formatting complete. Train dataset size: 49451, Validation dataset size: 5495
+2025-04-13 16:22:02,815 - INFO - Loading model and tokenizer: unsloth/DeepSeek-R1-Distill-Llama-8B
+2025-04-13 16:22:06,546 - INFO - We will use 90% of the memory on device 0 for storing the model, and 10% for the buffer to avoid OOM. You can set `max_memory` in to a higher value to use more memory (at your own risk).
+2025-04-13 16:22:11,083 - INFO - Model and tokenizer loaded successfully.
+2025-04-13 16:22:11,084 - INFO - Applying LoRA configuration...
+2025-04-13 16:22:14,106 - INFO - LoRA configuration applied.
+2025-04-13 16:22:14,106 - INFO - Tokenizing the dataset...
+2025-04-13 16:22:19,305 - INFO - Tokenization complete.
+2025-04-13 16:22:19,307 - INFO - Setting up the trainer...
+2025-04-13 16:22:27,792 - INFO - Trainer setup complete.
+2025-04-13 16:22:27,792 - INFO - Starting training...
+2025-04-13 18:38:02,459 - INFO - Training finished successfully.
+2025-04-13 18:38:02,459 - INFO - Evaluating the model...
+2025-04-13 18:38:02,459 - INFO - Started generating glosses for evaluation on validation set...
+2025-04-13 18:38:02,460 - INFO - [Call 1] Generating gloss for sentence: 'Die Großeltern sind gehörlos und die Enkelkinder hörend.'
+2025-04-13 18:38:03,908 - INFO - [Call 1] Generated gloss: 'You are a sign language gloss translator. Given a sentence, output the corresponding gloss sequence.<｜User｜>Die Großeltern sind gehörlos und die Enkelkinder hörend.<｜Assistant｜><think>
+ICH2,GROSS5B,ELTERN1A,TAUB-GEHÖRLOS1A,HÖREND1A'
+2025-04-13 18:38:03,909 - INFO - [Call 2] Generating gloss for sentence: 'Dann der zweite Punkt: Die Jury besteht aus mehreren Gehörlosen und, ich glaube, zwei Hörenden.'
+2025-04-13 18:38:05,971 - INFO - [Call 2] Generated gloss: 'You are a sign language gloss translator. Given a sentence, output the corresponding gloss sequence.<｜User｜>Dann der zweite Punkt: Die Jury besteht aus mehreren Gehörlosen und, ich glaube, zwei Hörenden.<｜Assistant｜><think>
+$LIST1:2of2d,MEHR1,TAUB-GEHÖRLOS1A,$NUM-EINER1A:2,HÖREND1A,$LIST1:2of2d'
+2025-04-13 18:38:05,971 - INFO - [Call 3] Generating gloss for sentence: 'Ja.'
+2025-04-13 18:38:06,203 - INFO - [Call 3] Generated gloss: 'You are a sign language gloss translator. Given a sentence, output the corresponding gloss sequence.<｜User｜>Ja.<｜Assistant｜><think>
+$INDEX1'
+2025-04-13 18:38:06,204 - INFO - [Call 4] Generating gloss for sentence: 'Die gelbe gehört vor allem zu Dieselautos.'
+2025-04-13 18:38:08,317 - INFO - [Call 4] Generated gloss: 'You are a sign language gloss translator. Given a sentence, output the corresponding gloss sequence.<｜User｜>Die gelbe gehört vor allem zu Dieselautos.<｜Assistant｜><think>
+$INDEX1,GEFÄHRLICH1B,GEFÄHRLICH1B,VOR1A,GEFÄHRLICH1B,VOR1A,GEFÄHRLICH1B'
+2025-04-13 18:38:08,318 - INFO - [Call 5] Generating gloss for sentence: 'Ich erfahre gerne Neues.'
+2025-04-13 18:38:09,020 - INFO - [Call 5] Generated gloss: 'You are a sign language gloss translator. Given a sentence, output the corresponding gloss sequence.<｜User｜>Ich erfahre gerne Neues.<｜Assistant｜><think>
+ICH1,NEU1A,ERFAHREN1A'
+2025-04-13 18:38:09,021 - INFO - [Call 6] Generating gloss for sentence: 'Ja, das ist wichtig!'
+2025-04-13 18:38:09,338 - INFO - [Call 6] Generated gloss: 'You are a sign language gloss translator. Given a sentence, output the corresponding gloss sequence.<｜User｜>Ja, das ist wichtig!<｜Assistant｜><think>
+WICHTIG1'
+2025-04-13 18:38:09,338 - INFO - [Call 7] Generating gloss for sentence: 'Weißt du was ich meine?'
+2025-04-13 18:38:09,912 - INFO - [Call 7] Generated gloss: 'You are a sign language gloss translator. Given a sentence, output the corresponding gloss sequence.<｜User｜>Weißt du was ich meine?<｜Assistant｜><think>
+WISSEN2B,DU1,ICH1'
+2025-04-13 18:38:09,913 - INFO - [Call 8] Generating gloss for sentence: 'Klar, ich war geschockt.'
+2025-04-13 18:38:10,232 - INFO - [Call 8] Generated gloss: 'You are a sign language gloss translator. Given a sentence, output the corresponding gloss sequence.<｜User｜>Klar, ich war geschockt.<｜Assistant｜><think>
+SCHOCK2A'
+2025-04-13 18:38:10,232 - INFO - [Call 9] Generating gloss for sentence: 'Alkohol ist verboten.'
+2025-04-13 18:38:10,721 - INFO - [Call 9] Generated gloss: 'You are a sign language gloss translator. Given a sentence, output the corresponding gloss sequence.<｜User｜>Alkohol ist verboten.<｜Assistant｜><think>
+ALKOHOL1,VERBOTEN1'
+2025-04-13 18:38:10,722 - INFO - [Call 10] Generating gloss for sentence: 'Es funktionierte und war ein ganz angenehmes Miteinander.'
+2025-04-13 18:38:11,467 - INFO - [Call 10] Generated gloss: 'You are a sign language gloss translator. Given a sentence, output the corresponding gloss sequence.<｜User｜>Es funktionierte und war ein ganz angenehmes Miteinander.<｜Assistant｜><think>
+ABLAUF2,ANGENEHM1,MITEINANDER2'
+2025-04-13 18:46:45,960 - INFO - [Call 500] Generating gloss for sentence: 'Es gibt viele gehörlose Künstler, wie zum Beispiel Bastelkünstler, Glaskünstler und viele mehr.'
+2025-04-13 18:46:48,143 - INFO - [Call 500] Generated gloss: 'You are a sign language gloss translator. Given a sentence, output the corresponding gloss sequence.<｜User｜>Es gibt viele gehörlose Künstler, wie zum Beispiel Bastelkünstler, Glaskünstler und viele mehr.<｜Assistant｜><think>
+$INDEX1,TAUB-GEHÖRLOS1A,KUNST3B,ES-GIBT3,BASTELN1A,KUNST3B,GLAS1B,KUNST3B,UND-SO-'
+2025-04-13 18:55:06,859 - INFO - [Call 1000] Generating gloss for sentence: 'Auch wenn sie Hörende sind, wirklich alle können gebärden.'
+2025-04-13 18:55:08,038 - INFO - [Call 1000] Generated gloss: 'You are a sign language gloss translator. Given a sentence, output the corresponding gloss sequence.<｜User｜>Auch wenn sie Hörende sind, wirklich alle können gebärden.<｜Assistant｜><think>
+AUCH1A,HÖREND1A,ALLE1A,KANN2A,GEBÄRDEN1A'
+2025-04-13 19:03:42,855 - INFO - [Call 1500] Generating gloss for sentence: 'Da bin ich auch schon mal mit hingegangen.'
+2025-04-13 19:03:43,694 - INFO - [Call 1500] Generated gloss: 'You are a sign language gloss translator. Given a sentence, output the corresponding gloss sequence.<｜User｜>Da bin ich auch schon mal mit hingegangen.<｜Assistant｜><think>
+AUCH1A,ICH1,DORTHIN-GEHEN1,ICH1'
+2025-04-13 19:12:21,873 - INFO - [Call 2000] Generating gloss for sentence: 'Ob sie hörend oder gehörlos waren, wusste man nicht, sie schienen alle gehörlos zu sein.'
+2025-04-13 19:12:23,364 - INFO - [Call 2000] Generated gloss: 'You are a sign language gloss translator. Given a sentence, output the corresponding gloss sequence.<｜User｜>Ob sie hörend oder gehörlos waren, wusste man nicht, sie schienen alle gehörlos zu sein.<｜Assistant｜><think>
+HÖREND1A,TAUB-GEHÖRLOS1A,ALLE2A,TAUB-GEHÖRLOS1A'
+2025-04-13 19:20:40,211 - INFO - [Call 2500] Generating gloss for sentence: 'Sie konnten dabei auch telefonieren.'
+2025-04-13 19:20:40,970 - INFO - [Call 2500] Generated gloss: 'You are a sign language gloss translator. Given a sentence, output the corresponding gloss sequence.<｜User｜>Sie konnten dabei auch telefonieren.<｜Assistant｜><think>
+$INDEX1,TELEFONIEREN1,KANN2A'
+2025-04-13 19:29:00,297 - INFO - [Call 3000] Generating gloss for sentence: 'Da passt es dann.'
+2025-04-13 19:29:00,533 - INFO - [Call 3000] Generated gloss: 'You are a sign language gloss translator. Given a sentence, output the corresponding gloss sequence.<｜User｜>Da passt es dann.<｜Assistant｜><think>
+$INDEX1'
+2025-04-13 19:37:05,479 - INFO - [Call 3500] Generating gloss for sentence: 'Die vier Jahre, dreieinhalb Jahre Ausbildung, das war eine schöne Zeit.'
+2025-04-13 19:37:07,619 - INFO - [Call 3500] Generated gloss: 'You are a sign language gloss translator. Given a sentence, output the corresponding gloss sequence.<｜User｜>Die vier Jahre, dreieinhalb Jahre Ausbildung, das war eine schöne Zeit.<｜Assistant｜><think>
+$NUM-EINER1A:4,JAHR1B,JAHR1B,$NUM-HALB1A,JAHR1B,AUSBILDUNG1,SCHÖN1A,ZEIT7A'
+2025-04-13 19:45:31,811 - INFO - [Call 4000] Generating gloss for sentence: 'Selbst wenn man etwas sagen möchte, kümmert es die Gehörlosen nicht oder es ist ihnen nicht bewusst, dass man draußen den Krach hört.'
+2025-04-13 19:45:34,048 - INFO - [Call 4000] Generated gloss: 'You are a sign language gloss translator. Given a sentence, output the corresponding gloss sequence.<｜User｜>Selbst wenn man etwas sagen möchte, kümmert es die Gehörlosen nicht oder es ist ihnen nicht bewusst, dass man draußen den Krach hört.<｜Assistant｜><think>
+SELBST1A,ICH2,SELBST1A,ICH2,SELBST1A,ICH2,SELBST1A,ICH2,SELBST1A,ICH2,SELBST1A,ICH2,SELBST'
+2025-04-13 19:54:14,737 - INFO - [Call 4500] Generating gloss for sentence: 'Ich habe dem Malermeister erzählt, dass er Arbeit sucht.'
+2025-04-13 19:54:16,085 - INFO - [Call 4500] Generated gloss: 'You are a sign language gloss translator. Given a sentence, output the corresponding gloss sequence.<｜User｜>Ich habe dem Malermeister erzählt, dass er Arbeit sucht.<｜Assistant｜><think>
+ICH2,ICH2,ERZÄHLEN4,ICH2,SUCHEN1,ARBEITEN2,SUCHEN1'
+2025-04-13 20:02:50,236 - INFO - [Call 5000] Generating gloss for sentence: 'Warum ist das so?'
+2025-04-13 20:02:50,516 - INFO - [Call 5000] Generated gloss: 'You are a sign language gloss translator. Given a sentence, output the corresponding gloss sequence.<｜User｜>Warum ist das so?<｜Assistant｜><think>
+WARUM10B'
+2025-04-13 20:11:05,254 - INFO - Finished generating glosses for validation evaluation...
+2025-04-13 20:11:05,255 - INFO - Calculating BLEU score on validation set...
+2025-04-13 20:11:06,350 - INFO - BLEU score on validation set: 3.234319
+2025-04-13 20:11:06,351 - INFO - Calculating exact match accuracy on validation set...
+2025-04-13 20:11:06,352 - INFO - Exact match accuracy on validation set: 0.000000
+2025-04-13 20:11:06,352 - INFO - Evaluating on 200 random samples from train dataset...
+2025-04-13 20:11:10,452 - INFO - [Call 5500] Generating gloss for sentence: 'Dabei wäre mir unwohl.'
+2025-04-13 20:11:10,708 - INFO - [Call 5500] Generated gloss: 'You are a sign language gloss translator. Given a sentence, output the corresponding gloss sequence.<｜User｜>Dabei wäre mir unwohl.<｜Assistant｜><think>
+WOHL1'
+2025-04-13 20:14:27,362 - INFO - Train BLEU score: 3.697874
+2025-04-13 20:14:27,362 - INFO - Train exact match accuracy: 0.000000
+2025-04-13 20:14:27,362 - INFO - Saving the fine-tuned model and tokenizer...
+2025-04-13 20:14:28,771 - INFO - Model and tokenizer saved successfully.
+2025-04-13 20:14:28,772 - INFO - Running inference on example sentence...
+2025-04-13 20:14:29,920 - INFO - Active threads at end: [<_MainThread(MainThread, started 138560002708096)>, <Thread(Thread-1 (_read_thread), started daemon 138552776066816)>, <TMonitor(Thread-2, started daemon 138552014800640)>, <TMonitor(Thread-3, started daemon 138550500656896)>, <TMonitor(Thread-10, started daemon 138556704032512)>]
+2025-04-13 20:14:29,920 - INFO - ========== PROCESS COMPLETE ==========

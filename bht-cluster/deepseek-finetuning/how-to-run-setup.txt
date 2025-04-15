@@ -1,3 +1,11 @@
+### Automatic training using deepseek-finetune-train-pod.yml:
+1. Apply the pod that automatically starts the training:
+### AUTOMATIC TRAINING ### kubectl apply -f deepseek-finetune-train-pod.yml
+
+### Manual training via bash
+0. OPTIONAL - Apply the pods without automatic setup:
+kubectl apply -f deepseek-finetune-pod.yml
+
 1. Setup the pod:
 ./setup.sh
 
@@ -5,8 +13,7 @@
 kubectl -n s85468 exec -it deepseek-finetune -- bash
 
 4. Navigate to correct directory:
-cd ..
-cd storage/text2gloss-finetune
+cd /storage/text2gloss-finetune
 
 4.5. Test:
 python test.py
@@ -17,3 +24,11 @@ python train.py
 5. FINALLY - Remove the pod from the cluster:
 exit
 kubectl delete -f deepseek-finetune-pod.yml
+OR
+kubectl delete -f deepseek-finetune-train-pod.yml
+
+## Updating the train.py script ##
+kubectl cp /Users/frederikbusch/Developer/master-arbeit/text2gloss2pose/bht-cluster/deepseek-finetuning/train.py s85468/deepseek-finetune:/storage/text2gloss-finetune/train.py
+
+## Get the log file
+kubectl cp s85468/deepseek-finetune:/storage/text2gloss-finetune/process.log /Users/frederikbusch/Developer/master-arbeit/text2gloss2pose/bht-cluster/deepseek-finetuning/process.log

@@ -2,3 +2,5 @@ resources/*
 __pycache__/
 .env
 gloss2pose_dictionary_output/
+gloss_dictionary.json
+pose-sequence-videos/
