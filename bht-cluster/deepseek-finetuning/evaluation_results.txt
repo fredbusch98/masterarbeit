@@ -1,7 +1,0 @@
-Validation set evaluation:
-BLEU score: 3.234319394225662
-Exact match accuracy: 0.0
-
-Train samples evaluation (200 random samples):
-Train BLEU score: 3.6978735967495555
-Train exact match accuracy: 0.0

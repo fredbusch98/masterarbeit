@@ -4,3 +4,4 @@ __pycache__/
 gloss2pose_dictionary_output/
 gloss_dictionary.json
 pose-sequence-videos/
+dataset.csv
