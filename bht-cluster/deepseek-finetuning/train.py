@@ -149,8 +149,8 @@ def main():
                 warmup_steps=1000,
                 num_train_epochs=5, ## should be 5-10 but doesnt really work with interactive batch 
                 learning_rate=5e-5, # try out 5e-5
-                fp16=True,
-                bf16=False,
+                fp16=False,
+                bf16=True,
                 logging_steps=10,
                 output_dir="/storage/text2gloss-finetune/outputs",
                 optim="adamw_8bit",
@@ -201,14 +201,7 @@ def main():
 
         input_text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
         inputs = tokenizer(input_text, return_tensors="pt").to(model.device)
-        outputs = model.generate(
-            **inputs,
-            max_new_tokens=max_gloss_tokens + 1,
-            num_beams=5,         # Enable beam search with 5 beams
-            early_stopping=True, # Stop when all beams reach EOS
-            length_penalty=1.0,  # Neutral penalty, adjust if needed
-            no_repeat_ngram_size=2  # Prevent repetitive n-grams
-        )
+        outputs = model.generate(**inputs, max_new_tokens=max_gloss_tokens + 1)
         generated_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
 
         if log_this_call:

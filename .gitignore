@@ -5,3 +5,5 @@ gloss2pose_dictionary_output/
 gloss_dictionary.json
 pose-sequence-videos/
 dataset.csv
+gloss_times_for_frame_interpolation.csv
+process.log

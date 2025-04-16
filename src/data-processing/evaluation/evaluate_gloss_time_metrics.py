@@ -90,6 +90,16 @@ def find_and_save_metrics_threshold(df, metric, threshold, above=True, output_di
         filtered.to_csv(file_path, index=False)
         print(f"Results saved to {file_path}")
 
+def extract_filtered_columns(input_file, output_file):
+    """
+    Read the evaluated metrics CSV, extract only the specified columns,
+    and save the result to a new CSV file.
+    """
+    df = pd.read_csv(input_file)
+    filtered_df = df[['gloss', 'median_igt', 'median_ogt']]
+    filtered_df.to_csv(output_file, index=False)
+    print(f"Filtered CSV written to {output_file}")
+
 def main():
     base_path = "/Volumes/IISY/DGSKorpus/"
     raw_csv = os.path.join(base_path, "dgs-gloss-times", "raw_gloss_metrics.csv")
@@ -118,6 +128,10 @@ def main():
     eval_csv = os.path.join(base_path, "dgs-gloss-times", "evaluated_gloss_metrics.csv")
     agg.to_csv(eval_csv, index=False)
     print(f"\nEvaluation metrics written to {eval_csv}")
+
+    # Extract and save filtered columns (gloss, median_igt, median_ogt)
+    filtered_csv = os.path.join(base_path, "dgs-gloss-times", "evaluated_gloss_metrics_filtered.csv")
+    extract_filtered_columns(eval_csv, filtered_csv)
     
     # Print top-5 aggregated averages per gloss
     print_top_aggregated("avg_gd", agg, "GD (Gloss Duration)")
