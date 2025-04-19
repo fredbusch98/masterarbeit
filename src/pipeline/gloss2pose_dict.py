@@ -12,19 +12,19 @@ from visualization.pose_utils import create_upper_body_pose_image
 # ---------------------- Configuration ----------------------
 # Path to gloss dictionary JSON
 root_folder = "/Volumes/IISY/DGSKorpus"
-dict_path = "./gloss_dictionary.json"
+dict_path = "./resources/gloss_dictionary.json"
 # Output directory for the individual gloss JSON files
-gloss_output_dir = "gloss2pose_dictionary_output"
+gloss_output_dir = "outputs/gloss2pose_dictionary_output"
 # Final output directory for video and config
-final_output_dir = "./pose-sequence-videos"
+final_output_dir = "./outputs/pose-sequence-videos"
 # Temporary input directory (using the gloss output directory)
 input_sentence_path = gloss_output_dir
 
 # NEW: Add new option for using the default number of intermediate frames.
-use_default_num_intermediate_frames = False  # Set to False to use CSV values for frame interpolation
+use_default_num_intermediate_frames = True  # Set to False to use CSV values for frame interpolation
 
 # NEW: Path for the CSV file with gloss times (assumed to be in the same directory as the script)
-gloss_times_csv = os.path.join(os.path.dirname(__file__), "gloss_times_for_frame_interpolation.csv")
+gloss_times_csv = "./resources/gloss_times_for_frame_interpolation.csv"
 # -----------------------------------------------------------
 
 # ---------------------- Helper Functions ----------------------

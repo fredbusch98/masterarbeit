@@ -7,3 +7,7 @@ pose-sequence-videos/
 dataset.csv
 gloss_times_for_frame_interpolation.csv
 process.log
+unique-glosses.csv
+results/
+outputs/
+resources/

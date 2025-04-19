@@ -4,6 +4,7 @@ metadata:
   name: deepseek-finetune
   namespace: s85468
 spec:
+  restartPolicy: OnFailure
   containers:
   - name: deepseek-finetune-container
     image: pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime
