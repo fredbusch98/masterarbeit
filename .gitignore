@@ -11,3 +11,4 @@ unique-glosses.csv
 results/
 outputs/
 resources/
+data_augment.log
