@@ -213,6 +213,54 @@ def generate_videos_from_poses_and_create_config_yml(data, output_dir='output', 
         print(f"Video created: {video_path}")
     config_filepath, config_filename = create_config_yml(timestamp, video_filename, output_dir)
     return config_filepath, video_path, config_filename, video_filename
+
+def run_from_list(gloss_list, default_frames=True):
+    """
+    Exactly the same pipeline as in main(), but takes
+    a Python list of glosses instead of sys.argv.
+    Returns (config_path, video_path, config_filename, video_filename).
+    """
+    # override the module‐level flag if you need to
+    global use_default_num_intermediate_frames
+    use_default_num_intermediate_frames = default_frames
+
+    # 1) clear old outputs
+    clear_directory(gloss_output_dir)
+
+    # 2) load dictionary & dump per‐gloss JSON
+    loaded_dict = load_gloss_dictionary(dict_path)
+    create_gloss_json_files(gloss_list, loaded_dict, gloss_output_dir)
+
+    # 3) load all pose‐sequences
+    data_frames = load_data_frames_from_path(gloss_output_dir)
+    if not data_frames:
+        raise RuntimeError("No valid pose JSON files generated")
+
+    # 4) stitch + interpolate
+    if len(data_frames) == 1:
+        final_pose_sequence = data_frames[0]
+    else:
+        final_pose_sequence = []
+        for i, current in enumerate(data_frames):
+            if i > 0:
+                prev = data_frames[i-1]
+                if default_frames:
+                    n_iframes = 7
+                else:
+                    # your CSV‐based logic here…
+                    # (copy from main)
+                    n_iframes = 7
+                interp = interpolate_keypoints(prev, current,
+                                               num_intermediate_frames=n_iframes)
+                # drop overlap
+                final_pose_sequence.extend(interp[len(prev):])
+            final_pose_sequence.extend(current)
+
+    # 5) render video + write config
+    cfg_path, vid_path, cfg_name, vid_name = generate_videos_from_poses_and_create_config_yml(
+        final_pose_sequence, output_dir=final_output_dir
+    )
+    return cfg_path, vid_path, cfg_name, vid_name
 # -----------------------------------------------------------
 
 def main():

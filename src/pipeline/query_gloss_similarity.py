@@ -4,6 +4,7 @@ Given new glosses as a comma-separated list, perform robust 1:1 matching:
 2. Prefix-based variant selection (e.g. ICH→ICH1)
 3. Fuzzy fallback via scikit-learn & embeddings
 """
+import os
 import json
 import re
 import numpy as np
@@ -11,6 +12,7 @@ from sentence_transformers import SentenceTransformer
 from sklearn.neighbors import NearestNeighbors
 import argparse
 from rapidfuzz import process, fuzz
+from gloss2pose_dict import run_from_list
 
 # Config paths
 MAPPING_OUT = './resources/gloss_to_idx.json'
@@ -90,11 +92,24 @@ for q in queries:
     print(f"🔹 {q} → {match}")
 
 gloss_sequence = gloss_sequence.rstrip(",")
-print(f"\nFinal mapped gloss sequence: \n{gloss_sequence}")
+gloss_list = gloss_sequence.split(",")
+print(f"\nFinal mapped gloss sequence: \n{gloss_list}")
+
+config_path, video_path, cfg_name, vid_name = run_from_list(gloss_list)
+abs_config_path = os.path.abspath(config_path)
+abs_video_path = os.path.abspath(video_path)
+print("\nCopy video and config to the mimicmotion pod:")
+print(f"kubectl cp {abs_config_path} s85468/mimicmotion:/storage/MimicMotion/configs/{cfg_name}")
+print(f"kubectl cp {abs_video_path} s85468/mimicmotion:/storage/MimicMotion/configs/{vid_name}\n")
+print("Start inference with the config on the mimicmotion pod:")
+print(f"python inference.py --inference_config configs/{cfg_name}")
 
 # HIER IST DER PROMPT FÜR ChatGPT API: 
 # Du bist ein professioneller Übersetzer für Deutsche Gebärdensprache. Du kannst ganze deutsche Sätze in ihre Gebärden-Gloss-Form übersetzen. Übersetze den folgenden Satz in eine solche Gebärden-Gloss-Sequenz: "In der Schule esse ich meistens einen Apfel in der Mittagspause."
 # Gib ausschließlich die Gloss-Sequenz als komma-separierte Liste aus und keinerlei zusätzliche Erklärung oder Gedanken!
 
-# Dann müsste als nächstes folgendes aufgerufen werden: 
-# f"python gloss2pose_dict.py {gloss_sequence}"
+# How to run:
+# 1. Prompt ChatGPT with the prompt above and change the sentence to your desired sentence!
+# The output will looks something like this: GLOSS_1, GLOSS_2, ..., GLOSS_N
+# 2. Copy the output and call the script: python query_gloss_similarity.py --glosses "GLOSS_1, GLOSS_2, ..., GLOSS_N"
+# This will create a pose sequence video that represents your input sentence.

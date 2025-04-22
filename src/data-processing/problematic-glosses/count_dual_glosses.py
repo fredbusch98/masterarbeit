@@ -1,7 +1,7 @@
 import os
 import re
 
-excluded_glosses = ["$PROD", "$ORAL", "$ALPHA", "$$EXTRA-LING-MAN", "$GEST-OFF", "$PMS", "$INDEX1"]
+excluded_glosses = ["$PROD", "$ORAL", "$ALPHA", "$$EXTRA-LING-MAN", "$GEST-OFF", "$PMS"]
 gest = "$GEST"
 
 def is_full_sentence(text):
@@ -50,7 +50,7 @@ def main():
                     if len(lines) >= 3:
                         dialogue = lines[2].strip()
                         dialogue = dialogue[2:].strip()
-                        dialogue.lstrip("||")
+                        dialogue = dialogue.lstrip("||")
                         
                         if not is_full_sentence(dialogue):
                             if "||" in dialogue and dialogue.isupper():
