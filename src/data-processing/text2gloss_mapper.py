@@ -42,6 +42,7 @@ def process_speaker_transcript(transcript_path, speaker):
         if text.endswith("_FULL_SENTENCE"):
             # Remove the _FULL_SENTENCE tag and then strip extra spaces.
             sentence_fragment = text.replace("_FULL_SENTENCE", "").strip()
+            sentence_fragment = sentence_fragment.rstrip("/")
             current_sentence = sentence_fragment
             mapping_active = True
             gloss_entries = []
