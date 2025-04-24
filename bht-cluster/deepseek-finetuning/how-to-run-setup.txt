@@ -30,5 +30,9 @@ kubectl delete -f deepseek-finetune-train-pod.yml
 ## Updating the train.py script ##
 kubectl cp /Users/frederikbusch/Developer/master-arbeit/text2gloss2pose/bht-cluster/deepseek-finetuning/train.py s85468/deepseek-finetune:/storage/text2gloss-finetune/train.py
 
-## Get the log file
+## Get the results
 kubectl cp s85468/deepseek-finetune:/storage/text2gloss-finetune/process.log /Users/frederikbusch/Developer/master-arbeit/text2gloss2pose/bht-cluster/deepseek-finetuning/process.log
+kubectl cp s85468/deepseek-finetune:/storage/text2gloss-finetune/gloss_generation_log.txt /Users/frederikbusch/Developer/master-arbeit/text2gloss2pose/bht-cluster/deepseek-finetuning/gloss_generation_log.txt
+kubectl cp s85468/deepseek-finetune:/storage/text2gloss-finetune/evaluation_results.txt /Users/frederikbusch/Developer/master-arbeit/text2gloss2pose/bht-cluster/deepseek-finetuning/evaluation_results.txt
+kubectl cp s85468/deepseek-finetune:/storage/text2gloss-finetune/fine_tuned_deepseek /Users/frederikbusch/Developer/master-arbeit/text2gloss2pose/bht-cluster/deepseek-finetuning/fine_tuned_deepseek
+kubectl cp s85468/deepseek-finetune:/storage/text2gloss-finetune/outputs /Users/frederikbusch/Developer/master-arbeit/text2gloss2pose/bht-cluster/deepseek-finetuning/outputs

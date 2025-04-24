@@ -7,7 +7,7 @@ spec:
   restartPolicy: OnFailure
   containers:
   - name: deepseek-finetune-container
-    image: pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime
+    image: pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime
     command: ["bash", "-c", "cd /storage/text2gloss-finetune && ./start_finetune.sh"]
     resources:
       limits:

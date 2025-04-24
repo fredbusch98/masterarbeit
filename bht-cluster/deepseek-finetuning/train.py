@@ -35,7 +35,7 @@ def main():
     # Step 1: Load and preprocess the dataset
     logger.info("Loading dataset from CSV...")
     try:
-        df = pd.read_csv('/storage/text2gloss-finetune/dataset.csv', encoding='utf-8')
+        df = pd.read_csv('/storage/text2gloss-finetune/augmented_dataset.csv', encoding='utf-8')
     except Exception as e:
         logger.error("Error reading CSV: %s", e)
         sys.exit(1)

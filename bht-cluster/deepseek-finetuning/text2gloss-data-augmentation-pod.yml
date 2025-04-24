@@ -23,8 +23,10 @@ spec:
     gpu: v100
 
 # Start the pod and data augmentation: kubectl apply -f text2gloss-data-augmentation-pod.yml
+
 # Delete the pod: kubectl delete -f text2gloss-data-augmentation-pod.yml
 
 # Copy the results:
-# kubectl cp s85468/mimicmotion:/storage/text2gloss-finetune/augmented_dataset.csv /Users/frederikbusch/Developer/master-arbeit/text2gloss2pose/bht-cluster/deepseek-finetuning/augmented_dataset.csv
-# kubectl cp s85468/mimicmotion:/storage/text2gloss-finetune/data_augment.log /Users/frederikbusch/Developer/master-arbeit/text2gloss2pose/bht-cluster/deepseek-finetuning/data_augment.log
+# kubectl apply -f deepseek-finetune-pod.yml
+# kubectl cp s85468/deepseek-finetune:/storage/text2gloss-finetune/augmented_dataset.csv /Users/frederikbusch/Developer/master-arbeit/text2gloss2pose/bht-cluster/deepseek-finetuning/augmented_dataset.csv
+# kubectl cp s85468/deepseek-finetune:/storage/text2gloss-finetune/data_augment.log /Users/frederikbusch/Developer/master-arbeit/text2gloss2pose/bht-cluster/deepseek-finetuning/data_augment.log
