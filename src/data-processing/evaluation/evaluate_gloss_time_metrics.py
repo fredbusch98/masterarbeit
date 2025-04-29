@@ -96,7 +96,7 @@ def extract_filtered_columns(input_file, output_file):
     and save the result to a new CSV file.
     """
     df = pd.read_csv(input_file)
-    filtered_df = df[['gloss', 'median_igt', 'median_ogt']]
+    filtered_df = df[['gloss', 'median_igt', 'median_ogt', 'median_gd']]
     filtered_df.to_csv(output_file, index=False)
     print(f"Filtered CSV written to {output_file}")
 

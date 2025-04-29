@@ -32,7 +32,7 @@ def load_gloss_dictionary(dict_path):
     try:
         file_size = os.path.getsize(dict_path)
         with open(dict_path, 'r', encoding='utf-8') as f:
-            with tqdm(total=file_size, desc="Loading dictionary", unit="B", unit_scale=True) as pbar:
+            with tqdm(total=file_size, desc="Loading gloss dictionary", unit="B", unit_scale=True) as pbar:
                 loaded_dict = json.load(f)
                 pbar.update(file_size)  # Update progress bar fully
         return loaded_dict
@@ -132,6 +132,67 @@ def interpolate_keypoints(current_data, next_data, num_intermediate_frames=7):
         intermediate_frames.append(new_frame)
     return current_data + intermediate_frames
 
+def stretch_pose_sequence_evenly(seq, target_frames, fps=50):
+    """
+    If seq has length L and we need T frames total, compute E = T - L extra.
+    Split E across the L-1 gaps:
+      - base = E // (L-1)
+      - remainder = E % (L-1), spread 1 extra into the first `remainder` gaps.
+    For each gap i, interpolate that many frames between seq[i] and seq[i+1].
+    Returns a new, length‐T list of frames.
+    """
+    L = len(seq)
+    # Nothing to do if already long enough or too few frames to interpolate
+    if L < 2 or L >= target_frames:
+        return seq
+
+    extra = target_frames - L
+    num_gaps = L - 1
+    base_per_gap = extra // num_gaps
+    remainder   = extra % num_gaps
+
+    new_seq = []
+    for i in range(num_gaps):
+        # Always keep the original frame i
+        new_seq.append(seq[i])
+
+        # Determine how many to insert in this gap
+        n_int = base_per_gap + (1 if i < remainder else 0)
+        if n_int > 0:
+            # interpolate_keypoints([start], [end], n_int) returns [start] + n_int intermediates
+            intermediates = interpolate_keypoints(
+                current_data=[seq[i]],
+                next_data   =[seq[i+1]],
+                num_intermediate_frames=n_int
+            )[1:]  # drop the duplicated “start” frame
+            new_seq.extend(intermediates)
+
+    # Finally add the last original frame
+    new_seq.append(seq[-1])
+    return new_seq
+
+def fill_pose_sequence_duration(gloss_list, data_frames, gloss_times, fps=50):
+    """
+    For each gloss in gloss_list, look up its median_gd (ms), compute the
+    target frame count at `fps`, then stretch its sequence evenly.
+    """
+    filled = []
+    for gloss, seq in zip(gloss_list, data_frames):
+        info = gloss_times.get(gloss, {})
+        median_gd = info.get('median_gd')
+        # If no valid median_gd, leave untouched
+        if median_gd is None:
+            filled.append(seq)
+            continue
+
+        # compute desired length
+        target = int(round((median_gd / 1000.0) * fps))
+        # stretch (or leave alone) so that len == target
+        new_seq = stretch_pose_sequence_evenly(seq, target, fps=fps)
+        filled.append(new_seq)
+
+    return filled
+
 # NEW: Helper function to load gloss times for frame interpolation from CSV.
 def load_gloss_times(csv_filepath):
     """
@@ -147,10 +208,14 @@ def load_gloss_times(csv_filepath):
                 try:
                     median_igt = float(row['median_igt'])
                     median_ogt = float(row['median_ogt'])
+                    median_gd  = float(row['median_gd'])
                 except ValueError:
-                    median_igt = 0.0
-                    median_ogt = 0.0
-                gloss_times[gloss] = {'median_igt': median_igt, 'median_ogt': median_ogt}
+                    median_igt = median_ogt = median_gd = 0.0
+                gloss_times[gloss] = {
+                    'median_igt': median_igt,
+                    'median_ogt': median_ogt,
+                    'median_gd':  median_gd
+                }
     except FileNotFoundError:
         print(f"Error: CSV file not found at {csv_filepath}")
         sys.exit(1)
@@ -214,7 +279,7 @@ def generate_videos_from_poses_and_create_config_yml(data, output_dir='output', 
     config_filepath, config_filename = create_config_yml(timestamp, video_filename, output_dir)
     return config_filepath, video_path, config_filename, video_filename
 
-def run_from_list(gloss_list, default_frames=True):
+def run_from_list(gloss_list, default_frames=False, fill_pose_sequence=False):
     """
     Exactly the same pipeline as in main(), but takes
     a Python list of glosses instead of sys.argv.
@@ -236,25 +301,46 @@ def run_from_list(gloss_list, default_frames=True):
     if not data_frames:
         raise RuntimeError("No valid pose JSON files generated")
 
+    # 3a) load gloss timing (including median_gd) and evenly stretch each sequence
+    gloss_times = load_gloss_times(gloss_times_csv)
+    if fill_pose_sequence:
+        data_frames = fill_pose_sequence_duration(
+            gloss_list,
+            data_frames,
+            gloss_times,
+            fps=50
+        )
+
     # 4) stitch + interpolate
     if len(data_frames) == 1:
         final_pose_sequence = data_frames[0]
     else:
         final_pose_sequence = []
-        for i, current in enumerate(data_frames):
+        for i, current_data in enumerate(data_frames):
             if i > 0:
-                prev = data_frames[i-1]
-                if default_frames:
-                    n_iframes = 7
+                previous_data = data_frames[i - 1]
+                if use_default_num_intermediate_frames:
+                    # Use default fixed value
+                    num_int_frames = 7
                 else:
-                    # your CSV‐based logic here…
-                    # (copy from main)
-                    n_iframes = 7
-                interp = interpolate_keypoints(prev, current,
-                                               num_intermediate_frames=n_iframes)
-                # drop overlap
-                final_pose_sequence.extend(interp[len(prev):])
-            final_pose_sequence.extend(current)
+                    # NEW: Calculate num_intermediate_frames using CSV values for the gloss pair.
+                    # For gloss at position i-1 (first gloss) use its median_ogt.
+                    # For gloss at position i (next gloss) use its median_igt.
+                    gloss_prev = gloss_list[i - 1]
+                    gloss_curr = gloss_list[i]
+                    if gloss_prev in gloss_times and gloss_curr in gloss_times:
+                        median_ogt = gloss_times[gloss_prev]['median_ogt']
+                        median_igt = gloss_times[gloss_curr]['median_igt']
+                        avg_ms = int(round((median_ogt + median_igt) / 2))
+                        num_int_frames = int(round((avg_ms / 1000.0) * 50))
+                    else:
+                        print(f"Gloss times not found for pair: {gloss_prev} and/or {gloss_curr}. Using default value.")
+                        num_int_frames = 7
+                # Use calculated number of intermediate frames
+                interpolated = interpolate_keypoints(previous_data, current_data, num_intermediate_frames=num_int_frames)
+                # Exclude the overlapping frame from interpolation
+                final_pose_sequence.extend(interpolated[len(previous_data):])
+            final_pose_sequence.extend(current_data)
 
     # 5) render video + write config
     cfg_path, vid_path, cfg_name, vid_name = generate_videos_from_poses_and_create_config_yml(

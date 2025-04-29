@@ -10,9 +10,13 @@ from trl import SFTTrainer
 from transformers import TrainingArguments
 from sacrebleu import corpus_bleu
 import os
+from unsloth.chat_templates import get_chat_template
+
+base_model_name = "Llama-3.2-3B"
+chat_template_name = "llama-3.2" # llama-3.2 | gemma-3 | qwen-2.5 | llama | mistral
 
 # Ensure the log directory exists
-log_dir = "/storage/text2gloss-finetune"
+log_dir = f"/storage/text2gloss-finetune/{base_model_name}"
 os.makedirs(log_dir, exist_ok=True)
 log_file = os.path.join(log_dir, "process.log")
 
@@ -35,7 +39,7 @@ def main():
     # Step 1: Load and preprocess the dataset
     logger.info("Loading dataset from CSV...")
     try:
-        df = pd.read_csv('/storage/text2gloss-finetune/augmented_dataset.csv', encoding='utf-8')
+        df = pd.read_csv('/storage/text2gloss-finetune/dataset.csv', encoding='utf-8')
     except Exception as e:
         logger.error("Error reading CSV: %s", e)
         sys.exit(1)
@@ -52,7 +56,6 @@ def main():
                      "into its precise sign language gloss sequence.\n"
                      "Guidelines:\n"
                      "- Output only the final gloss sequence as a comma-separated list of uppercase gloss tokens.\n"
-                     "- Do not include any chain-of-thought, explanations, or intermediary reasoning in your output.\n"
                      "- Do not output any tokens not part of the gloss sequence."
                 )},
                 {"role": "user", "content": row.full_sentence},
@@ -70,10 +73,10 @@ def main():
     logger.info("Dataset formatting complete. Train dataset size: %d, Validation dataset size: %d", len(train_dataset), len(val_dataset))
 
     # Step 2: Load the model and tokenizer
-    logger.info("Loading model and tokenizer: %s", "unsloth/DeepSeek-R1-Distill-Llama-8B")
+    logger.info("Loading model and tokenizer: %s", "unsloth/" + base_model_name)
     try:
         model, tokenizer = FastLanguageModel.from_pretrained(
-            model_name="unsloth/DeepSeek-R1-Distill-Llama-8B",
+            model_name="unsloth/" + base_model_name,
             max_seq_length=2048,
             dtype=None,
             load_in_4bit=True,
@@ -83,6 +86,12 @@ def main():
     except Exception as e:
         logger.error("Error loading model/tokenizer: %s", e)
         sys.exit(1)
+
+    tokenizer = get_chat_template(
+        tokenizer,
+        chat_template=chat_template_name,
+    )
+    logger.info("Chat template applied: %s", tokenizer.chat_template)
 
     def compute_max_gloss_tokens(df, tokenizer):
         max_tokens = 0
@@ -103,10 +112,12 @@ def main():
     try:
         model = FastLanguageModel.get_peft_model(
             model,
-            r=8,
-            target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
+            r=16,
+            target_modules = ["q_proj", "k_proj", "v_proj", "o_proj",
+                  "gate_proj", "up_proj", "down_proj",],
             lora_alpha=16,
-            lora_dropout=0.0,
+            lora_dropout=0,
+            bias = "none",
             use_gradient_checkpointing="unsloth",
             random_state=42,
         )
@@ -146,13 +157,13 @@ def main():
             args=TrainingArguments(
                 per_device_train_batch_size=4,
                 gradient_accumulation_steps=4,
-                warmup_steps=1000,
-                num_train_epochs=10, ## should be 5-10 but doesnt really work with interactive batch 
-                learning_rate=5e-5, # try out 5e-5
-                fp16=False,
-                bf16=True,
+                warmup_steps=100,
+                num_train_epochs=1,
+                learning_rate=1e-4, # try out 5e-5
+                fp16 = not torch.cuda.is_bf16_supported(),
+                bf16 = torch.cuda.is_bf16_supported(),
                 logging_steps=10,
-                output_dir="/storage/text2gloss-finetune/outputs",
+                output_dir=f"{log_dir}/outputs",
                 optim="adamw_8bit",
                 seed=42,
             ),
@@ -192,7 +203,6 @@ def main():
                 "into its precise sign language gloss sequence.\n"
                 "Guidelines:\n"
                 "- Output only the final gloss sequence as a comma-separated list of uppercase gloss tokens.\n"
-                "- Do not include any chain-of-thought, explanations, or intermediary reasoning in your output.\n"
                 "- Do not output any tokens not part of the gloss sequence."
             )
             },
@@ -260,8 +270,9 @@ def main():
     # Step 8: Save the model
     logger.info("Saving the fine-tuned model and tokenizer...")
     try:
-        model.save_pretrained("/storage/text2gloss-finetune/fine_tuned_deepseek")
-        tokenizer.save_pretrained("/storage/text2gloss-finetune/fine_tuned_deepseek")
+        save_path = f"{log_dir}/{base_model_name}_finetuned"
+        model.save_pretrained(save_path)
+        tokenizer.save_pretrained(save_path)
         logger.info("Model and tokenizer saved successfully.")
     except Exception as e:
         logger.error("Error saving model/tokenizer: %s", e)

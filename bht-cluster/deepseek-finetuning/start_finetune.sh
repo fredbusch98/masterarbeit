@@ -10,10 +10,10 @@ apt-get install -y build-essential nano libjpeg-dev libpng-dev && \
 pip install --upgrade --no-cache-dir torchvision && \
 
 # Install Python dependencies
-pip install pandas datasets scikit-learn trl transformers sacrebleu unsloth && \
+pip install pandas datasets scikit-learn trl transformers sacrebleu rouge-score unsloth && \
 
 # Set compiler environment variable
 export CC=/usr/bin/gcc && \
 
 # Start training
-python train.py
+python train_deepseek_distill.py 

@@ -95,7 +95,7 @@ gloss_sequence = gloss_sequence.rstrip(",")
 gloss_list = gloss_sequence.split(",")
 print(f"\nFinal mapped gloss sequence: \n{gloss_list}")
 
-config_path, video_path, cfg_name, vid_name = run_from_list(gloss_list)
+config_path, video_path, cfg_name, vid_name = run_from_list(gloss_list, default_frames=False, fill_pose_sequence=True)
 abs_config_path = os.path.abspath(config_path)
 abs_video_path = os.path.abspath(video_path)
 print("\nCopy video and config to the mimicmotion pod:")

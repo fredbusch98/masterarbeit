@@ -8,7 +8,7 @@ main_folder = '/Volumes/IISY/DGSKorpus'
 exclude_sentence_glosses = ["$PROD", "$ORAL", "$ALPHA", "$ORAL^"]
 
 # These glosses need to be excluded but the rest of the sentence can stay in the transcripts
-excluded_glosses = ["$GEST", "$GEST-OFF", "$$EXTRA-LING-MAN", "$PMS", "$UNKLAR"]
+excluded_glosses = ["$GEST", "$GEST-NM", "$GEST-OFF", "$$EXTRA-LING-MAN", "$PMS", "$UNKLAR"]
 
 # Timestamp parsing functions
 def parse_timestamp(ts):
@@ -68,7 +68,7 @@ def process_entries(entries, speaker):
         full_text = ' '.join(line.strip() for line in text_lines)
         clean_text = full_text[len(speaker_tag):].strip()
         
-        if any(gloss in clean_text for gloss in excluded_glosses):
+        if any(gloss == clean_text for gloss in excluded_glosses):
             i += 1
             continue
 
@@ -92,7 +92,7 @@ def process_entries(entries, speaker):
                     break
 
                 # Skip entries with the defined excluded glosses
-                if any(gloss in next_clean for gloss in excluded_glosses):
+                if any(gloss == next_clean for gloss in excluded_glosses):
                     j += 1
                     continue
                 sentence_entries.append(next_entry)

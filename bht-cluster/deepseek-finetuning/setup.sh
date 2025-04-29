@@ -21,7 +21,7 @@ kubectl -n s85468 exec -it deepseek-finetune -- bash -c "
   apt-get update && \
   apt-get install -y build-essential nano libjpeg-dev libpng-dev && \
   pip install --upgrade --no-cache-dir torchvision && \
-  pip install pandas datasets scikit-learn trl transformers sacrebleu unsloth && \
+  pip install pandas datasets scikit-learn trl transformers sacrebleu rouge-score unsloth && \
   export CC=/usr/bin/gcc && \
   cd /storage/text2gloss-finetune && \
   exec bash"
