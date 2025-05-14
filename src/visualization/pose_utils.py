@@ -7,6 +7,7 @@ from typing import List, Union, NamedTuple, Tuple
 # https://github.com/huggingface/controlnet_aux
 
 eps = 0.01
+show_body_keypoint_ids = False
 
 class Keypoint(NamedTuple):
     x: float
@@ -92,6 +93,12 @@ def draw_bodypose(canvas: np.ndarray, keypoints: List[Keypoint]) -> np.ndarray:
         x = int(x * W)
         y = int(y * H)
         cv2.circle(canvas, (int(x), int(y)), 4, color, thickness=-1)
+
+        if show_body_keypoint_ids:
+            # Draw keypoint ID as text next to the keypoint
+            cv2.putText(canvas, str(keypoint.id), (x + 5, y - 5),
+                        cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.5, color=(255, 255, 255),
+                        thickness=1, lineType=cv2.LINE_AA)
         
     return canvas
 

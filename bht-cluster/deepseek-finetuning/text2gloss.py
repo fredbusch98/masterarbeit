@@ -92,7 +92,7 @@ def main():
 
     # Collect all provided sentences
     sentences = sys.argv[1:]
-    model_dir = "/storage/text2gloss-finetune/fine_tuned_deepseek"
+    model_dir = "/storage/text2gloss-finetune/text2gloss_model_deepseek"
 
     # Load model once
     model, tokenizer = load_model(model_dir)

@@ -4,6 +4,8 @@ import subprocess
 from pathlib import Path
 import unicodedata
 
+ADD_SUBTITLES = False
+
 def parse_srt_blocks(srt_path):
     with open(srt_path, encoding='utf-8-sig') as f:
         content = f.read()
@@ -46,16 +48,20 @@ def extract_snippet(video_path, start_ts, end_ts, burn_text, out_path):
         "-ss", start_ff,
         "-i", str(video_path),
         "-t", dur_ff,
-        "-vf", (
-            f"drawtext="
-            f"text='{burn_text}':"
-            f"fontcolor=white:fontsize=12:"
-            f"box=1:boxcolor=black@0.5:boxborderw=5:"
-            f"x=(w-text_w)/2:y=h-(text_h)-10"
-        ),
-        "-c:a", "copy",
-        str(out_path)
     ]
+
+    if ADD_SUBTITLES:
+        cmd += [
+            "-vf", (
+                f"drawtext="
+                f"text='{burn_text}':"
+                f"fontcolor=white:fontsize=12:"
+                f"box=1:boxcolor=black@0.5:boxborderw=5:"
+                f"x=(w-text_w)/2:y=h-(text_h)-10"
+            )
+        ]
+
+    cmd += ["-c:a", "copy", str(out_path)]
     subprocess.run(cmd, check=True)
 
 def sanitize_filename(text):
@@ -65,8 +71,6 @@ def sanitize_filename(text):
     # Replace remaining non-filename-safe characters with underscores
     text = re.sub(r'[^\w\-.]', '_', text)
     return text
-
-# ... [all previous imports and function definitions remain unchanged]
 
 def main():
     p = argparse.ArgumentParser(description="🔍 Search SRTs and extract video snippets 🎞️")

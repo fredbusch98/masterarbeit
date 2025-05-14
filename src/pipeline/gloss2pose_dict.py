@@ -221,7 +221,7 @@ def load_gloss_times(csv_filepath):
         sys.exit(1)
     return gloss_times
 
-def create_config_yml(timestamp, video_filename, output_dir):
+def create_config_yml(timestamp, video_filename, output_dir, num_frames):
     config_filename = f"config-{timestamp}.yml"
     config_filepath = os.path.join(output_dir, config_filename)
     config_content = f"""# base svd model path
@@ -233,7 +233,7 @@ ckpt_path: models/MimicMotion_1-1.pth
 test_case:
   - ref_video_path: assets/example_data/videos/{video_filename}
     ref_image_path: assets/example_data/images/ref.jpg
-    num_frames: 72
+    num_frames: {num_frames}
     resolution: 576
     frames_overlap: 6
     num_inference_steps: 25
@@ -276,7 +276,9 @@ def generate_videos_from_poses_and_create_config_yml(data, output_dir='output', 
     if video_writer:
         video_writer.release()
         print(f"Video created: {video_path}")
-    config_filepath, config_filename = create_config_yml(timestamp, video_filename, output_dir)
+    # Pass correct number of frames
+    num_frames = len(data)
+    config_filepath, config_filename = create_config_yml(timestamp, video_filename, output_dir, num_frames)
     return config_filepath, video_path, config_filename, video_filename
 
 def run_from_list(gloss_list, default_frames=False, fill_pose_sequence=False):

@@ -22,4 +22,5 @@ spec:
       claimName: my-storage-volume
   # Node selector to ensure the pod is scheduled only on nodes with a V100 GPU.
   nodeSelector:
-    kubernetes.io/hostname: cl-worker29
+    gpu: a100
+    #kubernetes.io/hostname: cl-worker29

@@ -8,10 +8,12 @@ from unsloth import FastLanguageModel
 import torch
 from trl import SFTTrainer
 from transformers import TrainingArguments
-from sacrebleu import corpus_bleu, corpus_chrf, corpus_ter
+from sacrebleu import corpus_chrf, corpus_ter
+from sacrebleu.metrics import BLEU
 import os
 from rouge_score import rouge_scorer
 
+epochs = 7
 # Ensure the log directory exists
 log_dir = "/storage/text2gloss-finetune"
 os.makedirs(log_dir, exist_ok=True)
@@ -150,7 +152,7 @@ def main():
                 per_device_train_batch_size=4,
                 gradient_accumulation_steps=4,
                 warmup_steps=1000,
-                num_train_epochs=5,
+                num_train_epochs=epochs, # als nächstes mit 10
                 learning_rate=5e-5,
                 fp16 = not torch.cuda.is_bf16_supported(),
                 bf16 = torch.cuda.is_bf16_supported(),
@@ -226,10 +228,17 @@ def main():
         references = [row.glosses for row in val_df.itertuples()]
         logger.info("Finished generating glosses for validation evaluation...")
 
-        # BLEU
-        logger.info("Calculating BLEU score on validation set..." )
-        bleu = corpus_bleu(predictions, [references])
-        logger.info("BLEU score on validation set: %f", bleu.score)
+        # --- Use SacreBLEU for BLEU-1 through BLEU-4 instead of NLTK BLEU ---
+        logger.info("Calculating BLEU-1 through BLEU-4 on validation set with SacreBLEU...")
+        bleu_scores = {}
+        # SacreBLEU expects: predictions as List[str] and references as List[List[str]]
+        # Here we have a single reference per sentence, so wrap in a list: [references]
+        for n in range(1, 5):  # Compute BLEU-1 to BLEU-4
+            bleu_metric = BLEU(max_ngram_order=n)  # Instantiate BLEU metric for n-grams
+            result = bleu_metric.corpus_score(predictions, [references])  # Compute corpus-level score
+            bleu_scores[f"BLEU-{n}"] = result.score  # Extract score
+            logger.info("BLEU-%d: %.2f", n, result.score)
+        # --- End SacreBLEU BLEU-N computation ---
 
         # CHRF
         logger.info("Calculating CHRF score on validation set..." )
@@ -264,16 +273,21 @@ def main():
         accuracy = exact_matches / len(predictions)
         logger.info("Exact match accuracy on validation set: %f", accuracy)
 
-        # Write validation metrics
+        # Write validation metrics, including BLEU-N
         with open("/storage/text2gloss-finetune/evaluation_results.txt", "w") as f:
             f.write(f"Validation set evaluation:\n")
-            f.write(f"BLEU score: {bleu.score}\n")
-            f.write(f"CHRF score: {chrf.score}\n")
-            f.write(f"TER score: {ter.score}\n")
-            f.write(f"ROUGE-1: {rouge1}\n")
-            f.write(f"ROUGE-2: {rouge2}\n")
-            f.write(f"ROUGE-L: {rougel}\n")
-            f.write(f"Exact match accuracy: {accuracy}\n")
+            # Write BLEU-N scores
+            f.write("=== Detailed BLEU scores ===\n")
+            for name, score in bleu_scores.items():  # Writing each BLEU-N
+                f.write(f"{name}: {score:.2f}\n")
+            f.write("\n=== CHRF and TER ===\n")
+            f.write(f"CHRF score: {chrf.score:.2f}\n")
+            f.write(f"TER score: {ter.score:.2f}\n")
+            f.write("\n=== ROUGE F1 scores ===\n")
+            f.write(f"ROUGE-1: {rouge1:.2f}\n")
+            f.write(f"ROUGE-2: {rouge2:.2f}\n")
+            f.write(f"ROUGE-L: {rougel:.2f}\n")
+            f.write(f"Exact match accuracy: {accuracy:.2f}\n")
             
         # Additional evaluation on 1000 random samples from the training set - non-zero-shot:
         logger.info("Evaluating on 1000 random samples from train dataset...")
@@ -282,8 +296,15 @@ def main():
         train_sample_df = train_df.sample(n=1000, random_state=42)
         train_predictions = [generate_gloss(row.full_sentence) for row in train_sample_df.itertuples()]
         train_references = [row.glosses for row in train_sample_df.itertuples()]
-        # BLEU on train
-        train_bleu = corpus_bleu(train_predictions, [train_references])
+        # --- Use SacreBLEU for BLEU-1 through BLEU-4 on training samples (non-zero-shot) ---
+        logger.info("Calculating BLEU-1 through BLEU-4 on train samples with SacreBLEU...")
+        train_bleu_scores = {}
+        for n in range(1, 5):  # Compute BLEU-1 to BLEU-4
+            bleu_metric = BLEU(max_ngram_order=n)  # Instantiate BLEU metric for n-grams
+            result = bleu_metric.corpus_score(train_predictions, [train_references])  # Compute corpus-level score
+            train_bleu_scores[f"Train BLEU-{n}"] = result.score  # Extract score
+            logger.info("Train BLEU-%d: %.2f", n, result.score)
+        # --- End SacreBLEU BLEU-N computation for training ---
         # CHRF on train 
         train_chrf = corpus_chrf(train_predictions, [train_references])
         # TER on train
@@ -302,7 +323,8 @@ def main():
         # Exact match on train
         train_exact_matches = sum(1 for pred, ref in zip(train_predictions, train_references) if pred == ref)
         train_accuracy = train_exact_matches / len(train_predictions)
-        logger.info("Train BLEU score: %f", train_bleu.score)
+        for name, score in bleu_scores.items():  # Writing each BLEU-N
+                logger.info(f"{name}: {score:.2f}\n")
         logger.info("Train CHRF score: %f", train_chrf.score)
         logger.info("Train TER score: %f", train_ter.score)
         logger.info("Train ROUGE-1: %f", rouge1_t)
@@ -311,7 +333,8 @@ def main():
         logger.info("Train exact match accuracy: %f", train_accuracy)
         with open("/storage/text2gloss-finetune/evaluation_results.txt", "a") as f:
             f.write(f"\nTrain samples evaluation (1000 random samples):\n")
-            f.write(f"Train BLEU score: {train_bleu.score}\n")
+            for name, score in train_bleu_scores.items():  # Writing each BLEU-N
+                f.write(f"{name}: {score:.2f}\n")
             f.write(f"Train CHRF score: {train_chrf.score}\n")
             f.write(f"Train TER score: {train_ter.score}\n")
             f.write(f"Train ROUGE-1: {rouge1_t}\n")
@@ -325,8 +348,8 @@ def main():
     # Step 8: Save the model
     logger.info("Saving the fine-tuned model and tokenizer...")
     try:
-        model.save_pretrained("/storage/text2gloss-finetune/fine_tuned_deepseek-v2")
-        tokenizer.save_pretrained("/storage/text2gloss-finetune/fine_tuned_deepseek-v2")
+        model.save_pretrained("/storage/text2gloss-finetune/fine_tuned_deepseek")
+        tokenizer.save_pretrained("/storage/text2gloss-finetune/fine_tuned_deepseek")
         logger.info("Model and tokenizer saved successfully.")
     except Exception as e:
         logger.error("Error saving model/tokenizer: %s", e)
