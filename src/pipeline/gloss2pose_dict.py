@@ -3,11 +3,15 @@ import json
 import sys
 import cv2
 from datetime import datetime
+from scipy.signal import savgol_filter
 from tqdm import tqdm
 import shutil  # Added for directory removal
 import csv  # NEW: Import csv module for reading the interpolation times
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from visualization.pose_utils import create_upper_body_pose_image
+from scale_keypoint_proportions import scale_all_files
+
+skip_interpolation = False
 
 # ---------------------- Configuration ----------------------
 # Path to gloss dictionary JSON
@@ -21,7 +25,7 @@ final_output_dir = "./outputs/pose-sequence-videos"
 input_sentence_path = gloss_output_dir
 
 # NEW: Add new option for using the default number of intermediate frames.
-use_default_num_intermediate_frames = True  # Set to False to use CSV values for frame interpolation
+use_default_num_intermediate_frames = False  # Set to False to use CSV values for frame interpolation
 
 # NEW: Path for the CSV file with gloss times (assumed to be in the same directory as the script)
 gloss_times_csv = "./resources/gloss_times_for_frame_interpolation.csv"
@@ -107,6 +111,8 @@ def interpolate_keypoints(current_data, next_data, num_intermediate_frames=7):
     Returns:
         The combined list: current_data followed by the intermediate frames.
     """
+    if skip_interpolation: 
+        return current_data
     start_frame = current_data[-1]
     end_frame = next_data[0]
     keys = ["pose_keypoints_2d", "face_keypoints_2d", "hand_left_keypoints_2d", "hand_right_keypoints_2d"]
@@ -192,6 +198,75 @@ def fill_pose_sequence_duration(gloss_list, data_frames, gloss_times, fps=50):
         filled.append(new_seq)
 
     return filled
+
+def smooth_pose_sequence_savgol(pose_sequence,
+                                window_length=11,
+                                polyorder=3):
+    """
+    Applies a Savitzky–Golay filter independently to each keypoint coordinate
+    (x and y) over time. Confidence values are carried through unchanged.
+
+    Args:
+        pose_sequence: list of frames, where each frame is a dict
+                       containing keys:
+                       "pose_keypoints_2d", "face_keypoints_2d",
+                       "hand_left_keypoints_2d", "hand_right_keypoints_2d"
+                       Each of those is a flat list [x0, y0, c0, x1, y1, c1, …].
+        window_length: must be odd; controls smoothing span in frames.
+        polyorder: polynomial degree for fitting; < window_length.
+
+    Returns:
+        A new list of frames of same length with x/y smoothed.
+    """
+    # extract the four streams of keypoint lists
+    streams = {k: [] for k in ["pose_keypoints_2d",
+                               "face_keypoints_2d",
+                               "hand_left_keypoints_2d",
+                               "hand_right_keypoints_2d"]}
+    # build per-keypoint time series
+    for frame in pose_sequence:
+        for key, buf in streams.items():
+            buf.append(frame.get(key, []))
+
+    # helper to smooth one stream
+    def _smooth_stream(frames_list):
+        if not frames_list:
+            return []
+        num_kpts = len(frames_list[0]) // 3
+        # separate into arrays shape (T, num_kpts)
+        xs = [[f[3*i]   for i in range(num_kpts)] for f in frames_list]
+        ys = [[f[3*i+1] for i in range(num_kpts)] for f in frames_list]
+        # apply filter across axis=0 (time) for each keypoint
+        xs_s = savgol_filter(xs, window_length, polyorder, axis=0).tolist()
+        ys_s = savgol_filter(ys, window_length, polyorder, axis=0).tolist()
+
+        out = []
+        T = len(frames_list)
+        for t in range(T):
+            new_flat = []
+            for i in range(num_kpts):
+                new_flat.extend([
+                    xs_s[t][i],
+                    ys_s[t][i],
+                    # just carry confidence from original
+                    frames_list[t][3*i+2]
+                ])
+            out.append(new_flat)
+        return out
+
+    # smooth each
+    smoothed_streams = {k: _smooth_stream(v) for k, v in streams.items()}
+
+    # rebuild list of frames
+    smoothed_seq = []
+    T = len(pose_sequence)
+    for t in range(T):
+        smoothed_frame = {}
+        for k in streams:
+            smoothed_frame[k] = smoothed_streams[k][t]
+        smoothed_seq.append(smoothed_frame)
+
+    return smoothed_seq
 
 # NEW: Helper function to load gloss times for frame interpolation from CSV.
 def load_gloss_times(csv_filepath):
@@ -298,6 +373,9 @@ def run_from_list(gloss_list, default_frames=False, fill_pose_sequence=False):
     loaded_dict = load_gloss_dictionary(dict_path)
     create_gloss_json_files(gloss_list, loaded_dict, gloss_output_dir)
 
+    # 2.5) Scale all keypoints to match proportions of first glosses signer (to avoid morphing heade and body size!)
+    scale_all_files(gloss_output_dir)
+
     # 3) load all pose‐sequences
     data_frames = load_data_frames_from_path(gloss_output_dir)
     if not data_frames:
@@ -374,6 +452,7 @@ def main():
         gloss_times = load_gloss_times(gloss_times_csv)
 
     # Step 2: Load pose sequences from created JSON files
+    scale_all_files(gloss_output_dir)
     data_frames = load_data_frames_from_path(input_sentence_path)
     if not data_frames:
         print("No valid pose sequence JSON files found. Exiting.")
@@ -409,6 +488,14 @@ def main():
                 # Exclude the overlapping frame from interpolation
                 final_pose_sequence.extend(interpolated[len(previous_data):])
             final_pose_sequence.extend(current_data)
+
+    # Step 3.5 apply smoothing
+    # choose window_length odd, e.g. 11 frames (~0.22s at 50fps), polyorder=3
+    final_pose_sequence = smooth_pose_sequence_savgol(
+        final_pose_sequence,
+        window_length=11,
+        polyorder=3
+    )
 
     # Step 4: Generate the video and config YAML
     config_path, video_path, config_filename, video_filename = generate_videos_from_poses_and_create_config_yml(

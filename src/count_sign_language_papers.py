@@ -20,14 +20,22 @@ KEYWORDS = {
     "Sign Language Production": [
         '"sign language production"',
         '"sign-language-production"',
+        '"sign-language production"',
+    ],
+    "Sign Language Generation": [
+        '"sign language generation"',
+        '"sign-language-generation"',
+        '"sign-language generation"',
     ],
     "Sign Language Recognition": [
         '"sign language recognition"',
         '"sign-language-recognition"',
+        '"sign-language recognition"',
     ],
     "Sign Language Translation": [
         '"sign language translation"',
         '"sign-language-translation"',
+        '"sign-language translation"',
     ],
 }
 

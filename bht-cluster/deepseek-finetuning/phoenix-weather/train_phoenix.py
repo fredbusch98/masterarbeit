@@ -3,7 +3,6 @@ import logging
 import threading
 import pandas as pd
 from datasets import Dataset
-from sklearn.model_selection import train_test_split
 from unsloth import FastLanguageModel
 import torch
 from trl import SFTTrainer
@@ -36,14 +35,14 @@ gloss_output_file = os.path.join(log_dir, "gloss_generation_log.txt")
 def main():
     logger.info("========== STARTING PROCESS ==========")
     # Step 1: Load and preprocess the dataset
-    logger.info("Loading dataset from CSV...")
+    logger.info("Loading train and test datasets from CSVs...")
     try:
-        df = pd.read_csv('/storage/text2gloss-finetune/dataset.csv', encoding='utf-8')
+        train_df = pd.read_csv('/storage/text2gloss-finetune/phoenix_train.csv', encoding='utf-8')
+        val_df   = pd.read_csv('/storage/text2gloss-finetune/phoenix_test.csv',  encoding='utf-8')
     except Exception as e:
-        logger.error("Error reading CSV: %s", e)
+        logger.error("Error reading CSVs: %s", e)
         sys.exit(1)
-    train_df, val_df = train_test_split(df, test_size=0.1, random_state=42)
-    logger.info("Dataset loaded. Train shape: %d, Validation shape: %d", len(train_df), len(val_df))
+    logger.info("Train shape: %d, Validation shape: %d", len(train_df), len(val_df))
 
     def format_conversations(df):
         data = []
@@ -98,7 +97,8 @@ def main():
 
     # After loading dataset
     logger.info("Computing maximum gloss sequence token length...")
-    max_gloss_tokens = compute_max_gloss_tokens(df, tokenizer)
+    full_df = pd.concat([train_df, val_df], ignore_index=True)
+    max_gloss_tokens = compute_max_gloss_tokens(full_df, tokenizer)
     logger.info("Maximum gloss sequence token length: %d tokens", max_gloss_tokens)
 
     # Step 3: Apply LoRA configuration

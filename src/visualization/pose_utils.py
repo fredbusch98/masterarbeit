@@ -198,26 +198,33 @@ def normalize_all_keypoints(body: List[Keypoint],
                             right: List[Keypoint],
                             face: List[Keypoint]) -> Tuple[List[Keypoint], List[Keypoint], List[Keypoint], List[Keypoint]]:
     """
-    Normalizes all keypoints so that the body keypoint with id==1 is centered at (0.5, 0.4) (i.e., center of a 1280x720 image).
-    The function computes an offset based on keypoint id 1 and applies it to all keypoints.
+    Normalizes all keypoints so that the body keypoint with id==1 is centered at (0.5, 0.4).
+    The body keypoint with id==8 is fixed at (0.5, 0.8) and NOT offset.
 
     Returns:
         Tuple of updated keypoint lists (body, left, right, face).
     """
     # Find the reference keypoint from the body keypoints with id 1.
-    ref_kp = next((kp for kp in body if kp.id == 1 and kp.score >= CONFIDENCE_THRESHOLD), None)
+    ref_kp = next((kp for kp in body if kp.id == 1), None)
     if ref_kp is None:
-        # If not found, return keypoints unchanged
         return body, left, right, face
 
-    # Compute offset in normalized coordinates
+    # Compute offset
     offset_x = 0.5 - ref_kp.x
     offset_y = 0.4 - ref_kp.y
 
-    def apply_offset(keypoints: List[Keypoint]) -> List[Keypoint]:
-        return [Keypoint(x=kp.x + offset_x, y=kp.y + offset_y, score=kp.score, id=kp.id) for kp in keypoints]
+    def apply_offset(keypoints: List[Keypoint], fix_id8=False) -> List[Keypoint]:
+        new_kps = []
+        for kp in keypoints:
+            if fix_id8 and kp.id == 8:
+                # Fix this keypoint to (0.5, 0.8)
+                new_kps.append(Keypoint(x=0.5, y=0.8, score=kp.score, id=kp.id))
+            else:
+                # Apply offset
+                new_kps.append(Keypoint(x=kp.x + offset_x, y=kp.y + offset_y, score=kp.score, id=kp.id))
+        return new_kps
 
-    return apply_offset(body), apply_offset(left), apply_offset(right), apply_offset(face)
+    return apply_offset(body, fix_id8=True), apply_offset(left), apply_offset(right), apply_offset(face)
 
 # Create and return a pose image using OpenCV
 def create_pose_image(person):

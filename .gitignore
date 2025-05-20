@@ -13,3 +13,4 @@ outputs/
 resources/
 data_augment.log
 augmented_dataset.csv
+*.csv

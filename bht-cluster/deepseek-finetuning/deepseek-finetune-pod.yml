@@ -20,5 +20,5 @@ spec:
     persistentVolumeClaim:
       claimName: my-storage-volume
   nodeSelector:
-    gpu: a100
+    gpu: v100
     #kubernetes.io/hostname: cl-worker29 ## ggf wieder auf v100 wechseln!
