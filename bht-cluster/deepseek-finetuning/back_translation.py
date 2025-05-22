@@ -7,6 +7,7 @@ from pathlib import Path
 
 # Global default number of paraphrases per sentence
 global_num_paraphrases = 2
+max_attempts = 10
 
 # Configure logging
 log_file = Path(__file__).with_name("data_augment.log")
@@ -24,7 +25,7 @@ def back_translate(sentence: str,
                    translator_de_en,
                    translator_en_de,
                    exclude: set,
-                   max_attempts: int = 10) -> str:
+                   max_attempts: int = max_attempts) -> str:
     """Perform back‑translation on a single sentence, avoiding any in `exclude` set."""
     for attempt in range(max_attempts):
         # Translate to English with sampling for variation
@@ -119,7 +120,7 @@ def main(input_csv: str, output_csv: str, n_paraphrases: int):
     )
     logger.info(
         "Problematic (no new paraphrase after %d attempts each): %d",
-        5,
+        max_attempts,
         problematic_count
     )
 
