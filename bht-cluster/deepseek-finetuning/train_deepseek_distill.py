@@ -163,7 +163,7 @@ def main():
                 per_device_train_batch_size=4,
                 gradient_accumulation_steps=4,
                 warmup_steps=1000,
-                num_train_epochs=epochs, # als nächstes mit 10
+                num_train_epochs=epochs,
                 learning_rate=5e-5,
                 fp16 = not torch.cuda.is_bf16_supported(),
                 bf16 = torch.cuda.is_bf16_supported(),

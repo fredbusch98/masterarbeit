@@ -12,7 +12,7 @@ from sacrebleu.metrics import BLEU
 import os
 from rouge_score import rouge_scorer
 
-epochs = 6
+epochs = 3
 # Ensure the log directory exists
 log_dir = "/storage/text2gloss-finetune"
 os.makedirs(log_dir, exist_ok=True)
