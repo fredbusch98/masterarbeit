@@ -11,20 +11,10 @@ from sacrebleu import corpus_chrf, corpus_ter
 from sacrebleu.metrics import BLEU
 import os
 from rouge_score import rouge_scorer
-import argparse
 
-# Argument parsing
-p = argparse.ArgumentParser(description='LLM finetuning training script for Text2Gloss translation')
-p.add_argument('--train_dir', type=str, default='og',required=True,
-               help='Name of the train directory, e.g.: og, bt-1 or bt-2')
-p.add_argument('--num_epochs', type=int, default='6', help='Number of epochs for the LLM fine-tuning')
-args = p.parse_args()
-
-train_set_dir = args.train_dir
-epochs = args.num_epochs
-
+epochs = 2
 # Ensure the log directory exists
-results_dir = "/storage/text2gloss-finetune/results"
+results_dir = "/storage/text2gloss-finetune/phoenix-weather/results"
 os.makedirs(results_dir, exist_ok=True)
 log_file = os.path.join(results_dir, "process.log")
 
@@ -47,13 +37,13 @@ def main():
     # Step 1: Load and preprocess the dataset
     logger.info("Loading train and test datasets from CSVs...")
     try:
-        train_df = pd.read_csv(f'/storage/text2gloss-finetune/text2gloss_data/{train_set_dir}/train.csv', encoding='utf-8')
-        val_df   = pd.read_csv('/storage/text2gloss-finetune/text2gloss_data/dev.csv',  encoding='utf-8')
-        test_df  = pd.read_csv('/storage/text2gloss-finetune/text2gloss_data/test.csv',  encoding='utf-8')
+        train_df = pd.read_csv('/storage/text2gloss-finetune/phoenix-weather/og_train.csv', encoding='utf-8')
+        val_df   = pd.read_csv('/storage/text2gloss-finetune/phoenix-weather/dev.csv',  encoding='utf-8')
+        test_df  = pd.read_csv('/storage/text2gloss-finetune/phoenix-weather/test.csv',  encoding='utf-8')
     except Exception as e:
         logger.error("Error reading CSVs: %s", e)
         sys.exit(1)
-    logger.info("Train shape: %d, Validation shape: %d, Test shape: %d", len(train_df), len(val_df), len(test_df))
+    logger.info("Train shape: %d, Validation shape: %d", len(train_df), len(val_df))
 
     def format_conversations(df):
         data = []
@@ -163,7 +153,7 @@ def main():
                 per_device_train_batch_size=4,
                 gradient_accumulation_steps=4,
                 warmup_steps=1000,
-                num_train_epochs=epochs,
+                num_train_epochs=epochs, # als nächstes mit 10
                 learning_rate=5e-5,
                 fp16 = not torch.cuda.is_bf16_supported(),
                 bf16 = torch.cuda.is_bf16_supported(),
@@ -298,8 +288,8 @@ def main():
     # Step 8: Save the model
     logger.info("Saving the fine-tuned model and tokenizer...")
     try:
-        model.save_pretrained("/storage/text2gloss-finetune/results/fine_tuned_deepseek")
-        tokenizer.save_pretrained("/storage/text2gloss-finetune/results/fine_tuned_deepseek")
+        model.save_pretrained("/storage/text2gloss-finetune/phoenix-weather/results/fine_tuned_deepseek")
+        tokenizer.save_pretrained("/storage/text2gloss-finetune/phoenix-weather/results/fine_tuned_deepseek")
         logger.info("Model and tokenizer saved successfully.")
     except Exception as e:
         logger.error("Error saving model/tokenizer: %s", e)

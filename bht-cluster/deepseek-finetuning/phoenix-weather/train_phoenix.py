@@ -12,11 +12,11 @@ from sacrebleu.metrics import BLEU
 import os
 from rouge_score import rouge_scorer
 
-epochs = 3
+epochs = 6
 # Ensure the log directory exists
-log_dir = "/storage/text2gloss-finetune"
-os.makedirs(log_dir, exist_ok=True)
-log_file = os.path.join(log_dir, "process.log")
+results_dir = "/storage/text2gloss-finetune/phoenix-weather/results"
+os.makedirs(results_dir, exist_ok=True)
+log_file = os.path.join(results_dir, "process.log")
 
 # Configure logging to write to both a file and stdout if desired
 logging.basicConfig(
@@ -30,16 +30,16 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Define the output file for generated glosses
-gloss_output_file = os.path.join(log_dir, "gloss_generation_log.txt")
+gloss_output_file = os.path.join(results_dir, "gloss_generation_log.txt")
 
 def main():
     logger.info("========== STARTING PROCESS ==========")
     # Step 1: Load and preprocess the dataset
     logger.info("Loading train and test datasets from CSVs...")
     try:
-        train_df = pd.read_csv('/storage/text2gloss-finetune/phoenix-weather/phoenix_train.csv', encoding='utf-8')
-        val_df   = pd.read_csv('/storage/text2gloss-finetune/phoenix-weather/phoenix_val.csv',  encoding='utf-8')
-        test_df  = pd.read_csv('/storage/text2gloss-finetune/phoenix-weather/phoenix_test.csv',  encoding='utf-8')
+        train_df = pd.read_csv('/storage/text2gloss-finetune/phoenix-weather/bt1_train.csv', encoding='utf-8')
+        val_df   = pd.read_csv('/storage/text2gloss-finetune/phoenix-weather/dev.csv',  encoding='utf-8')
+        test_df  = pd.read_csv('/storage/text2gloss-finetune/phoenix-weather/test.csv',  encoding='utf-8')
     except Exception as e:
         logger.error("Error reading CSVs: %s", e)
         sys.exit(1)
@@ -259,14 +259,14 @@ def main():
             rouge2 += scores["rouge2"].fmeasure
             rougel += scores["rougeL"].fmeasure
         n = len(predictions)
-        rouge1 /= n
-        rouge2 /= n
-        rougel /= n
+        rouge1 = 100 * rouge1 / n
+        rouge2 = 100 * rouge2 / n
+        rougel = 100 * rougel / n
         logger.info(f"Average ROUGE-1 on {mode} set: %f", rouge1)
         logger.info(f"Average ROUGE-2 on {mode} set: %f", rouge2)
         logger.info(f"Average ROUGE-L on {mode} set: %f", rougel)
 
-        with open(f"/storage/text2gloss-finetune/evaluation_results_{mode}.txt", "w") as f:
+        with open(f"{results_dir}/evaluation_results_{mode}.txt", "w") as f:
             f.write(f"{mode} set evaluation:\n")
             f.write("=== Detailed BLEU scores ===\n")
             for name, score in bleu_scores.items(): 
@@ -288,8 +288,8 @@ def main():
     # Step 8: Save the model
     logger.info("Saving the fine-tuned model and tokenizer...")
     try:
-        model.save_pretrained("/storage/text2gloss-finetune/fine_tuned_deepseek")
-        tokenizer.save_pretrained("/storage/text2gloss-finetune/fine_tuned_deepseek")
+        model.save_pretrained("/storage/text2gloss-finetune/phoenix-weather/results/fine_tuned_deepseek")
+        tokenizer.save_pretrained("/storage/text2gloss-finetune/phoenix-weather/results/fine_tuned_deepseek")
         logger.info("Model and tokenizer saved successfully.")
     except Exception as e:
         logger.error("Error saving model/tokenizer: %s", e)

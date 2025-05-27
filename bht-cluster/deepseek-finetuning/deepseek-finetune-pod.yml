@@ -13,12 +13,12 @@ spec:
       limits:
         nvidia.com/gpu: "1"
     volumeMounts:
-    - name: my-storage-volume
+    - name: fbusch-volume
       mountPath: /storage
   volumes:
-  - name: my-storage-volume
+  - name: fbusch-volume
     persistentVolumeClaim:
-      claimName: my-storage-volume
+      claimName: fbusch-volume
   nodeSelector:
     #gpu: a100
     kubernetes.io/hostname: cl-worker29 ## ggf wieder auf v100 wechseln!

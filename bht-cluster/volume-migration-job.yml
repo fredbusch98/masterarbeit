@@ -1,0 +1,24 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: volume-migration
+spec:
+  template:
+    spec:
+      containers:
+      - name: migrator
+        image: busybox
+        command: ["sh", "-c", "tar c -C /source . | tar x -C /target"]
+        volumeMounts:
+        - name: source-volume
+          mountPath: /source
+        - name: target-volume
+          mountPath: /target
+      volumes:
+      - name: source-volume
+        persistentVolumeClaim:
+          claimName: my-storage-volume
+      - name: target-volume
+        persistentVolumeClaim:
+          claimName: fbusch-volume
+      restartPolicy: Never

@@ -13,19 +13,21 @@ spec:
       limits:
         nvidia.com/gpu: "1"
     volumeMounts:
-    - name: my-storage-volume
+    - name: fbusch-volume
       mountPath: /storage
   volumes:
-  - name: my-storage-volume
+  - name: fbusch-volume
     persistentVolumeClaim:
-      claimName: my-storage-volume
+      claimName: fbusch-volume
   nodeSelector:
-    gpu: a100
-    #kubernetes.io/hostname: cl-worker29 ## ggf wieder auf v100 wechseln!
+    #gpu: a100
+    kubernetes.io/hostname: cl-worker29 ## ggf wieder auf v100 wechseln!
 
 
 # Update the training script:
 # kubectl cp /Users/frederikbusch/Developer/master-arbeit/text2gloss2pose/bht-cluster/deepseek-finetuning/phoenix-weather/train_phoenix.py s85468/deepseek-finetune:/storage/text2gloss-finetune/phoenix-weather/train_phoenix.py
 
 ## Get the results
-# kubectl cp s85468/deepseek-finetune:/storage/text2gloss-finetune/phoenix-weather/evaluation_results.txt /Users/frederikbusch/Developer/master-arbeit/text2gloss2pose/bht-cluster/deepseek-finetuning/phoenix-weather/evaluation_results.txt
+# kubectl delete -f deepseek-finetune-train-pod.yml
+# kubectl apply -f deepseek-finetune-pod.yml
+# kubectl cp s85468/deepseek-finetune:/storage/text2gloss-finetune/phoenix-weather/results /Users/frederikbusch/Developer/master-arbeit/text2gloss2pose/bht-cluster/deepseek-finetuning/phoenix-weather/results

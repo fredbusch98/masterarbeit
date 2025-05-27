@@ -37,8 +37,4 @@ Deepseek-LLAMA-Distill: kubectl cp /Users/frederikbusch/Developer/master-arbeit/
 2. kubectl cp /Users/frederikbusch/Developer/master-arbeit/text2gloss2pose/bht-cluster/deepseek-finetuning/text2gloss_model_deepseek s85468/deepseek-finetune:/storage/text2gloss-finetune/text2gloss_model_deepseek
 
 ## Get the results
-kubectl cp s85468/deepseek-finetune:/storage/text2gloss-finetune/process.log /Users/frederikbusch/Developer/master-arbeit/text2gloss2pose/bht-cluster/deepseek-finetuning/results/process.log
-kubectl cp s85468/deepseek-finetune:/storage/text2gloss-finetune/gloss_generation_log.txt /Users/frederikbusch/Developer/master-arbeit/text2gloss2pose/bht-cluster/deepseek-finetuning/results/gloss_generation_log.txt
-kubectl cp s85468/deepseek-finetune:/storage/text2gloss-finetune/evaluation_results_DEV.txt /Users/frederikbusch/Developer/master-arbeit/text2gloss2pose/bht-cluster/deepseek-finetuning/results/evaluation_results_DEV.txt
-kubectl cp s85468/deepseek-finetune:/storage/text2gloss-finetune/evaluation_results_TEST.txt /Users/frederikbusch/Developer/master-arbeit/text2gloss2pose/bht-cluster/deepseek-finetuning/results/evaluation_results_TEST.txt
-kubectl cp s85468/deepseek-finetune:/storage/text2gloss-finetune/fine_tuned_deepseek /Users/frederikbusch/Developer/master-arbeit/text2gloss2pose/bht-cluster/deepseek-finetuning/results/fine_tuned_deepseek
+kubectl cp s85468/deepseek-finetune:/storage/text2gloss-finetune/results /Users/frederikbusch/Developer/master-arbeit/text2gloss2pose/bht-cluster/deepseek-finetuning/results

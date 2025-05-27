@@ -8,17 +8,17 @@ spec:
   containers:
   - name: deepseek-finetune-container
     image: pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime
-    command: ["bash", "-c", "cd /storage/text2gloss-finetune && ./start_finetune.sh bt-1 6"]
+    command: ["bash", "-c", "cd /storage/text2gloss-finetune && ./start_finetune.sh bt-2 6"]
     resources:
       limits:
         nvidia.com/gpu: "1"
     volumeMounts:
-    - name: my-storage-volume
+    - name: fbusch-volume
       mountPath: /storage
   volumes:
-  - name: my-storage-volume
+  - name: fbusch-volume
     persistentVolumeClaim:
-      claimName: my-storage-volume
+      claimName: fbusch-volume
   nodeSelector:
     #gpu: a100
     kubernetes.io/hostname: cl-worker29 ## ggf wieder auf v100 wechseln!
