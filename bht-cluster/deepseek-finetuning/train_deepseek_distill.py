@@ -20,11 +20,11 @@ p.add_argument('--train_dir', type=str, default='og',required=True,
 p.add_argument('--num_epochs', type=int, default='6', help='Number of epochs for the LLM fine-tuning')
 args = p.parse_args()
 
-train_set_dir = args.train_dir
+kcross_id = args.train_dir
 epochs = args.num_epochs
 
 # Ensure the log directory exists
-results_dir = "/storage/text2gloss-finetune/results"
+results_dir = f"/storage/text2gloss-finetune/results/kcross-{kcross_id}"
 os.makedirs(results_dir, exist_ok=True)
 log_file = os.path.join(results_dir, "process.log")
 
@@ -47,9 +47,9 @@ def main():
     # Step 1: Load and preprocess the dataset
     logger.info("Loading train and test datasets from CSVs...")
     try:
-        train_df = pd.read_csv(f'/storage/text2gloss-finetune/text2gloss_data/{train_set_dir}/train.csv', encoding='utf-8')
-        val_df   = pd.read_csv('/storage/text2gloss-finetune/text2gloss_data/dev.csv',  encoding='utf-8')
-        test_df  = pd.read_csv('/storage/text2gloss-finetune/text2gloss_data/test.csv',  encoding='utf-8')
+        train_df = pd.read_csv(f'/storage/text2gloss-finetune/text2gloss_data/new-splits-kcross-3/train{kcross_id}.csv', encoding='utf-8')
+        val_df   = pd.read_csv(f'/storage/text2gloss-finetune/text2gloss_data/new-splits-kcross-3/dev{kcross_id}.csv',  encoding='utf-8')
+        test_df  = pd.read_csv(f'/storage/text2gloss-finetune/text2gloss_data/new-splits-kcross-3/test{kcross_id}.csv',  encoding='utf-8')
     except Exception as e:
         logger.error("Error reading CSVs: %s", e)
         sys.exit(1)
@@ -298,8 +298,8 @@ def main():
     # Step 8: Save the model
     logger.info("Saving the fine-tuned model and tokenizer...")
     try:
-        model.save_pretrained("/storage/text2gloss-finetune/results/fine_tuned_deepseek")
-        tokenizer.save_pretrained("/storage/text2gloss-finetune/results/fine_tuned_deepseek")
+        model.save_pretrained(f"{results_dir}/fine_tuned_deepseek")
+        tokenizer.save_pretrained(f"{results_dir}/fine_tuned_deepseek")
         logger.info("Model and tokenizer saved successfully.")
     except Exception as e:
         logger.error("Error saving model/tokenizer: %s", e)

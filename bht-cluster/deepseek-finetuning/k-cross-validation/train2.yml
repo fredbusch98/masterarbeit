@@ -1,14 +1,14 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: deepseek-finetune
+  name: deepseek-finetune-kcross-val-2
   namespace: s85468
 spec:
   restartPolicy: OnFailure
   containers:
-  - name: deepseek-finetune-container
+  - name: deepseek-finetune-container-kcross-val-2
     image: pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime
-    command: ["bash", "-c", "while true; do sleep 30; done"]
+    command: ["bash", "-c", "cd /storage/text2gloss-finetune && ./start_finetune.sh 2 6"]
     resources:
       limits:
         nvidia.com/gpu: "1"

@@ -14,3 +14,4 @@ resources/
 data_augment.log
 augmented_dataset.csv
 *.csv
+fine_tuned_deepseek

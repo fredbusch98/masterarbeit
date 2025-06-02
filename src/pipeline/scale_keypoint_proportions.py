@@ -109,7 +109,7 @@ def scale_all_files(folder_path, uniform=True):
                 for i in range(0, len(fk), 3):
                     fk[i]   *= sx_face
                     fk[i+1] *= sy_face
-                # d) translate to where the head _should_ be after body-scaling
+                # d) translate to where the head should be after body-scaling
                 tx, ty = cx * sx_body, cy * sy_body
                 for i in range(0, len(fk), 3):
                     fk[i]   += tx

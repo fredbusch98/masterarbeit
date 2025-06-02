@@ -356,6 +356,19 @@ def generate_videos_from_poses_and_create_config_yml(data, output_dir='output', 
     config_filepath, config_filename = create_config_yml(timestamp, video_filename, output_dir, num_frames)
     return config_filepath, video_path, config_filename, video_filename
 
+def save_pose_sequence_json(pose_sequence, output_dir, timestamp):
+    """
+    Saves `pose_sequence` (a list of frame‐dicts) as a JSON file in `output_dir`.
+    The filename will be: "final_pose_sequence_<timestamp>.json".
+    """
+    os.makedirs(output_dir, exist_ok=True)
+    filename = f"final_pose_sequence_{timestamp}.json"
+    filepath = os.path.join(output_dir, filename)
+    with open(filepath, 'w', encoding='utf-8') as f:
+        json.dump(pose_sequence, f)
+    print(f"Pose sequence saved to: {filepath}")
+    return filepath
+
 def run_from_list(gloss_list, default_frames=False, fill_pose_sequence=False):
     """
     Exactly the same pipeline as in main(), but takes
@@ -373,7 +386,7 @@ def run_from_list(gloss_list, default_frames=False, fill_pose_sequence=False):
     loaded_dict = load_gloss_dictionary(dict_path)
     create_gloss_json_files(gloss_list, loaded_dict, gloss_output_dir)
 
-    # 2.5) Scale all keypoints to match proportions of first glosses signer (to avoid morphing heade and body size!)
+    # 2.5) Scale all keypoints to match proportions of first glosses signer (to avoid morphing of head and body size)
     scale_all_files(gloss_output_dir)
 
     # 3) load all pose‐sequences
@@ -403,7 +416,7 @@ def run_from_list(gloss_list, default_frames=False, fill_pose_sequence=False):
                     # Use default fixed value
                     num_int_frames = 7
                 else:
-                    # NEW: Calculate num_intermediate_frames using CSV values for the gloss pair.
+                    # Calculate num_intermediate_frames using CSV values for the gloss pair.
                     # For gloss at position i-1 (first gloss) use its median_ogt.
                     # For gloss at position i (next gloss) use its median_igt.
                     gloss_prev = gloss_list[i - 1]
@@ -422,6 +435,9 @@ def run_from_list(gloss_list, default_frames=False, fill_pose_sequence=False):
                 final_pose_sequence.extend(interpolated[len(previous_data):])
             final_pose_sequence.extend(current_data)
 
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    save_pose_sequence_json(final_pose_sequence, final_output_dir, timestamp)
+    
     # 5) render video + write config
     cfg_path, vid_path, cfg_name, vid_name = generate_videos_from_poses_and_create_config_yml(
         final_pose_sequence, output_dir=final_output_dir
