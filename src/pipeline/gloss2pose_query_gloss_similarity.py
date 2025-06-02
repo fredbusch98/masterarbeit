@@ -45,11 +45,14 @@ model = SentenceTransformer(MODEL_NAME)
 nn = NearestNeighbors(n_neighbors=1, metric='cosine').fit(embeddings)
 
 # Argument parsing
-p = argparse.ArgumentParser(description='🔍 Robust 1:1 gloss matcher')
+p = argparse.ArgumentParser(description='🔍 Robust 1:1 gloss matcher that will generate a pose sequence video for the given gloss sequence!')
 p.add_argument('--glosses', required=True,
                help='Comma-separated gloss list')
+p.add_argument('--reference-image', required=False,
+               help='Path to a reference image of a single person for setting the skeleton dimensions of the final pose sequence. Upper-body (including both arms, hands and the face) should be fully visible in the image!')
 args = p.parse_args()
 queries = [g.strip().upper() for g in args.glosses.split(',') if g.strip()]
+reference_image_path = args.reference_image
 
 # Matching pipeline
 def match_gloss(q):
@@ -95,7 +98,7 @@ gloss_sequence = gloss_sequence.rstrip(",")
 gloss_list = gloss_sequence.split(",")
 print(f"\nFinal mapped gloss sequence: \n{gloss_list}")
 
-config_path, video_path, cfg_name, vid_name = run_from_list(gloss_list, default_frames=False, fill_pose_sequence=True)
+config_path, video_path, cfg_name, vid_name = run_from_list(gloss_list, reference_image_path, default_frames=False, fill_pose_sequence=True)
 abs_config_path = os.path.abspath(config_path)
 abs_video_path = os.path.abspath(video_path)
 print("\nCopy video and config to the mimicmotion pod:")
@@ -105,13 +108,3 @@ print("kubectl -n s85468 exec -it mimicmotion -- bash")
 print("conda activate mimicmotion && cd /storage/MimicMotion\n")
 print("Start inference with the config on the mimicmotion pod:")
 print(f"python inference.py --inference_config configs/{cfg_name}")
-
-# HIER IST DER PROMPT FÜR ChatGPT API: 
-# Du bist ein professioneller Übersetzer für Deutsche Gebärdensprache. Du kannst ganze deutsche Sätze in ihre Gebärden-Gloss-Form übersetzen. Übersetze den folgenden Satz in eine solche Gebärden-Gloss-Sequenz: "In der Schule esse ich meistens einen Apfel in der Mittagspause."
-# Gib ausschließlich die Gloss-Sequenz als komma-separierte Liste aus und keinerlei zusätzliche Erklärung oder Gedanken!
-
-# How to run:
-# 1. Prompt ChatGPT with the prompt above and change the sentence to your desired sentence!
-# The output will looks something like this: GLOSS_1, GLOSS_2, ..., GLOSS_N
-# 2. Copy the output and call the script: python query_gloss_similarity.py --glosses "GLOSS_1, GLOSS_2, ..., GLOSS_N"
-# This will create a pose sequence video that represents your input sentence.

@@ -369,7 +369,7 @@ def save_pose_sequence_json(pose_sequence, output_dir, timestamp):
     print(f"Pose sequence saved to: {filepath}")
     return filepath
 
-def run_from_list(gloss_list, default_frames=False, fill_pose_sequence=False):
+def run_from_list(gloss_list, reference_image_path, default_frames=False, fill_pose_sequence=False):
     """
     Exactly the same pipeline as in main(), but takes
     a Python list of glosses instead of sys.argv.
@@ -387,7 +387,7 @@ def run_from_list(gloss_list, default_frames=False, fill_pose_sequence=False):
     create_gloss_json_files(gloss_list, loaded_dict, gloss_output_dir)
 
     # 2.5) Scale all keypoints to match proportions of first glosses signer (to avoid morphing of head and body size)
-    scale_all_files(gloss_output_dir)
+    scale_all_files(gloss_output_dir, reference_image_path)
 
     # 3) load all pose‐sequences
     data_frames = load_data_frames_from_path(gloss_output_dir)
@@ -512,6 +512,9 @@ def main():
         window_length=11,
         polyorder=3
     )
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    save_pose_sequence_json(final_pose_sequence, final_output_dir, timestamp)
 
     # Step 4: Generate the video and config YAML
     config_path, video_path, config_filename, video_filename = generate_videos_from_poses_and_create_config_yml(
