@@ -5,8 +5,8 @@ import cv2
 from datetime import datetime
 from scipy.signal import savgol_filter
 from tqdm import tqdm
-import shutil  # Added for directory removal
-import csv  # NEW: Import csv module for reading the interpolation times
+import shutil
+import csv
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from visualization.pose_utils import create_upper_body_pose_image
 from scale_keypoint_proportions import scale_all_files
@@ -17,17 +17,14 @@ skip_interpolation = False
 # Path to gloss dictionary JSON
 root_folder = "/Volumes/IISY/DGSKorpus"
 dict_path = "./resources/gloss_dictionary.json"
-# Output directory for the individual gloss JSON files
+# Output directory for the intermediary gloss JSON files
 gloss_output_dir = "outputs/gloss2pose_dictionary_output"
-# Final output directory for video and config
+# Final output directory for pose sequence video and MimicMotion config
 final_output_dir = "./outputs/pose-sequence-videos"
-# Temporary input directory (using the gloss output directory)
+# Input directory for testing with the main method instead of gloss2pose_query_dict_gloss_similarity.py (using the intermediary gloss output directory)
 input_sentence_path = gloss_output_dir
 
-# NEW: Add new option for using the default number of intermediate frames.
 use_default_num_intermediate_frames = False  # Set to False to use CSV values for frame interpolation
-
-# NEW: Path for the CSV file with gloss times (assumed to be in the same directory as the script)
 gloss_times_csv = "./resources/gloss_times_for_frame_interpolation.csv"
 # -----------------------------------------------------------
 
@@ -38,7 +35,7 @@ def load_gloss_dictionary(dict_path):
         with open(dict_path, 'r', encoding='utf-8') as f:
             with tqdm(total=file_size, desc="Loading gloss dictionary", unit="B", unit_scale=True) as pbar:
                 loaded_dict = json.load(f)
-                pbar.update(file_size)  # Update progress bar fully
+                pbar.update(file_size)
         return loaded_dict
     except FileNotFoundError:
         print(f"Error: Could not find the dictionary file at {dict_path}")
@@ -70,7 +67,7 @@ def create_gloss_json_files(gloss_list, loaded_dict, output_dir):
             # Get the pose sequence for this gloss
             pose_sequence = loaded_dict[gloss]
             output_data = {
-                "gloss": gloss,  # NEW: Include gloss in JSON for reference
+                "gloss": gloss,
                 "pose_sequence": pose_sequence
             }
             output_file = os.path.join(output_dir, f"{counter}.json")
@@ -83,7 +80,6 @@ def create_gloss_json_files(gloss_list, loaded_dict, output_dir):
 def load_json(file_path):
     with open(file_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
-    # Return the pose_sequence (expected key)
     return data['pose_sequence']
 
 def load_data_frames_from_path(sentence_path):
@@ -268,7 +264,6 @@ def smooth_pose_sequence_savgol(pose_sequence,
 
     return smoothed_seq
 
-# NEW: Helper function to load gloss times for frame interpolation from CSV.
 def load_gloss_times(csv_filepath):
     """
     Reads the CSV file with gloss times and returns a dictionary
@@ -351,7 +346,7 @@ def generate_videos_from_poses_and_create_config_yml(data, output_dir='output', 
     if video_writer:
         video_writer.release()
         print(f"Video created: {video_path}")
-    # Pass correct number of frames
+
     num_frames = len(data)
     config_filepath, config_filename = create_config_yml(timestamp, video_filename, output_dir, num_frames)
     return config_filepath, video_path, config_filename, video_filename
@@ -371,9 +366,9 @@ def save_pose_sequence_json(pose_sequence, output_dir, timestamp):
 
 def run_from_list(gloss_list, reference_image_path, default_frames=False, fill_pose_sequence=False):
     """
-    Exactly the same pipeline as in main(), but takes
-    a Python list of glosses instead of sys.argv.
-    Returns (config_path, video_path, config_filename, video_filename).
+    Given a list of glosses and optionally a reference image, 
+    runs the entire pipeline and creates a pose sequence JSON file, 
+    a video of the pose sequence and a config file for the inference of the MimicMotion Pose2Sign pipeline.
     """
     # override the module‐level flag if you need to
     global use_default_num_intermediate_frames
@@ -417,8 +412,8 @@ def run_from_list(gloss_list, reference_image_path, default_frames=False, fill_p
                     num_int_frames = 7
                 else:
                     # Calculate num_intermediate_frames using CSV values for the gloss pair.
-                    # For gloss at position i-1 (first gloss) use its median_ogt.
-                    # For gloss at position i (next gloss) use its median_igt.
+                    # For gloss at position i-1 (first gloss) use its median_ogt. (out-of-gloss time)
+                    # For gloss at position i (next gloss) use its median_igt. (into-gloss time)
                     gloss_prev = gloss_list[i - 1]
                     gloss_curr = gloss_list[i]
                     if gloss_prev in gloss_times and gloss_curr in gloss_times:
