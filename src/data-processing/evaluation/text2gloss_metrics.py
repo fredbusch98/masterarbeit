@@ -2,7 +2,8 @@ import csv
 from statistics import mean
 
 # Path to your CSV file
-file_path = "/Volumes/IISY/DGSKorpus/dgs-text2gloss-combined.csv"
+# file_path = "/Volumes/IISY/DGSKorpus/dgs-text2gloss-combined.csv"
+file_path = "../../../bht-cluster/deepseek-finetuning/text2gloss_data/bt-1/train.csv"
 
 sentences = []
 
@@ -39,9 +40,16 @@ longest_example = longest_sentences[0] if longest_sentences else ""
 # Count additional sentences that share the longest length (excluding the printed example)
 longest_others = len(longest_sentences) - 1
 
+# Word statistics
+all_words = [word for sentence in sentences for word in sentence.split()]
+total_words = len(all_words)
+unique_words = len(set(all_words))
+
 # Log the results
 print(f"Total sentences: {len(sentences)}")
 print(f"Unique sentences: {unique_count}")
 print(f"Average sentence length (in words): {avg_length:.2f}")
 print(f"Shortest sentence ({min_length} words): \"{shortest_example}\" (and {shortest_others} more with this length)")
 print(f"Longest sentence ({max_length} words): \"{longest_example}\" (and {longest_others} more with this length)")
+print(f"Total words across all sentences: {total_words}")
+print(f"Unique words across all sentences: {unique_words}")

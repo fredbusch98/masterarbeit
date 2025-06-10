@@ -20,7 +20,7 @@ spec:
     persistentVolumeClaim:
       claimName: fbusch-volume
   nodeSelector:
-    gpu: v100
+    gpu: a100
 
 # Start the pod and data augmentation: kubectl apply -f text2gloss-data-augmentation-pod.yml
 
@@ -30,6 +30,7 @@ spec:
 # kubectl apply -f deepseek-finetune-pod.yml
 # kubectl cp s85468/deepseek-finetune:/storage/text2gloss-finetune/augmented_dataset.csv /Users/frederikbusch/Developer/master-arbeit/text2gloss2pose/bht-cluster/deepseek-finetuning/augmented_dataset.csv
 # kubectl cp s85468/deepseek-finetune:/storage/text2gloss-finetune/data_augment.log /Users/frederikbusch/Developer/master-arbeit/text2gloss2pose/bht-cluster/deepseek-finetuning/data_augment.log
+# kubectl delete -f deepseek-finetune-pod.yml
 
 # Update the BT-script:
 # kubectl cp /Users/frederikbusch/Developer/master-arbeit/text2gloss2pose/bht-cluster/deepseek-finetuning/back_translation.py s85468/deepseek-finetune:/storage/text2gloss-finetune/back_translation.py

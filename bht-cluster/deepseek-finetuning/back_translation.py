@@ -4,10 +4,12 @@ from transformers import pipeline
 import argparse
 import sys
 from pathlib import Path
+from collections import Counter
+import torch
 
 # Global default number of paraphrases per sentence
-global_num_paraphrases = 2
-max_attempts = 10
+global_num_paraphrases = 1
+max_attempts = 5
 
 # Configure logging
 log_file = Path(__file__).with_name("data_augment.log")
@@ -20,6 +22,28 @@ logging.basicConfig(
     ],
 )
 logger = logging.getLogger(__name__)
+
+def is_degenerate(s: str, min_words: int = 5, max_ngram: int = 10, repetition_threshold: float = 0.5) -> bool:
+    words = s.split()
+    if not words:
+        return False
+    if len(words) < min_words:
+        return False  # Allow short valid sentences
+
+    total_words = len(words)
+
+    for n in range(1, min(max_ngram, total_words) + 1):
+        ngrams = [" ".join(words[i:i+n]) for i in range(len(words) - n + 1)]
+        if not ngrams:
+            continue
+        counts = Counter(ngrams)
+        most_common, freq = counts.most_common(1)[0]
+        if freq > 1:
+            proportion = (freq * n) / total_words
+            if proportion > repetition_threshold:
+                return True
+
+    return False
 
 def back_translate(sentence: str,
                    translator_de_en,
@@ -34,39 +58,46 @@ def back_translate(sentence: str,
             max_length=512,
             do_sample=True,
             top_k=50,
-            top_p=0.95
-        )[0]['translation_text']
+            top_p=0.95,
+            no_repeat_ngram_size=3,
+            repetition_penalty=2.0,
+            early_stopping=True
+        )[0]['translation_text'].strip()
         logger.debug("DE→EN: %s → %s", sentence, en)
 
-        # Back‑translate to German (greedy)
+        # Back‑translate to German (greedy with constraints)
         back = translator_en_de(
             en,
-            max_length=512
-        )[0]['translation_text']
+            max_length=512,
+            no_repeat_ngram_size=3,
+            repetition_penalty=2.0,
+            early_stopping=True
+        )[0]['translation_text'].strip()
         logger.debug("EN→DE: %s → %s", en, back)
 
-        # If new (not in exclude), accept
-        candidate = back.strip()
-        if candidate and candidate not in exclude:
+        candidate = back
+        if candidate and candidate not in exclude and not is_degenerate(candidate):
             return candidate
-    # All attempts yielded either identical or excluded sentence
     return None
 
 def main(input_csv: str, output_csv: str, n_paraphrases: int):
     logger.info("Loading dataset from %s", input_csv)
     df = pd.read_csv(input_csv)
     total = len(df)
+    device = 0 if torch.cuda.is_available() else -1
 
     # Initialize translation pipelines with error handling
     try:
         logger.info("Loading translation pipelines …")
         translator_de_en = pipeline(
             'translation_de_to_en',
-            model='Helsinki-NLP/opus-mt-de-en'
+            model='Helsinki-NLP/opus-mt-de-en',
+            device=device
         )
         translator_en_de = pipeline(
             'translation_en_to_de',
-            model='Helsinki-NLP/opus-mt-en-de'
+            model='Helsinki-NLP/opus-mt-en-de',
+            device=device
         )
     except ImportError:
         logger.exception(
@@ -94,10 +125,8 @@ def main(input_csv: str, output_csv: str, n_paraphrases: int):
                 augmented_rows.append({'full_sentence': pt, 'glosses': gloss})
                 augmented_count += 1
             else:
-                # No new paraphrase after retries
                 break
 
-        # Logging status
         if paraphrases:
             status = f"Augmented {len(paraphrases)}"
         else:

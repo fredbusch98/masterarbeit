@@ -97,6 +97,7 @@ def parse_srt_for_sentence_entries(srt_file_path, fps, speaker):
                     if found_end and len(gloss_list) > 0:
                         # Build a comma-separated string of the component glosses
                         gloss_sequence = ",".join(gloss_list)
+                        full_sentence = full_sentence.rstrip("/")
                         sentence_entries.append({
                             "full_sentence": full_sentence,
                             "gloss_sequence": gloss_sequence,

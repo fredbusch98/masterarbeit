@@ -298,8 +298,8 @@ def main():
     # Step 8: Save the model
     logger.info("Saving the fine-tuned model and tokenizer...")
     try:
-        model.save_pretrained(f"{results_dir}/fine_tuned_deepseek")
-        tokenizer.save_pretrained(f"{results_dir}/fine_tuned_deepseek")
+        model.save_pretrained(f"{results_dir}/fine_tuned_deepseek-k{kcross_id}")
+        tokenizer.save_pretrained(f"{results_dir}/fine_tuned_deepseek-k{kcross_id}")
         logger.info("Model and tokenizer saved successfully.")
     except Exception as e:
         logger.error("Error saving model/tokenizer: %s", e)
