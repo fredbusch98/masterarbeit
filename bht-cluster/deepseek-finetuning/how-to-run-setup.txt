@@ -28,9 +28,8 @@ kubectl delete -f deepseek-finetune-pod.yml
 OR
 kubectl delete -f deepseek-finetune-train-pod.yml
 
-## Updating the training scripts ##
-Base Models: kubectl cp /Users/frederikbusch/Developer/master-arbeit/text2gloss2pose/bht-cluster/deepseek-finetuning/train_base_model.py s85468/deepseek-finetune:/storage/text2gloss-finetune/train_base_model.py
-Deepseek-LLAMA-Distill: kubectl cp /Users/frederikbusch/Developer/master-arbeit/text2gloss2pose/bht-cluster/deepseek-finetuning/train_deepseek_distill.py s85468/deepseek-finetune:/storage/text2gloss-finetune/train_deepseek_distill.py
+## Updating the training script ##
+kubectl cp /Users/frederikbusch/Developer/master-arbeit/text2gloss2pose/bht-cluster/deepseek-finetuning/train_deepseek_distill.py s85468/deepseek-finetune:/storage/text2gloss-finetune/train_deepseek_distill.py
 
 ## Updating the text2gloss model:
 1. Delete the old model!

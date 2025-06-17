@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: gloss2text-finetune
+  namespace: s85468
+spec:
+  restartPolicy: OnFailure
+  containers:
+  - name: gloss2text-finetune-container
+    image: pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime
+    command: ["bash", "-c", "cd /storage/text2gloss-finetune/gloss2text && ./start_finetune_gloss2text.sh bt-2 6"]
+    resources:
+      limits:
+        nvidia.com/gpu: "1"
+    volumeMounts:
+    - name: fbusch-volume
+      mountPath: /storage
+  volumes:
+  - name: fbusch-volume
+    persistentVolumeClaim:
+      claimName: fbusch-volume
+  nodeSelector:
+    gpu: a100
+    #kubernetes.io/hostname: cl-worker29
+
+# Start the training: kubectl apply -f train-gloss2text-pod.yml
+
+# Delete the pod: kubectl delete -f train-gloss2text-pod.yml
+
+# Copy the results:
+# cd ..
+# kubectl apply -f deepseek-finetune-pod.yml
+# kubectl cp s85468/deepseek-finetune:/storage/text2gloss-finetune/results /Users/frederikbusch/Developer/master-arbeit/text2gloss2pose/bht-cluster/deepseek-finetuning/results
+# kubectl delete -f deepseek-finetune-pod.yml
+
+# Update the BT-script:
+# kubectl cp /Users/frederikbusch/Developer/master-arbeit/text2gloss2pose/bht-cluster/deepseek-finetuning/gloss2text/train_deepseek_gloss2text.py s85468/deepseek-finetune:/storage/text2gloss-finetune/train_deepseek_gloss2text.py

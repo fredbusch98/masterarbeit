@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pose2gloss-volume
+  namespace: s85468
+spec:
+  storageClassName: shared
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 200Gi

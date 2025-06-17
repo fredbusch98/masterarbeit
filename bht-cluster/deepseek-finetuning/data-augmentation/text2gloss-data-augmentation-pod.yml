@@ -28,9 +28,9 @@ spec:
 
 # Copy the results:
 # kubectl apply -f deepseek-finetune-pod.yml
-# kubectl cp s85468/deepseek-finetune:/storage/text2gloss-finetune/augmented_dataset.csv /Users/frederikbusch/Developer/master-arbeit/text2gloss2pose/bht-cluster/deepseek-finetuning/augmented_dataset.csv
-# kubectl cp s85468/deepseek-finetune:/storage/text2gloss-finetune/data_augment.log /Users/frederikbusch/Developer/master-arbeit/text2gloss2pose/bht-cluster/deepseek-finetuning/data_augment.log
+# kubectl cp s85468/deepseek-finetune:/storage/text2gloss-finetune/augmented_dataset.csv /Users/frederikbusch/Developer/master-arbeit/text2gloss2pose/bht-cluster/deepseek-finetuning/data-augmentation/augmented_dataset.csv
+# kubectl cp s85468/deepseek-finetune:/storage/text2gloss-finetune/data_augment.log /Users/frederikbusch/Developer/master-arbeit/text2gloss2pose/bht-cluster/deepseek-finetuning/data-augmentation/data_augment.log
 # kubectl delete -f deepseek-finetune-pod.yml
 
 # Update the BT-script:
-# kubectl cp /Users/frederikbusch/Developer/master-arbeit/text2gloss2pose/bht-cluster/deepseek-finetuning/back_translation.py s85468/deepseek-finetune:/storage/text2gloss-finetune/back_translation.py
+# kubectl cp /Users/frederikbusch/Developer/master-arbeit/text2gloss2pose/bht-cluster/deepseek-finetuning/data-augmentation/back_translation.py s85468/deepseek-finetune:/storage/text2gloss-finetune/back_translation.py

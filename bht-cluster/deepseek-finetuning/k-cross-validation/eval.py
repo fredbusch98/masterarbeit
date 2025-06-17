@@ -4,9 +4,11 @@ import csv
 with open('eval.csv', newline='') as csvfile:
     reader = csv.reader(csvfile)
     for row in reader:
-        # Convert each value in the row to a float
-        numbers = list(map(float, row))
+        # The first column is a string (e.g., name or label)
+        label = row[0]
+        # Convert the remaining values to floats
+        numbers = list(map(float, row[1:]))
         # Calculate the average
         avg = sum(numbers) / len(numbers)
-        # Print the average
-        print(avg)
+        # Print in the specified format
+        print(f"{label}: {avg}")

@@ -3,7 +3,7 @@ from statistics import mean
 
 # Path to your CSV file
 # file_path = "/Volumes/IISY/DGSKorpus/dgs-text2gloss-combined.csv"
-file_path = "../../../bht-cluster/deepseek-finetuning/text2gloss_data/bt-1/train.csv"
+file_path = "/Users/frederikbusch/Developer/master-arbeit/text2gloss2pose/bht-cluster/deepseek-finetuning/text2gloss_data/bt2.csv"
 
 sentences = []
 

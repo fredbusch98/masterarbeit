@@ -21,10 +21,12 @@ p.add_argument('--num_epochs', type=int, default='6', help='Number of epochs for
 args = p.parse_args()
 
 kcross_id = args.train_dir
+# train_dir = args.train_dir
 epochs = args.num_epochs
 
 # Ensure the log directory exists
 results_dir = f"/storage/text2gloss-finetune/results/kcross-{kcross_id}"
+# results_dir = f"/storage/text2gloss-finetune/results/"
 os.makedirs(results_dir, exist_ok=True)
 log_file = os.path.join(results_dir, "process.log")
 
@@ -50,6 +52,9 @@ def main():
         train_df = pd.read_csv(f'/storage/text2gloss-finetune/text2gloss_data/new-splits-kcross-3/train{kcross_id}.csv', encoding='utf-8')
         val_df   = pd.read_csv(f'/storage/text2gloss-finetune/text2gloss_data/new-splits-kcross-3/dev{kcross_id}.csv',  encoding='utf-8')
         test_df  = pd.read_csv(f'/storage/text2gloss-finetune/text2gloss_data/new-splits-kcross-3/test{kcross_id}.csv',  encoding='utf-8')
+        # train_df = pd.read_csv(f'/storage/text2gloss-finetune/text2gloss_data/{train_dir}/train.csv', encoding='utf-8')
+        # val_df   = pd.read_csv(f'/storage/text2gloss-finetune/text2gloss_data/dev.csv',  encoding='utf-8')
+        # test_df  = pd.read_csv(f'/storage/text2gloss-finetune/text2gloss_data/test.csv',  encoding='utf-8')
     except Exception as e:
         logger.error("Error reading CSVs: %s", e)
         sys.exit(1)
@@ -300,6 +305,8 @@ def main():
     try:
         model.save_pretrained(f"{results_dir}/fine_tuned_deepseek-k{kcross_id}")
         tokenizer.save_pretrained(f"{results_dir}/fine_tuned_deepseek-k{kcross_id}")
+        # model.save_pretrained(f"{results_dir}/fine_tuned_deepseek")
+        # tokenizer.save_pretrained(f"{results_dir}/fine_tuned_deepseek")
         logger.info("Model and tokenizer saved successfully.")
     except Exception as e:
         logger.error("Error saving model/tokenizer: %s", e)

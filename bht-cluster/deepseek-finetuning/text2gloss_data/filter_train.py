@@ -1,8 +1,8 @@
 import pandas as pd
 
 # Load all files
-train_files = ['bt1-train.csv', 'bt2-train.csv']
-test_dev_files = ['test.csv', 'dev.csv']
+train_files = ['bt2.csv']
+test_dev_files = ['./new-splits-kcross-3/test3.csv', './new-splits-kcross-3/dev3.csv']
 
 # Load test and dev (sentence, glosses) pairs into a list to preserve duplicates
 test_dev_pairs = []

@@ -8,7 +8,7 @@ from collections import Counter
 import torch
 
 # Global default number of paraphrases per sentence
-global_num_paraphrases = 1
+global_num_paraphrases = 2
 max_attempts = 5
 
 # Configure logging
