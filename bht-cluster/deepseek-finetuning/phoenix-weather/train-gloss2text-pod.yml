@@ -25,7 +25,7 @@ spec:
 
 
 # Update the training script:
-# kubectl cp /Users/frederikbusch/Developer/master-arbeit/text2gloss2pose/bht-cluster/deepseek-finetuning/phoenix-weather/train_phoenix.py s85468/deepseek-finetune:/storage/text2gloss-finetune/phoenix-weather/train_phoenix.py
+# kubectl cp /Users/frederikbusch/Developer/master-arbeit/text2gloss2pose/bht-cluster/deepseek-finetuning/phoenix-weather/train_phoenix_gloss2text.py s85468/deepseek-finetune:/storage/text2gloss-finetune/phoenix-weather/train_phoenix_gloss2text.py
 
 ## Get the results
 # kubectl delete -f deepseek-finetune-train-pod.yml

@@ -20,8 +20,8 @@ spec:
     persistentVolumeClaim:
       claimName: fbusch-volume
   nodeSelector:
-    gpu: a100
-    #kubernetes.io/hostname: cl-worker29
+    #gpu: a100
+    kubernetes.io/hostname: cl-worker28
 
 # Start the training: kubectl apply -f train-gloss2text-pod.yml
 

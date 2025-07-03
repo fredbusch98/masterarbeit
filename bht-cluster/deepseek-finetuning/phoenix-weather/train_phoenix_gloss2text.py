@@ -15,6 +15,8 @@ from jiwer import wer
 
 epochs = 3
 results_dir = "/storage/text2gloss-finetune/phoenix-weather/results"
+# directory where your first script saved the model+tokenizer
+finetuned_dir = "/storage/text2gloss-finetune/results/fine_tuned_deepseek_gloss2text"
 os.makedirs(results_dir, exist_ok=True)
 log_file = os.path.join(results_dir, "process.log")
 # ➊ Rename output log file
@@ -75,27 +77,36 @@ def main():
     logger.info("Dataset formatting complete. Train size: %d, Val size: %d", len(train_dataset), len(val_dataset))
 
     # Load model & tokenizer
-    logger.info("Loading model and tokenizer: unsloth/DeepSeek-R1-Distill-Llama-8B")
+    # logger.info("Loading model and tokenizer: unsloth/DeepSeek-R1-Distill-Llama-8B")
+    # model, tokenizer = FastLanguageModel.from_pretrained(
+    #     model_name="unsloth/DeepSeek-R1-Distill-Llama-8B",
+    #     max_seq_length=2048,
+    #     dtype=None,
+    #     load_in_4bit=True,
+    #     device_map="auto",
+    # )
+
+    logger.info("Loading model and tokenizer from '%s'...", finetuned_dir)
     model, tokenizer = FastLanguageModel.from_pretrained(
-        model_name="unsloth/DeepSeek-R1-Distill-Llama-8B",
+        model_name=finetuned_dir,
         max_seq_length=2048,
         dtype=None,
         load_in_4bit=True,
         device_map="auto",
-    )
+    )   
 
-    # ➌ Apply LoRA
-    model = FastLanguageModel.get_peft_model(
-        model,
-        r=16,
-        target_modules=["q_proj","k_proj","v_proj","o_proj","gate_proj","up_proj","down_proj"],
-        lora_alpha=16,
-        lora_dropout=0,
-        bias="none",
-        use_gradient_checkpointing="unsloth",
-        random_state=42,
-    )
-    logger.info("LoRA configuration applied.")
+    # # ➌ Apply LoRA
+    # model = FastLanguageModel.get_peft_model(
+    #     model,
+    #     r=16,
+    #     target_modules=["q_proj","k_proj","v_proj","o_proj","gate_proj","up_proj","down_proj"],
+    #     lora_alpha=16,
+    #     lora_dropout=0,
+    #     bias="none",
+    #     use_gradient_checkpointing="unsloth",
+    #     random_state=42,
+    # )
+    # logger.info("LoRA configuration applied.")
 
     # ➍ Compute max target (sentence) length
     def compute_max_output_tokens(df, tokenizer):
