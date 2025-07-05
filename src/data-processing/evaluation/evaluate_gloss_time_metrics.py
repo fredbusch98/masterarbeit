@@ -39,15 +39,15 @@ def print_top_aggregated(metric, agg, label):
     metric_name = metric.split('_')[1]  # Extract base metric name, e.g., "gd" from "avg_gd"
     median_metric = f"median_{metric_name}"  # Corresponding median column, e.g., "median_gd"
     
-    print(f"\nTop 5 lowest {label} averages (with medians):")
-    for _, row in sorted_df.head(5).iterrows():
-        print(f"  {row['gloss']}: Avg = {row[metric]:.2f} ms, Median = {row[median_metric]:.2f} ms (n={int(row['count'])})")
+    print(f"\nTop 10 lowest {label} averages (with medians):")
+    for _, row in sorted_df.head(10).iterrows():
+        print(f"  {row['gloss']}: Avg = {row[metric]:.2f} ms, Median = {row[median_metric]:.2f} ms (occurrence={int(row['count'])})")
     
-    print(f"\nTop 5 highest {label} averages (with medians):")
-    for _, row in sorted_df.tail(5).sort_values(by=metric, ascending=False).iterrows():
-        print(f"  {row['gloss']}: Avg = {row[metric]:.2f} ms, Median = {row[median_metric]:.2f} ms (n={int(row['count'])})")
+    print(f"\nTop 10 highest {label} averages (with medians):")
+    for _, row in sorted_df.tail(10).sort_values(by=metric, ascending=False).iterrows():
+        print(f"  {row['gloss']}: Avg = {row[metric]:.2f} ms, Median = {row[median_metric]:.2f} ms (occurrence={int(row['count'])})")
 
-def print_top_occurrences(metric, label, index_field, df, n=5):
+def print_top_occurrences(metric, label, index_field, df, n=10):
     """
     Print the top-n lowest and highest single-occurrence values of a metric,
     including the extra details (entry, index string, and speaker).
@@ -140,10 +140,10 @@ def main():
     print_top_aggregated("avg_tgt", agg, "TGT (Total Gloss Time)")
     
     # Print top-5 single-occurrence metrics with full details
-    print_top_occurrences("igt", "IGT (Into-Gloss Time)", "igt_index", df, n=5)
-    print_top_occurrences("ogt", "OGT (Out-of-Gloss Time)", "ogt_index", df, n=5)
-    print_top_occurrences("gd", "GD (Gloss Duration)", "block_index", df, n=5)
-    print_top_occurrences("tgt", "TGT (Total Gloss Time)", "tgt_index", df, n=5)
+    print_top_occurrences("igt", "IGT (Into-Gloss Time)", "igt_index", df, n=10)
+    print_top_occurrences("ogt", "OGT (Out-of-Gloss Time)", "ogt_index", df, n=10)
+    print_top_occurrences("gd", "GD (Gloss Duration)", "block_index", df, n=10)
+    print_top_occurrences("tgt", "TGT (Total Gloss Time)", "tgt_index", df, n=10)
     
     # Example usage: print all GD occurrences above 2000 ms
     find_and_save_metrics_threshold(df, "gd", 2000, above=True)

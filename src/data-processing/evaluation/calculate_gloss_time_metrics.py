@@ -59,30 +59,38 @@ def process_sentence_blocks(blocks, gloss_types, raw_rows):
             
             for i, (timestamp, group_blocks) in enumerate(sorted_groups):
                 current_group_index = group_blocks[0].get("index", "")
+                # If *any* block in the current timestamp‑group ends with "_END_SENTENCE"
+                # we must NOT compute OGT for it, even when a later group exists.
+                ends_with_end_sentence = any(
+                    blk["text"].strip().endswith("_END_SENTENCE") for blk in group_blocks
+                )
                 # Compute IGT for groups after the first.
                 if i > 0:
                     prev_group = sorted_groups[i-1][1]
                     prev_group_index = prev_group[0].get("index", "0")
-                    current_igt = timestamp[0] - sorted_groups[i-1][0][1]
+                    current_igt = max(0, timestamp[0] - sorted_groups[i-1][0][1])
                     igt_index = f"index:{prev_group_index}-{current_group_index}"
                 else:
                     current_igt = 0
                     igt_index = "None"
                 # Compute OGT for groups before the last.
-                if i < len(sorted_groups) - 1:
-                    next_group = sorted_groups[i+1][1]
+                if i < len(sorted_groups) - 1 and not ends_with_end_sentence:
+                    next_group = sorted_groups[i + 1][1]
                     next_group_index = next_group[0].get("index", "0")
-                    current_ogt = next_group[0]["start_ms"] - timestamp[1]
+                    current_ogt = max(0, next_group[0]["start_ms"] - timestamp[1])
                     ogt_index = f"index:{current_group_index}-{next_group_index}"
-                else:
+                else:  # last group in list *or* it ends with _END_SENTENCE
                     current_ogt = 0
                     ogt_index = "None"
                 # Build TGT index string combining IGT and OGT info.
-                if i > 0 and i < len(sorted_groups) - 1:
-                    tgt_index = f"IGT:{prev_group_index}-{current_group_index} | OGT:{current_group_index}-{next_group_index}"
+                if i > 0 and i < len(sorted_groups) - 1 and not ends_with_end_sentence:
+                    tgt_index = (
+                        f"IGT:{prev_group_index}-{current_group_index} | "
+                        f"OGT:{current_group_index}-{next_group_index}"
+                    )
                 elif i > 0:
                     tgt_index = f"IGT:{prev_group_index}-{current_group_index} | OGT:None"
-                elif i < len(sorted_groups) - 1:
+                elif i < len(sorted_groups) - 1 and not ends_with_end_sentence:
                     tgt_index = f"IGT:None | OGT:{current_group_index}-{next_group_index}"
                 else:
                     tgt_index = current_group_index

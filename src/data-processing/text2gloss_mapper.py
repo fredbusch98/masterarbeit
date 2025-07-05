@@ -67,7 +67,7 @@ def process_speaker_transcript(transcript_path, speaker):
 
 def process_folder(folder_path):
     """
-    Process a folder containing speaker-a.srt and speaker-b.srt, combining their results into one CSV.
+    Process a folder containing speaker-a-final.srt and speaker-b-final.srt, combining their results into one CSV.
     
     Args:
         folder_path (str): Path to the folder containing the SRT files.
@@ -76,8 +76,8 @@ def process_folder(folder_path):
         list: Combined list of rows from both speakers.
     """
     # Define paths to the speaker transcript files
-    transcript_a_path = os.path.join(folder_path, "speaker-a.srt")
-    transcript_b_path = os.path.join(folder_path, "speaker-b.srt")
+    transcript_a_path = os.path.join(folder_path, "speaker-a-final.srt")
+    transcript_b_path = os.path.join(folder_path, "speaker-b-final.srt")
 
     # Process each speaker's transcript
     rows_a = process_speaker_transcript(transcript_a_path, speaker="A")

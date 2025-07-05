@@ -83,7 +83,7 @@ print("🔍 Scanning for lost sentences and glosses...\n")
 
 for entry_folder in entry_folders:
     for speaker in ['a', 'b']:
-        srt_path = os.path.join(main_folder, entry_folder, f'speaker-{speaker}.srt')
+        srt_path = os.path.join(main_folder, entry_folder, f'speaker-{speaker}-final.srt')
         if os.path.exists(srt_path):
             lost, glosses, sentences = process_srt_file(srt_path)
             all_lost_glosses.extend(lost)

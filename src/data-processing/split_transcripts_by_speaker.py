@@ -1,202 +1,142 @@
 import os
 import re
 
-# Define the main folder path where entry_* folders are located
+# Main folder path
 main_folder = '/Volumes/IISY/DGSKorpus'
 
-# Define a list of glosses that define full sentences and all their corresponding glosses to be exluded
-exclude_sentence_glosses = ["$PROD", "$ORAL", "$ALPHA", "$ORAL^"]
+# Helpers
+def is_full_sentence(tokens):
+    return any(tok.endswith('_FULL_SENTENCE') for tok in tokens)
 
-# These glosses need to be excluded but the rest of the sentence can stay in the transcripts
-excluded_glosses = ["$GEST", "$GEST-NM", "$GEST-OFF", "$$EXTRA-LING-MAN", "$PMS", "$UNKLAR"]
+def line_ends_full(lines):
+    return any('_FULL_SENTENCE' in l for l in lines)
 
-# Timestamp parsing functions
+# Timestamp parsing/formatting
 def parse_timestamp(ts):
-    """Convert SRT timestamp (e.g., '00:00:02,160') to milliseconds."""
-    time_part, ms_part = ts.split(',')
-    hours, minutes, seconds = time_part.split(':')
-    total_ms = (int(hours) * 3600000 + 
-                int(minutes) * 60000 + 
-                int(seconds) * 1000 + 
-                int(ms_part))
-    return total_ms
+    time_part, ms = ts.split(',')
+    h, m, s = time_part.split(':')
+    return int(h)*3600000 + int(m)*60000 + int(s)*1000 + int(ms)
 
-def parse_srt_timestamp(timestamp_line):
-    """Parse SRT timestamp line (e.g., '00:00:00,240 --> 00:00:02,160') into start and end times in milliseconds."""
-    start_str, end_str = timestamp_line.strip().split(' --> ')
-    start_ms = parse_timestamp(start_str)
-    end_ms = parse_timestamp(end_str)
-    return start_ms, end_ms
+def format_timestamp(ms):
+    h = ms // 3600000
+    ms -= h * 3600000
+    m = ms // 60000
+    ms -= m * 60000
+    s = ms // 1000
+    ms -= s * 1000
+    return f"{h:02}:{m:02}:{s:02},{ms:03}"
 
-# Improved SRT parsing function
+def parse_srt_timestamp(line):
+    start, end = line.strip().split(' --> ')
+    return parse_timestamp(start), parse_timestamp(end)
+
+# Parse raw SRT into list of (timestamp_line, text_lines)
 def parse_srt(lines):
-    """Parse SRT lines into a list of (timestamp, text_lines) tuples, excluding trailing blank lines."""
-    entries = []
-    current_entry = []
-    for line in lines:
-        if line.strip() == "":
-            if current_entry and len(current_entry) >= 2:
-                timestamp = current_entry[1]
-                text_lines = current_entry[2:]
-                # Remove trailing blank lines
-                while text_lines and text_lines[-1].strip() == "":
-                    text_lines.pop()
-                entries.append((timestamp, text_lines))
-            current_entry = []
+    entries, block = [], []
+    for ln in lines:
+        if not ln.strip():
+            if len(block) >= 2:
+                entries.append((block[1], block[2:]))
+            block = []
         else:
-            current_entry.append(line)
-    # Handle the last entry
-    if current_entry and len(current_entry) >= 2:
-        timestamp = current_entry[1]
-        text_lines = current_entry[2:]
-        while text_lines and text_lines[-1].strip() == "":
-            text_lines.pop()
-        entries.append((timestamp, text_lines))
+            block.append(ln)
+    if len(block) >= 2:
+        entries.append((block[1], block[2:]))
     return entries
 
-# Entry processing function
-def process_entries(entries, speaker):
-    speaker_tag = f"{speaker}: "
-    processed_entries = []
+# Swap duplicates on raw entries before marking
+# Ensure first doesn't end full, second ends full
+# Subtract 1ms from second start, swap order
+
+def adjust_swaps_before_mark(entries, speaker):
+    res = []
     i = 0
-    
+    label = f"{speaker}:"
     while i < len(entries):
-        entry = entries[i]
-        timestamp_line = entry[0]
-        _, end_ms = parse_srt_timestamp(timestamp_line)
-        text_lines = entry[1]
-        full_text = ' '.join(line.strip() for line in text_lines)
-        clean_text = full_text[len(speaker_tag):].strip()
-        
-        if any(gloss == clean_text for gloss in excluded_glosses):
-            i += 1
-            continue
+        if i+1 < len(entries):
+            ts1, lines1 = entries[i]
+            ts2, lines2 = entries[i+1]
+            if ts1.strip() == ts2.strip():
+                if (lines1[0].strip().startswith(label) and lines2[0].strip().startswith(label)):
+                    if not line_ends_full(lines1) and line_ends_full(lines2):
+                        # adjust ts2
+                        start2, end2 = parse_srt_timestamp(ts2)
+                        new_start = max(0, start2 - 1)
+                        parts = ts2.split(' --> ')
+                        new_ts2 = format_timestamp(new_start) + ' --> ' + parts[1]
+                        cleaned_lines2 = lines2.copy()
+                        while cleaned_lines2 and not cleaned_lines2[0].strip():
+                            cleaned_lines2.pop(0)
+                        res.append((new_ts2 + '', cleaned_lines2))
+                        res.append((ts1, lines1))
+                        i += 2
+                        continue
+        res.append(entries[i])
+        i += 1
+    return res
 
-        if clean_text.endswith("_FULL_SENTENCE"):
-            # Begin a sentence block
-            sentence_entries = []
-            # Add the current entry (it passed the extra-gloss check)
-            sentence_entries.append(entry)
+# Process and mark sentences (_END_SENTENCE)
+def process_entries(entries, speaker):
+    out = []
+    tag = f"{speaker}: "
+    i = 0
+    while i < len(entries):
+        ts_line, text_lines = entries[i]
+        start_ms, end_ms = parse_srt_timestamp(ts_line)
+        tokens = ' '.join(l.strip() for l in text_lines)[len(tag):].split()
+        if is_full_sentence(tokens):
+            block = [(ts_line, text_lines)]
             j = i + 1
-            
-            # Gather subsequent entries belonging to the same sentence period
             while j < len(entries):
-                next_entry = entries[j]
-                next_timestamp_line = next_entry[0]
-                next_start_ms, _ = parse_srt_timestamp(next_timestamp_line)
-                next_text = ' '.join(line.strip() for line in next_entry[1])
-                next_clean = next_text[len(speaker_tag):].strip()
-                
-                # Stop if we encounter a new sentence or the time exceeds the sentence block
-                if next_clean.endswith("_FULL_SENTENCE") or next_start_ms > end_ms:
+                next_ts, next_lines = entries[j]
+                nxt_tokens = ' '.join(l.strip() for l in next_lines)[len(tag):].split()
+                next_start, _ = parse_srt_timestamp(next_ts)
+                if is_full_sentence(nxt_tokens) or next_start > end_ms:
                     break
-
-                # Skip entries with the defined excluded glosses
-                if any(gloss == next_clean for gloss in excluded_glosses):
-                    j += 1
-                    continue
-                sentence_entries.append(next_entry)
+                block.append((next_ts, next_lines))
                 j += 1
-
-            # Before adding the sentence block, check for any excluded gloss (from the list)
-            glosses = []
-            for se in sentence_entries:
-                se_text = ' '.join(line.strip() for line in se[1])
-                se_clean = se_text[len(speaker_tag):].strip()
-                glosses.extend(se_clean.split())
-            if any(
-                gloss in exclude_sentence_glosses or 
-                (gloss.startswith('$ALPHA'))
-                for gloss in glosses
-            ):
-                # Skip the entire sentence if any excluded gloss is found
-                i = j
-                continue
-            else:
-                processed_entries.extend(sentence_entries)
-                # Append _END_SENTENCE to the last gloss of the sentence
-                if sentence_entries:
-                    last_entry = sentence_entries[-1]
-                    if last_entry[1]:
-                        last_text_line = last_entry[1][-1]
-                        last_entry[1][-1] = last_text_line.rstrip() + "_END_SENTENCE\n"
-                i = j
+            # mark last
+            for idx, (b_ts, b_lines) in enumerate(block):
+                if idx == len(block) - 1:
+                    b_lines[-1] = b_lines[-1].rstrip() + "_END_SENTENCE\n"
+                out.append((b_ts, b_lines))
+            i = j
         else:
-            # Non-sentence entry / lost gloss
-            if any(gloss in clean_text for gloss in exclude_sentence_glosses):
-                i += 1
-                continue
-            processed_entries.append(entry)
+            out.append(entries[i])
             i += 1
-    
-    return processed_entries
+    return out
 
-# Main execution
-# Get a list of all subfolders named entry_0, entry_1, etc.
-entry_folders = [
-    f for f in os.listdir(main_folder)
-    if f.startswith('entry_') and os.path.isdir(os.path.join(main_folder, f))
-]
+# Main
+if __name__ == '__main__':
+    folders = [d for d in os.listdir(main_folder) if d.startswith('entry_')]
+    for entry in folders:
+        src = os.path.join(main_folder, entry, 'filtered-transcript.srt')
+        if not os.path.exists(src):
+            print(f"⚠️ Missing {src}, skipping")
+            continue
+        print(f"🔍 Processing {entry}...")
 
-total_folders = len(entry_folders)
-print(f"🚀 Starting to process {total_folders} folders...")
+        with open(src) as f:
+            lines = f.readlines()
+        raw_entries = parse_srt(lines)
 
-for idx, entry_folder in enumerate(entry_folders):
-    transcript_path = os.path.join(main_folder, entry_folder, 'filtered-transcript.srt')
-    
-    if os.path.exists(transcript_path):
-        # Read the SRT file
-        with open(transcript_path, 'r') as file:
-            lines = file.readlines()
-        
-        # Parse SRT entries using the improved parser
-        entries = parse_srt(lines)
-        
-        # Split entries by speaker
-        entries_a = []
-        entries_b = []
-        for entry in entries:
-            timestamp, text_lines = entry
-            if text_lines:
-                first_line = text_lines[0].strip()
-                match = re.match(r'([A-B]):\s', first_line)
-                if match:
-                    speaker = match.group(1)
-                    if speaker == 'A':
-                        entries_a.append((timestamp, text_lines))
-                    elif speaker == 'B':
-                        entries_b.append((timestamp, text_lines))
-        
-        # Process entries to append _END_SENTENCE to last gloss and apply exclusions
-        entries_a = process_entries(entries_a, "A")
-        entries_b = process_entries(entries_b, "B")
-        
-        # Write to speaker-a.srt
-        speaker_a_path = os.path.join(main_folder, entry_folder, 'speaker-a.srt')
-        with open(speaker_a_path, 'w') as f:
-            for i, (timestamp, text_lines) in enumerate(entries_a, start=1):
-                f.write(f"{i}\n")
-                f.write(timestamp)
-                for line in text_lines:
-                    f.write(line)
-                f.write("\n")
-        
-        # Write to speaker-b.srt
-        speaker_b_path = os.path.join(main_folder, entry_folder, 'speaker-b.srt')
-        with open(speaker_b_path, 'w') as f:
-            for i, (timestamp, text_lines) in enumerate(entries_b, start=1):
-                f.write(f"{i}\n")
-                f.write(timestamp)
-                for line in text_lines:
-                    f.write(line)
-                f.write("\n")
-        
-        # Progress update
-        percentage = (idx + 1) / total_folders * 100
-        print(f"[{round(percentage)}%] ✅ Processed folder {entry_folder}.")
-    else:
-        # Skip if transcript file is missing
-        percentage = (idx + 1) / total_folders * 100
-        print(f"⚠️ Skipped folder {entry_folder}: filtered-transcript.srt not found. Progress: {round(percentage)}%")
+        # split by speaker
+        per_sp = {'A': [], 'B': []}
+        for ts, txt in raw_entries:
+            m = re.match(r'([AB]): ', txt[0].strip())
+            if m:
+                per_sp[m.group(1)].append((ts, txt))
 
-print("🎉 All folders checked successfully! Check the entry_* folders for speaker-a.srt and speaker-b.srt files.")
+        # for each speaker: swap first, then mark
+        for sp, arr in per_sp.items():
+            swapped = adjust_swaps_before_mark(arr, sp)
+            processed = process_entries(swapped, sp)
+
+            out_file = os.path.join(main_folder, entry, f'speaker-{sp.lower()}.srt')
+            with open(out_file, 'w') as f:
+                for idx, (ts, lines_) in enumerate(processed, 1):
+                    f.write(f"{idx}\n{ts}")
+                    f.writelines(lines_)
+                    f.write("\n")
+
+        print(f"✅ Done splitting, swapping & marking {entry}")

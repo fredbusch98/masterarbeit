@@ -9,9 +9,11 @@ gloss_times_for_frame_interpolation.csv
 process.log
 unique-glosses.csv
 results/
+dataset-stats/
 outputs/
 resources/
 data_augment.log
 augmented_dataset.csv
 *.csv
 fine_tuned_deepseek
+text2gloss_model_deepseek

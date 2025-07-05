@@ -282,8 +282,8 @@ def process_folder(folder_path):
     For a given folder containing:
       - video-a.mp4
       - video-b.mp4
-      - speaker-a.srt
-      - speaker-b.srt
+      - speaker-a-final.srt
+      - speaker-b-final.srt
       - openpose.json
     this will:
       1) Compute FPS from whichever video exists first (A preferred).
@@ -293,8 +293,8 @@ def process_folder(folder_path):
     """
     video_a = os.path.join(folder_path, "video-a.mp4")
     video_b = os.path.join(folder_path, "video-b.mp4")
-    srt_a = os.path.join(folder_path, "speaker-a.srt")
-    srt_b = os.path.join(folder_path, "speaker-b.srt")
+    srt_a = os.path.join(folder_path, "speaker-a-final.srt")
+    srt_b = os.path.join(folder_path, "speaker-b-final.srt")
     openpose = os.path.join(folder_path, "openpose.json")
 
     print(f"[INFO] Processing folder: {folder_path}")

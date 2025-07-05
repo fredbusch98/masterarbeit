@@ -5,8 +5,8 @@ sentence2video_mapper.py
 This script processes folders containing:
   - video-a.mp4
   - video-b.mp4
-  - speaker-a.srt
-  - speaker-b.srt
+  - speaker-a-final.srt
+  - speaker-b-final.srt
 
 For each “full sentence” entry in the SRTs (marked with `_FULL_SENTENCE` and ending with `_END_SENTENCE`),
 it outputs:
@@ -126,8 +126,8 @@ def process_folder(folder_path):
     For a given folder containing:
       - video-a.mp4
       - video-b.mp4
-      - speaker-a.srt
-      - speaker-b.srt
+      - speaker-a-final.srt
+      - speaker-b-final.srt
 
     This will:
       1) Parse each .srt to find full-sentence entries for A and B.
@@ -135,8 +135,8 @@ def process_folder(folder_path):
          full_sentence, gloss_sequence, video_path, start_time, end_time
     Returns a list of rows (each a list of 5 strings) for this folder.
     """
-    srt_a = os.path.join(folder_path, "speaker-a.srt")
-    srt_b = os.path.join(folder_path, "speaker-b.srt")
+    srt_a = os.path.join(folder_path, "speaker-a-final.srt")
+    srt_b = os.path.join(folder_path, "speaker-b-final.srt")
 
     print(f"[INFO] Processing folder: {folder_path}")
 

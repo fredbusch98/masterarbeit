@@ -176,8 +176,8 @@ def map_text_to_poses(openpose_file_path, srt_entries_personA, srt_entries_perso
 def process_folder(folder_path):
     video_a_path = os.path.join(folder_path, "video-a.mp4")
     video_b_path = os.path.join(folder_path, "video-b.mp4")
-    srt_a_path = os.path.join(folder_path, "speaker-a.srt")
-    srt_b_path = os.path.join(folder_path, "speaker-b.srt")
+    srt_a_path = os.path.join(folder_path, "speaker-a-final.srt")
+    srt_b_path = os.path.join(folder_path, "speaker-b-final.srt")
     openpose_path = os.path.join(folder_path, "openpose.json")
 
     print(f"[INFO] Processing folder: {folder_path}")
