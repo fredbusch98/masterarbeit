@@ -44,10 +44,30 @@ def parse_srt(lines):
         entries.append((block[1], block[2:]))
     return entries
 
-# Swap duplicates on raw entries before marking
-# Ensure first doesn't end full, second ends full
-# Subtract 1ms from second start, swap order
+# Swap duplicates on raw entries before marking (adjust_swaps_before_mark)
+# Ensure first doesn't end with FULL_SENTENCE meaning it is a gloss and second ends with FULL_SENTENCE
+# Subtract 1ms from FULL_SENETCE start and swap order
+# Such cases occur occasionally (a total of 327 times across all transripts of the DGS Korpus Release 3)
+# The swaps must be made so that the gloss can be sequentially mapped exactly to its sentence later on during the Text2Gloss Mapper
+# Example of such a problematic case in a transcript:
 
+# Original (Problematic for sequential mapping of the Text2Gloss Mapper):
+# 24
+# 00:00:07,160 --> 00:00:09,600
+# B: $GEST-NM-KOPFNICKEN1
+
+# 25
+# 00:00:07,160 --> 00:00:09,600
+# B: Ja!_FULL_SENTENCE
+
+# Becomes (Fixed for sequential mapping of the Text2Gloss Mapper):
+# 24
+# 00:00:07,159 --> 00:00:09,600
+# B: Ja!_FULL_SENTENCE
+
+# 25
+# 00:00:07,160 --> 00:00:09,600
+# B: $GEST-NM-KOPFNICKEN1
 def adjust_swaps_before_mark(entries, speaker):
     res = []
     i = 0

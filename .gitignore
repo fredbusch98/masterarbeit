@@ -10,6 +10,7 @@ process.log
 unique-glosses.csv
 results/
 dataset-stats/
+dataset-plots/
 outputs/
 resources/
 data_augment.log

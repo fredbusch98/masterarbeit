@@ -9,6 +9,9 @@ from all_types import load_gloss_types
 # Global list to hold raw metric rows.
 raw_rows = []
 
+excluded_glosses_equal = ["$GEST", "$GEST-NM", "$GEST-OFF", "$$EXTRA-LING-MAN", "$PMS", "$UNKLAR", "$PROD"]  # must be equal
+exclude_glosses_contains = ["$ORAL", "$ALPHA"]  # must only contain
+
 def process_sentence_blocks(blocks, gloss_types, raw_rows):
     """
     Process gloss blocks from the same sentence & speaker.
@@ -29,26 +32,26 @@ def process_sentence_blocks(blocks, gloss_types, raw_rows):
             block = main_blocks[0]
             block_text = block["text"].replace("_END_SENTENCE", "")
             block_text = block_text.split(":")[0]
-            for gloss in gloss_types:
-                if gloss == block_text:
-                    gd = block["duration_ms"]
-                    igt = 0
-                    ogt = 0
-                    tgt = gd
-                    raw_rows.append({
-                        "entry": block["entry"],
-                        "block_index": block["index"],
-                        "speaker": block["speaker"],
-                        "gloss": gloss,
-                        "gd": gd,
-                        "igt": igt,
-                        "ogt": ogt,
-                        "tgt": tgt,
-                        "igt_index": block["index"],
-                        "ogt_index": block["index"],
-                        "tgt_index": block["index"],
-                        "lost": False
-                    })
+            if block_text in gloss_types:
+                gloss = block_text
+                gd = block["duration_ms"]
+                igt = 0
+                ogt = 0
+                tgt = gd
+                raw_rows.append({
+                    "entry": block["entry"],
+                    "block_index": block["index"],
+                    "speaker": block["speaker"],
+                    "gloss": gloss,
+                    "gd": gd,
+                    "igt": igt,
+                    "ogt": ogt,
+                    "tgt": tgt,
+                    "igt_index": block["index"],
+                    "ogt_index": block["index"],
+                    "tgt_index": block["index"],
+                    "lost": False
+                })
         else:
             # Group blocks by identical (start_ms, end_ms)
             timestamp_groups = {}
@@ -98,45 +101,45 @@ def process_sentence_blocks(blocks, gloss_types, raw_rows):
                 for block in group_blocks:
                     block_text = block["text"].replace("_END_SENTENCE", "")
                     block_text = block_text.split(":")[0]
-                    for gloss in gloss_types:
-                        if gloss == block_text:
-                            gd = block["duration_ms"]
-                            tgt = current_igt + gd + current_ogt
-                            raw_rows.append({
-                                "entry": block["entry"],
-                                "block_index": block["index"],
-                                "speaker": block["speaker"],
-                                "gloss": gloss,
-                                "gd": gd,
-                                "igt": current_igt,
-                                "ogt": current_ogt,
-                                "tgt": tgt,
-                                "igt_index": igt_index,
-                                "ogt_index": ogt_index,
-                                "tgt_index": tgt_index,
-                                "lost": False
-                            })
+                    if block_text in gloss_types:
+                        gloss = block_text
+                        gd = block["duration_ms"]
+                        tgt = current_igt + gd + current_ogt
+                        raw_rows.append({
+                            "entry": block["entry"],
+                            "block_index": block["index"],
+                            "speaker": block["speaker"],
+                            "gloss": gloss,
+                            "gd": gd,
+                            "igt": current_igt,
+                            "ogt": current_ogt,
+                            "tgt": tgt,
+                            "igt_index": igt_index,
+                            "ogt_index": ogt_index,
+                            "tgt_index": tgt_index,
+                            "lost": False
+                        })
     # --- Process lost gloss blocks: only GD is used.
     for block in lost_blocks:
         block_text = block["text"].replace("_END_SENTENCE", "")
         block_text = block_text.split(":")[0]
-        for gloss in gloss_types:
-            if gloss == block_text:
-                gd = block["duration_ms"]
-                raw_rows.append({
-                    "entry": block["entry"],
-                    "block_index": block["index"],
-                    "speaker": block["speaker"],
-                    "gloss": gloss,
-                    "gd": gd,
-                    "igt": 0,
-                    "ogt": 0,
-                    "tgt": gd,
-                    "igt_index": block["index"],
-                    "ogt_index": block["index"],
-                    "tgt_index": block["index"],
-                    "lost": True
-                })
+        if block_text in gloss_types:
+            gloss = block_text
+            gd = block["duration_ms"]
+            raw_rows.append({
+                "entry": block["entry"],
+                "block_index": block["index"],
+                "speaker": block["speaker"],
+                "gloss": gloss,
+                "gd": gd,
+                "igt": 0,
+                "ogt": 0,
+                "tgt": gd,
+                "igt_index": block["index"],
+                "ogt_index": block["index"],
+                "tgt_index": block["index"],
+                "lost": True
+            })
 
 def process_srt_file(srt_path, speakers_to_process, gloss_types, entry, raw_rows):
     """
@@ -211,6 +214,8 @@ def main():
     base_path = "/Volumes/IISY/DGSKorpus/"
     gloss_types = load_gloss_types(os.path.join(base_path, "all-types-dgs.csv"))
     gloss_types = {g.rstrip('^') for g in gloss_types}
+    # Filter out glosses that are in excluded_glosses_equal or contain any string in exclude_glosses_contains
+    gloss_types = {g for g in gloss_types if g not in excluded_glosses_equal and not any(ex in g for ex in exclude_glosses_contains)}
     
     entries = [entry for entry in os.listdir(base_path)
                if os.path.isdir(os.path.join(base_path, entry)) and entry.startswith("entry_")]

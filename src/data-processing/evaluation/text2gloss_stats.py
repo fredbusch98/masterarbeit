@@ -54,6 +54,17 @@ all_glosses = [g for cell in gloss_cells for g in cell.split(',') if g]
 total_sentences = len(sentences)
 unique_sentences = len(set(sentences))
 lengths = [len(s.split()) for s in sentences]
+length_counter = Counter(lengths)
+def write_counter_sorted_by_key(counter, filename, header):
+    path = os.path.join(results_dir, filename)
+    with open(path, 'w', newline='', encoding='utf-8') as f:
+        w = csv.writer(f)
+        w.writerow(header)
+        for length in sorted(counter):         # iterate sorted keys
+            w.writerow([length, counter[length]])
+    print(f"Saved {filename}")
+
+write_counter_sorted_by_key(length_counter, 'sentence_lengths.csv', ['length','count'])
 avg_len = mean(lengths)
 med_len = median(lengths)
 std_len = stdev(lengths) if total_sentences > 1 else 0
@@ -123,23 +134,24 @@ gloss_buckets = {
 }
 
 # --- Export CSV helpers ---
-def write_counter(counter, filename, header):
+def write_counter(counter, filename, header, relative):
     path = os.path.join(results_dir, filename)
     with open(path, 'w', newline='', encoding='utf-8') as f:
         w = csv.writer(f)
         w.writerow(header)
         for item, cnt in counter.most_common():
             key = ' '.join(item) if isinstance(item, tuple) else item
-            w.writerow([key, cnt])
+            percent = (cnt / relative) * 100 if relative else 0
+            w.writerow([key, cnt, percent])
     print(f"Saved {filename}")
 
 # Export frequency files
-write_counter(word_counter, 'word_frequencies_raw.csv', ['word', 'count'])
-write_counter(word_counter_norm, 'word_frequencies_norm.csv', ['word', 'count'])
-write_counter(gloss_counter, 'gloss_frequencies.csv', ['gloss', 'count'])
+write_counter(word_counter, 'word_frequencies_raw.csv', ['word', 'count', 'percentage'], total_words)
+write_counter(word_counter_norm, 'word_frequencies_norm.csv', ['word', 'count', 'percentage'], total_words_norm)
+write_counter(gloss_counter, 'gloss_frequencies.csv', ['gloss', 'count', 'percentage'], total_glosses)
 for n in ngram_sizes:
-    write_counter(ngram_counters[n], f'{n}gram_frequencies_raw.csv', [f'{n}-gram', 'count'])
-    write_counter(ngram_counters_norm[n], f'{n}gram_frequencies_norm.csv', [f'{n}-gram', 'count'])
+    write_counter(ngram_counters[n], f'{n}gram_frequencies_raw.csv', [f'{n}-gram', 'count', 'percentage'], total_words)
+    write_counter(ngram_counters_norm[n], f'{n}gram_frequencies_norm.csv', [f'{n}-gram', 'count', 'percentage'], total_words_norm)
 # Gloss detailed metrics
 gdm_path = os.path.join(results_dir, 'gloss_detailed_metrics.csv')
 with open(gdm_path, 'w', newline='', encoding='utf-8') as f:
@@ -168,19 +180,23 @@ print(f"Average sentence TTR: {avg_norm_sent_ttr:.3f}")
 print(f"Guiraud's R: {guiraud_r:.3f}")
 
 print("\nTop 10 glosses:")
-for g,c in gloss_counter.most_common(10): print(f"  {g}: {c}")
+for g,c in gloss_counter.most_common(10): 
+    percent = (c / total_glosses) * 100 if total_glosses else 0
+    print(f"  {g}: {c} ({percent:.2f}%)")
 
 for n in ngram_sizes:
     print(f"\nTop 10 {n}-grams (raw):")
     for ng,c in ngram_counters[n].most_common(10):
         label = ' '.join(ng) if isinstance(ng, tuple) else ng
-        print(f"  {label} - {c}")
+        percent = (c / total_words) * 100 if total_words else 0
+        print(f"  {label} - {c} ({percent:.4f}%)")
 
 for n in ngram_sizes:
     print(f"\nTop 10 {n}-grams (normalized):")
     for ng,c in ngram_counters_norm[n].most_common(10):
         label = ' '.join(ng) if isinstance(ng, tuple) else ng
-        print(f"  {label} - {c}")
+        percent = (c / total_words_norm) * 100 if total_words_norm else 0
+        print(f"  {label} - {c} ({percent:.4f}%)")
 
 print("\nDetailed gloss buckets:")
 print(f"  average_occurrence: {avg_occurrence:.2f}")
