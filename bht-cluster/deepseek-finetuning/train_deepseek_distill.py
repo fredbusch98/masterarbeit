@@ -224,11 +224,10 @@ def main():
         inputs = tokenizer(input_text, return_tensors="pt").to(model.device)
         outputs = model.generate(**inputs, max_new_tokens=max_gloss_tokens + 1)
         generated_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
+        gloss_sequence = generated_text.split("<think>")[-1].strip()
 
         if log_this_call:
             logger.info("[Call %d] Raw generated text: %s", call, generated_text)
-
-        gloss_sequence = generated_text.split("<think>")[-1].strip()
 
         if log_this_call:
             logger.info("[Call %d] Generated gloss: '%s'", call, gloss_sequence)

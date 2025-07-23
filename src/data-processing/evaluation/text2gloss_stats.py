@@ -8,9 +8,9 @@ import string
 import re
 
 # Path to your CSV file and results directory
-txt_file_path = "/Users/frederikbusch/Developer/master-arbeit/text2gloss2pose/bht-cluster/deepseek-finetuning/text2gloss_data/statistics/bt2.csv"
-# txt_file_path = "combined.csv"
-dataset = "DGS-BT2"
+#txt_file_path = "/Users/frederikbusch/Developer/master-arbeit/text2gloss2pose/bht-cluster/deepseek-finetuning/text2gloss_data/statistics/og.csv"
+txt_file_path = "combined.csv"
+dataset = "PHOENIX"
 results_dir = f"./dataset-stats/{dataset}"
 
 # Ensure results directory exists
@@ -55,20 +55,43 @@ total_sentences = len(sentences)
 unique_sentences = len(set(sentences))
 lengths = [len(s.split()) for s in sentences]
 length_counter = Counter(lengths)
-def write_counter_sorted_by_key(counter, filename, header):
+def write_counter_sorted_by_key(counter, filename, header, relative):
     path = os.path.join(results_dir, filename)
     with open(path, 'w', newline='', encoding='utf-8') as f:
         w = csv.writer(f)
         w.writerow(header)
-        for length in sorted(counter):         # iterate sorted keys
-            w.writerow([length, counter[length]])
+        for length in sorted(counter):  
+            cnt = counter[length]       # iterate sorted keys
+            percent = (cnt / relative) * 100 if relative else 0
+            w.writerow([length, cnt, percent])
     print(f"Saved {filename}")
 
-write_counter_sorted_by_key(length_counter, 'sentence_lengths.csv', ['length','count'])
+write_counter_sorted_by_key(length_counter, 'sentence_lengths.csv', ['length','count', 'percentage'], total_sentences)
 avg_len = mean(lengths)
 med_len = median(lengths)
 std_len = stdev(lengths) if total_sentences > 1 else 0
 min_len, max_len = min(lengths), max(lengths)
+
+# --- Gloss‑sequence length stats ---
+# count how many glosses each row has
+gloss_seq_lengths = [
+    len([g for g in cell.split(',') if g.strip()]) 
+    for cell in gloss_cells
+]
+gloss_seq_counter = Counter(gloss_seq_lengths)
+
+# write out as CSV (length,count,percentage)
+total_sequences = len(gloss_seq_lengths)
+# compute mean, median, std
+avg_gloss_seq_len   = mean(gloss_seq_lengths) if total_sequences else 0
+med_gloss_seq_len   = median(gloss_seq_lengths) if total_sequences else 0
+std_gloss_seq_len   = stdev(gloss_seq_lengths) if total_sequences > 1 else 0
+write_counter_sorted_by_key(
+    gloss_seq_counter,
+    'gloss_sequence_lengths.csv',
+    ['length', 'count', 'percentage'],
+    total_sequences
+)
 
 # Find example sentences and counts for min/max lengths
 short_sents = [s for s in sentences if len(s.split()) == min_len]
@@ -77,6 +100,21 @@ n_short = len(short_sents)
 n_long  = len(long_sents)
 example_short = short_sents[0] if short_sents else ''
 example_long  = long_sents[0]  if long_sents else ''
+
+# --- Example gloss‑sequence lengths and counts for min/max lengths ---
+min_gloss_seq = min(gloss_seq_lengths) if gloss_seq_lengths else 0
+max_gloss_seq = max(gloss_seq_lengths) if gloss_seq_lengths else 0
+
+# collect all rows with the min/max gloss‑sequence length
+min_gloss_rows = [cell for cell in gloss_cells 
+                  if len([g for g in cell.split(',') if g.strip()]) == min_gloss_seq]
+max_gloss_rows = [cell for cell in gloss_cells 
+                  if len([g for g in cell.split(',') if g.strip()]) == max_gloss_seq]
+
+n_min_gloss = len(min_gloss_rows)
+n_max_gloss = len(max_gloss_rows)
+example_min_gloss = min_gloss_rows[0] if min_gloss_rows else ''
+example_max_gloss = max_gloss_rows[0] if max_gloss_rows else ''
 
 # --- Word-level stats ---
 word_counter = Counter(all_words_raw)
@@ -161,6 +199,9 @@ with open(gdm_path, 'w', newline='', encoding='utf-8') as f:
     writer.writerow(['unique_glosses', unique_glosses])
     writer.writerow(['avg_occurrence', round(avg_occurrence,2)])
     writer.writerow(['median_occurrence', median_occurrence])
+    writer.writerow(['average_gloss_sequence_length', round(avg_gloss_seq_len,2)])
+    writer.writerow(['median_gloss_sequence_length', med_gloss_seq_len])
+    writer.writerow(['std_gloss_sequence_length', round(std_gloss_seq_len,2)])
     for key, val in gloss_buckets.items():
         writer.writerow([key, val])
 print(f"Saved gloss_detailed_metrics.csv")
@@ -171,6 +212,12 @@ print(f"Unique sentences: {unique_sentences}")
 print(f"Average sentence length: {avg_len:.2f}, median: {med_len}, std: {std_len:.2f}")
 print(f"Shortest sentence ({min_len} words): \"{example_short}\" (and {n_short-1} more with this length)")
 print(f"Longest sentence ({max_len} words): \"{example_long}\" (and {n_long-1} more with this length)")
+print(f"Gloss‑sequence length (mean: {avg_gloss_seq_len:.2f}, "
+      f"median: {med_gloss_seq_len}, std: {std_gloss_seq_len:.2f}):")
+print(f"Shortest gloss sequence ({min_gloss_seq} gloss{'es' if min_gloss_seq != 1 else ''}): "
+      f"\"{example_min_gloss}\" (and {n_min_gloss-1} more with this length)")
+print(f"Longest  gloss sequence ({max_gloss_seq} gloss{'es' if max_gloss_seq != 1 else ''}): "
+      f"\"{example_max_gloss}\" (and {n_max_gloss-1} more with this length)")
 print(f"Total words (raw): {total_words} ({unique_words} unique)")
 print(f"Total words (normalized): {total_words_norm} ({unique_words_norm} unique)")
 print(f"Total glosses: {total_glosses} ({unique_glosses} unique)")

@@ -16,9 +16,6 @@ kubectl -n s85468 exec -it deepseek-finetune -- bash
 4. Navigate to correct directory:
 cd /storage/text2gloss-finetune
 
-4.5. Test:
-python test.py
-
 5. Train:
 python train.py
 

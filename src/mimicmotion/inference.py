@@ -198,8 +198,11 @@ def main(args):
         print("Finished running pipeline")
 
         # Generate the output filename
-        output_filename = f"{args.output_dir}/{os.path.basename(task.ref_video_path).split('.')[0]}" \
-                          f"_{datetime.now().strftime('%Y%m%d%H%M%S')}.mp4"
+        basename = os.path.basename(task.ref_video_path)
+        base_ref_image_name = os.path.basename(task.ref_image_path)
+        base_ref_image_name = base_ref_image_name.replace(".png", "")
+        new_name = basename.replace("_pose.mp4", f"_gen_{base_ref_image_name}.mp4")
+        output_filename = os.path.join(args.output_dir, new_name)
         
         # Save results to the output folder.
         print("Saving result video as mp4 ...")

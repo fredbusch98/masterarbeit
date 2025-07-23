@@ -3,7 +3,7 @@ import cv2
 import math
 from typing import List, Union, NamedTuple, Tuple
 
-#### IMPORTANT NOTE: Script is highly inspired and partly copied from the following sources:
+#### IMPORTANT NOTE: Script is highly inspired and partially copied and was then adapted for our SLP use-case from the following source project:
 # https://github.com/huggingface/controlnet_aux
 
 eps = 0.01

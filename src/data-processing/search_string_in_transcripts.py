@@ -135,9 +135,9 @@ def main():
                         snippet_count[term] = count
                         safe_name = sanitize_filename(term)
                         if count > 1:
-                            out_name = f"{safe_name}_{count:03d}.mp4"
+                            out_name = f"{safe_name}_{count:03d}_og_dgs.mp4"
                         else:
-                            out_name = f"{safe_name}.mp4"
+                            out_name = f"{safe_name}_og_dgs.mp4"
                         out_path = output_dir / out_name
 
                         # Extract the snippet

@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mimicmotion-gen2
+  namespace: s85468
+spec:
+  restartPolicy: OnFailure
+  containers:
+  - name: mimicmotion-container-gen2
+    image: fredbln98/mimicmotion:latest
+    # This command keeps the container alive so you can later exec into it.
+    command: ["bash", "-c", "cd /storage/MimicMotion && ./start_gen.sh 2"]
+    resources:
+      limits:
+        # Request exactly one GPU (V100) for the container.
+        nvidia.com/gpu: "1"
+    volumeMounts:
+    - name: fbusch-volume
+      mountPath: /storage
+  volumes:
+  - name: fbusch-volume
+    persistentVolumeClaim:
+      claimName: fbusch-volume
+  # Node selector to ensure the pod is scheduled only on nodes with a V100 GPU.
+  nodeSelector:
+    gpu: a100
