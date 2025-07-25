@@ -6,6 +6,7 @@ import time
 from omegaconf import OmegaConf
 from datetime import datetime
 from pathlib import Path
+from datetime import datetime
 
 import numpy as np
 import cv2
@@ -246,7 +247,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     Path(args.output_dir).mkdir(parents=True, exist_ok=True)
-    set_logger(args.log_file if args.log_file is not None else 
-               f"{args.output_dir}/{datetime.now().strftime('%Y%m%d%H%M%S')}.log")
+    config_filename = os.path.basename(args.inference_config)
+    config_filename = config_filename.replace(".yml", "")
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    logfile_name = f"{args.output_dir}/{config_filename}_{timestamp}.log"
+    set_logger(args.log_file if args.log_file is not None else
+               logfile_name)
     main(args)
     logger.info("--- Finished ---")

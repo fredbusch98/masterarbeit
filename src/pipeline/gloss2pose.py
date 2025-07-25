@@ -1,9 +1,3 @@
-"""
-Given new glosses as a comma-separated list, perform robust 1:1 matching:
-1. Exact match
-2. Prefix-based variant selection (e.g. ICH→ICH1)
-3. Fuzzy fallback via scikit-learn & embeddings
-"""
 import os
 import json
 import re
@@ -48,13 +42,16 @@ nn = NearestNeighbors(n_neighbors=1, metric='cosine').fit(embeddings)
 p = argparse.ArgumentParser(description='🔍 Robust 1:1 gloss matcher that will generate a pose sequence video for the given gloss sequence!')
 p.add_argument('--glosses', required=True,
                help='Comma-separated gloss list')
-p.add_argument('--reference-image', required=False,
-               help='Path to a reference image of a single person for setting the skeleton dimensions of the final pose sequence. Upper-body (including both arms, hands and the face) should be fully visible in the image!')
+p.add_argument('--output-filename', required=False,
+               help='Output filename of the final pose sequence video.')
+p.add_argument('--config-filename', required=False,
+               help='Output filename of the configuration .yaml file for MimicMotion inference.')
 args = p.parse_args()
 queries = [g.strip().upper() for g in args.glosses.split(',') if g.strip()]
-reference_image_path = args.reference_image
+output_filename = args.output_filename
+config_filename = args.config_filename
 
-# Matching pipeline
+# Gloss matching pipeline
 def match_gloss(q):
     q = q.upper()
     # 1) Exact match
@@ -88,7 +85,6 @@ def match_gloss(q):
     return idx_to_gloss[idx[0][0]]
 
 gloss_sequence = ""
-# Run and print
 for q in queries:
     match = match_gloss(q)
     gloss_sequence = gloss_sequence + match + ","
@@ -98,7 +94,7 @@ gloss_sequence = gloss_sequence.rstrip(",")
 gloss_list = gloss_sequence.split(",")
 print(f"\nFinal mapped gloss sequence: \n{gloss_list}")
 
-config_path, video_path, cfg_name, vid_name = run_from_list(gloss_list, reference_image_path, default_frames=False, fill_pose_sequence=True)
+config_path, video_path, cfg_name, vid_name = run_from_list(gloss_list, output_filename, config_filename, default_frames=False, fill_pose_sequence=True)
 abs_config_path = os.path.abspath(config_path)
 abs_video_path = os.path.abspath(video_path)
 print("\nCopy video and config to the mimicmotion pod:")

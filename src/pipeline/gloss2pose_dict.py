@@ -3,6 +3,7 @@ import json
 import sys
 import cv2
 from datetime import datetime
+from scipy.signal import savgol_filter
 from tqdm import tqdm
 import shutil
 import csv
@@ -41,7 +42,7 @@ def load_gloss_dictionary(dict_path):
         print(f"Error: Could not find the dictionary file at {dict_path}")
         sys.exit(1)
 
-def clear_gloss_output_directory(directory):
+def clear_directory(directory):
     """
     Removes all files and subdirectories from the specified directory.
     """
@@ -134,7 +135,7 @@ def interpolate_keypoints(current_data, next_data, num_intermediate_frames=7):
         intermediate_frames.append(new_frame)
     return current_data + intermediate_frames
 
-def stretch_pose_sequence_evenly(seq, target_frames):
+def stretch_pose_sequence_evenly(seq, target_frames, fps=50):
     """
     If seq has length L and we need T frames total, compute E = T - L extra.
     Split E across the L-1 gaps:
@@ -222,8 +223,7 @@ def load_gloss_times(csv_filepath):
         sys.exit(1)
     return gloss_times
 
-def create_config_yml(timestamp, video_filename, output_dir, num_frames):
-    config_filename = f"config-{timestamp}.yml"
+def create_config_yml(video_filename, output_dir, num_frames, config_filename):
     config_filepath = os.path.join(output_dir, config_filename)
     config_content = f"""# base svd model path
 base_model_path: stabilityai/stable-video-diffusion-img2vid-xt-1-1
@@ -232,8 +232,8 @@ base_model_path: stabilityai/stable-video-diffusion-img2vid-xt-1-1
 ckpt_path: models/MimicMotion_1-1.pth
 
 test_case:
-  - ref_video_path: assets/example_data/videos/{video_filename}
-    ref_image_path: assets/example_data/images/ref.jpg
+  - ref_video_path: assets/example_data/videos/pose-sequence-videos/{video_filename}
+    ref_image_path: assets/example_data/images/reference-images/ref.jpg
     num_frames: {num_frames}
     resolution: 576
     frames_overlap: 6
@@ -250,10 +250,10 @@ test_case:
     print(f"Config file created: {config_filepath}")
     return config_filepath, config_filename
 
-def generate_videos_from_poses_and_create_config_yml(data, output_dir='output', fps=50):
+def generate_videos_from_poses_and_create_config_yml(data, output_filename, config_filename, output_dir='output', fps=50):
     os.makedirs(output_dir, exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    video_filename = f"pose-sequence_{timestamp}.mp4"
+    video_filename = f"{output_filename}_pose.mp4"
     video_path = os.path.join(output_dir, video_filename)
     print("Started generating pose sequence video...")
     fixed_width, fixed_height = 1280, 720
@@ -279,7 +279,7 @@ def generate_videos_from_poses_and_create_config_yml(data, output_dir='output', 
         print(f"Video created: {video_path}")
 
     num_frames = len(data)
-    config_filepath, config_filename = create_config_yml(timestamp, video_filename, output_dir, num_frames)
+    config_filepath, config_filename = create_config_yml(video_filename, output_dir, num_frames, config_filename)
     return config_filepath, video_path, config_filename, video_filename
 
 def save_pose_sequence_json(pose_sequence, output_dir, timestamp):
@@ -295,7 +295,7 @@ def save_pose_sequence_json(pose_sequence, output_dir, timestamp):
     print(f"Pose sequence saved to: {filepath}")
     return filepath
 
-def run_from_list(gloss_list, reference_image_path, default_frames=False, fill_pose_sequence=False):
+def run_from_list(gloss_list, output_filename, config_filename, default_frames=False, fill_pose_sequence=False):
     """
     Given a list of glosses and optionally a reference image, 
     runs the entire pipeline and creates a pose sequence JSON file, 
@@ -306,21 +306,21 @@ def run_from_list(gloss_list, reference_image_path, default_frames=False, fill_p
     use_default_num_intermediate_frames = default_frames
 
     # 1) clear old outputs
-    clear_gloss_output_directory(gloss_output_dir)
+    clear_directory(gloss_output_dir)
 
-    # 2) load dictionary & create numbered JSON files for each gloss of the gloss sequence
+    # 2) load dictionary & dump per‐gloss JSON
     loaded_dict = load_gloss_dictionary(dict_path)
     create_gloss_json_files(gloss_list, loaded_dict, gloss_output_dir)
 
     # 2.5) Scale all keypoints to match proportions of first glosses signer (to avoid morphing of head and body size)
-    scale_all_files(gloss_output_dir, reference_image_path)
+    scale_all_files(gloss_output_dir)
 
     # 3) load all pose‐sequences
     data_frames = load_data_frames_from_path(gloss_output_dir)
     if not data_frames:
         raise RuntimeError("No valid pose JSON files generated")
 
-    # 3a) load gloss timing (including median_gd) and evenly stretch each sequence if needed
+    # 3a) load gloss timing (including median_gd) and evenly stretch each sequence
     gloss_times = load_gloss_times(gloss_times_csv)
     if fill_pose_sequence:
         data_frames = fill_pose_sequence_duration(
@@ -352,13 +352,20 @@ def run_from_list(gloss_list, reference_image_path, default_frames=False, fill_p
                         median_igt = gloss_times[gloss_curr]['median_igt']
                         avg_ms = int(round((median_ogt + median_igt) / 2))
                         num_int_frames = int(round((avg_ms / 1000.0) * 50))
+                        if num_int_frames < 1:
+                            num_int_frames = DEFAULT_NUM_INTERMEDIATE_FRAMES
                     else:
                         print(f"Gloss times not found for pair: {gloss_prev} and/or {gloss_curr}. Using default value.")
                         num_int_frames = DEFAULT_NUM_INTERMEDIATE_FRAMES
                 # Use calculated number of intermediate frames
-                interpolated = interpolate_keypoints(previous_data, current_data, num_intermediate_frames=num_int_frames)
-                # Exclude the overlapping frame from interpolation
-                final_pose_sequence.extend(interpolated[len(previous_data):])
+                interpolated = interpolate_keypoints(
+                    current_data=previous_data,
+                    next_data=current_data,
+                    num_intermediate_frames=num_int_frames
+                )[len(previous_data):]  # Exclude the overlapping frame from interpolation (Why does "interpolate_keypoints" concat the starting gloss with the interpolated frames in the first place?)
+
+                final_pose_sequence.extend(interpolated)
+
             final_pose_sequence.extend(current_data)
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -366,90 +373,6 @@ def run_from_list(gloss_list, reference_image_path, default_frames=False, fill_p
     
     # 5) render video + write config
     cfg_path, vid_path, cfg_name, vid_name = generate_videos_from_poses_and_create_config_yml(
-        final_pose_sequence, output_dir=final_output_dir
+        final_pose_sequence, output_filename, config_filename, output_dir=final_output_dir
     )
     return cfg_path, vid_path, cfg_name, vid_name
-# -----------------------------------------------------------
-
-def main():
-    # Ensure that a gloss sequence is provided via command-line
-    if len(sys.argv) < 2:
-        print("Please provide a single gloss or a comma-separated sequence of glosses.")
-        print("Example (single gloss): python script.py GLOSS1")
-        print("Example (multiple glosses): python script.py GLOSS1,GLOSS2,GLOSS3")
-        sys.exit(1)
-    input_sequence = sys.argv[1]
-    gloss_list = [gloss.strip() for gloss in input_sequence.split(',')]
-
-    # Clear the output directory before creating new files
-    clear_gloss_output_directory(gloss_output_dir)
-
-    # Step 1: Load gloss dictionary and create JSON files
-    loaded_dict = load_gloss_dictionary(dict_path)
-    create_gloss_json_files(gloss_list, loaded_dict, gloss_output_dir)
-    print(f"Gloss JSON files created in '{gloss_output_dir}'.")
-
-    # NEW: If not using default interpolation frames, load gloss times from CSV.
-    if not use_default_num_intermediate_frames:
-        gloss_times = load_gloss_times(gloss_times_csv)
-
-    # Step 2: Load pose sequences from created JSON files
-    scale_all_files(gloss_output_dir)
-    data_frames = load_data_frames_from_path(input_sentence_path)
-    if not data_frames:
-        print("No valid pose sequence JSON files found. Exiting.")
-        sys.exit(1)
-
-    # Step 3: Combine pose sequences with interpolation
-    if len(data_frames) == 1:
-        final_pose_sequence = data_frames[0]
-    else:
-        final_pose_sequence = []
-        for i, current_data in enumerate(data_frames):
-            if i > 0:
-                previous_data = data_frames[i - 1]
-                if use_default_num_intermediate_frames:
-                    # Use default fixed value
-                    num_int_frames = DEFAULT_NUM_INTERMEDIATE_FRAMES
-                else:
-                    # NEW: Calculate num_intermediate_frames using CSV values for the gloss pair.
-                    # For gloss at position i-1 (first gloss) use its median_ogt.
-                    # For gloss at position i (next gloss) use its median_igt.
-                    gloss_prev = gloss_list[i - 1]
-                    gloss_curr = gloss_list[i]
-                    if gloss_prev in gloss_times and gloss_curr in gloss_times:
-                        median_ogt = gloss_times[gloss_prev]['median_ogt']
-                        median_igt = gloss_times[gloss_curr]['median_igt']
-                        avg_ms = int(round((median_ogt + median_igt) / 2))
-                        num_int_frames = int(round((avg_ms / 1000.0) * 50))
-                    else:
-                        print(f"Gloss times not found for pair: {gloss_prev} and/or {gloss_curr}. Using default value.")
-                        num_int_frames = DEFAULT_NUM_INTERMEDIATE_FRAMES
-                # Use calculated number of intermediate frames
-                interpolated = interpolate_keypoints(previous_data, current_data, num_intermediate_frames=num_int_frames)
-                # Exclude the overlapping frame from interpolation
-                final_pose_sequence.extend(interpolated[len(previous_data):])
-            final_pose_sequence.extend(current_data)
-
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    save_pose_sequence_json(final_pose_sequence, final_output_dir, timestamp)
-
-    # Step 4: Generate the video and config YAML
-    config_path, video_path, config_filename, video_filename = generate_videos_from_poses_and_create_config_yml(
-        final_pose_sequence, output_dir=final_output_dir
-    )
-    
-    abs_config_path = os.path.abspath(config_path)
-    abs_video_path = os.path.abspath(video_path)
-    print("")
-    print("Copy video and config to the mimicmotion pod:")
-    print(f"kubectl cp {abs_config_path} s85468/mimicmotion:/storage/MimicMotion/configs/{config_filename}")
-    print(f"kubectl cp {abs_video_path} s85468/mimicmotion:/storage/MimicMotion/configs/{video_filename}")
-    print("")
-    print("Start inference with the config on the mimicmotion pod:")
-    print(f"python inference.py --inference_config configs/{config_filename}")
-
-if __name__ == "__main__":
-    main()
-
-# Example sentence: BEREICH1A,INTERESSE1A,MERKWÜRDIG1,GEBÄRDEN1A,FASZINIEREND2,GEBÄRDEN1A,SPIELEN2,BEREICH1A,INTERESSE1A,SPIELEN2

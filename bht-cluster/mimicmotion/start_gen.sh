@@ -10,8 +10,10 @@ fi
 
 ARG_NUMBER="$1"
 
-# Now that ARG_NUMBER is known, set up logging
-exec > >(tee "${ARG_NUMBER}-log.log") 2>&1
+# Now that ARG_NUMBER is known, set up logging with timestamp
+TIMESTAMP=$(date '+%Y-%m-%d_%H-%M-%S')
+LOG_FILE="outputs/pod-${ARG_NUMBER}-log-${TIMESTAMP}.log"
+exec > >(tee "$LOG_FILE") 2>&1
 
 echo "Received argument: $ARG_NUMBER"
 
@@ -35,10 +37,15 @@ printf '%s\n' "${variant_list[@]}"
 # Hardcoded HF_TOKEN
 HF_TOKEN="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"
 
-# Step 1 & 2 & 3: Create the conda environment
-echo "Creating conda environment..."
+# Step 1: Conda env creation (only if it doesn’t exist)
+echo "Checking if conda environment 'mimicmotion' exists..."
 cd /storage/MimicMotion
-conda env create -f environment.yaml
+if conda env list | grep -qE '^\s*mimicmotion\s'; then
+    echo "Conda environment 'mimicmotion' already exists. Skipping creation."
+else
+    echo "Creating conda environment..."
+    conda env create -f environment.yaml
+fi
 
 # Initialize conda in the shell
 source /opt/miniconda/etc/profile.d/conda.sh

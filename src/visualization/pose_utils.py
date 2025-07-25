@@ -3,7 +3,7 @@ import cv2
 import math
 from typing import List, Union, NamedTuple, Tuple
 
-#### IMPORTANT NOTE: Script is highly inspired and partially copied and was then adapted for our SLP use-case from the following source project:
+#### IMPORTANT NOTE: Script is highly inspired and partly copied from the following sources:
 # https://github.com/huggingface/controlnet_aux
 
 eps = 0.01
@@ -51,7 +51,7 @@ def draw_bodypose(canvas: np.ndarray, keypoints: List[Keypoint]) -> np.ndarray:
         The function expects the x and y coordinates of the keypoints to be normalized between 0 and 1.
     """
     H, W, C = canvas.shape
-    stickwidth = 4
+    stickwidth = 2
 
     limbSeq = [
         [2, 3], [2, 6], [3, 4], [4, 5], 
@@ -92,7 +92,7 @@ def draw_bodypose(canvas: np.ndarray, keypoints: List[Keypoint]) -> np.ndarray:
         x, y = keypoint.x, keypoint.y
         x = int(x * W)
         y = int(y * H)
-        cv2.circle(canvas, (int(x), int(y)), 4, color, thickness=-1)
+        cv2.circle(canvas, (int(x), int(y)), 2, color, thickness=-1)
 
         if show_body_keypoint_ids:
             # Draw keypoint ID as text next to the keypoint
@@ -137,7 +137,7 @@ def draw_handpose(canvas: np.ndarray, keypoints: Union[List[Keypoint], None]) ->
         x2 = int(k2.x * W)
         y2 = int(k2.y * H)
         if x1 > eps and y1 > eps and x2 > eps and y2 > eps:
-            cv2.line(canvas, (x1, y1), (x2, y2), (matplotlib.colors.hsv_to_rgb([ie / float(len(edges)), 1.0, 1.0]) * 255).astype(int).tolist(), thickness=2)
+            cv2.line(canvas, (x1, y1), (x2, y2), (matplotlib.colors.hsv_to_rgb([ie / float(len(edges)), 1.0, 1.0]) * 255).astype(int).tolist(), thickness=1)
 
     for keypoint in keypoints:
         if keypoint.score < CONFIDENCE_THRESHOLD or (keypoint.x == 0.0 and keypoint.y == 0.0):
@@ -146,7 +146,7 @@ def draw_handpose(canvas: np.ndarray, keypoints: Union[List[Keypoint], None]) ->
         x = int(x * W)
         y = int(y * H)
         if x > eps and y > eps:
-            cv2.circle(canvas, (x, y), 4, (0, 0, 255), thickness=-1)
+            cv2.circle(canvas, (x, y), 1, (0, 0, 255), thickness=-1)
     return canvas
 
 def draw_facepose(canvas: np.ndarray, keypoints: Union[List[Keypoint], None]) -> np.ndarray:
@@ -169,13 +169,15 @@ def draw_facepose(canvas: np.ndarray, keypoints: Union[List[Keypoint], None]) ->
     
     H, W, C = canvas.shape
     for keypoint in keypoints:
+        if keypoint.id in {68, 69}:  # Skip keypoints with ID 68 and 69 (these are the pupil keypoints which do not exist in DWPose)
+            continue
         if keypoint.score < CONFIDENCE_THRESHOLD or (keypoint.x == 0.0 and keypoint.y == 0.0):
             continue  # Skip invalid keypoints
         x, y = keypoint.x, keypoint.y
         x = int(x * W)
         y = int(y * H)
         if x > eps and y > eps:
-            cv2.circle(canvas, (x, y), 3, (255, 255, 255), thickness=-1)
+            cv2.circle(canvas, (x, y), 1, (255, 255, 255), thickness=-1)
     return canvas
 
 # Parse 2D keypoints with normalization
@@ -291,7 +293,7 @@ def create_upper_body_pose_image(pose2d, face2d, left2d, right2d):
         np.ndarray: The resulting upper-body pose image.
     """
     # Reconstruct full pose2d with 75 values
-    included = [0, 1, 2, 3, 4, 5, 6, 7, 8, 15, 16, 17, 18]  # Upper-body keypoint indexes
+    included = [0, 1, 2, 3, 4, 5, 6, 7, 8]  # Upper-body keypoint indices (without the ears and eyes since we already have the face keypoints)
     full_pose2d = [0.0] * 75  # Initialize with zeros for all 25 keypoints
     for idx, i in enumerate(included):
         start = 3 * i
