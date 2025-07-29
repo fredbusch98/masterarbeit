@@ -8,6 +8,19 @@ import argparse
 from rapidfuzz import process, fuzz
 from gloss2pose_dict import run_from_list
 
+# Argument parsing
+p = argparse.ArgumentParser(description='🔍 Robust 1:1 gloss matcher that will generate a pose sequence video for the given gloss sequence!')
+p.add_argument('--glosses', required=True,
+               help='Comma-separated gloss list')
+p.add_argument('--output-filename', required=True,
+               help='Output filename of the final pose sequence video.')
+p.add_argument('--config-filename', required=True,
+               help='Output filename of the configuration .yaml file for MimicMotion inference.')
+args = p.parse_args()
+queries = [g.strip().upper() for g in args.glosses.split(',') if g.strip()]
+output_filename = args.output_filename
+config_filename = args.config_filename
+
 # Config paths
 MAPPING_OUT = './resources/gloss_to_idx.json'
 EMBEDDINGS_IN = './resources/gloss_embeddings.npz'
@@ -37,19 +50,6 @@ for base in prefix_map:
 embeddings = np.load(EMBEDDINGS_IN)['embeddings']
 model = SentenceTransformer(MODEL_NAME)
 nn = NearestNeighbors(n_neighbors=1, metric='cosine').fit(embeddings)
-
-# Argument parsing
-p = argparse.ArgumentParser(description='🔍 Robust 1:1 gloss matcher that will generate a pose sequence video for the given gloss sequence!')
-p.add_argument('--glosses', required=True,
-               help='Comma-separated gloss list')
-p.add_argument('--output-filename', required=False,
-               help='Output filename of the final pose sequence video.')
-p.add_argument('--config-filename', required=False,
-               help='Output filename of the configuration .yaml file for MimicMotion inference.')
-args = p.parse_args()
-queries = [g.strip().upper() for g in args.glosses.split(',') if g.strip()]
-output_filename = args.output_filename
-config_filename = args.config_filename
 
 # Gloss matching pipeline
 def match_gloss(q):

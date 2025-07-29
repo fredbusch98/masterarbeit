@@ -293,7 +293,7 @@ def create_upper_body_pose_image(pose2d, face2d, left2d, right2d):
         np.ndarray: The resulting upper-body pose image.
     """
     # Reconstruct full pose2d with 75 values
-    included = [0, 1, 2, 3, 4, 5, 6, 7, 8]  # Upper-body keypoint indices (without the ears and eyes since we already have the face keypoints)
+    included = [0, 1, 2, 3, 4, 5, 6, 7, 8, 15, 16, 17, 18]  # Upper-body keypoint indices
     full_pose2d = [0.0] * 75  # Initialize with zeros for all 25 keypoints
     for idx, i in enumerate(included):
         start = 3 * i

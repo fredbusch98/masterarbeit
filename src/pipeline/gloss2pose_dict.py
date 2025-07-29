@@ -16,7 +16,7 @@ skip_interpolation = False
 # ---------------------- Configuration ----------------------
 # Path to gloss dictionary JSON
 root_folder = "/Volumes/IISY/DGSKorpus"
-dict_path = "./resources/gloss_dictionary.json"
+dict_path = "./resources/gloss2pose_dictionary.json"
 # Output directory for the intermediary gloss JSON files
 gloss_output_dir = "outputs/gloss2pose_dictionary_output"
 # Final output directory for pose sequence video and MimicMotion config
@@ -34,7 +34,7 @@ def load_gloss_dictionary(dict_path):
     try:
         file_size = os.path.getsize(dict_path)
         with open(dict_path, 'r', encoding='utf-8') as f:
-            with tqdm(total=file_size, desc="Loading gloss dictionary", unit="B", unit_scale=True) as pbar:
+            with tqdm(total=file_size, desc="Loading gloss2pose dictionary", unit="B", unit_scale=True) as pbar:
                 loaded_dict = json.load(f)
                 pbar.update(file_size)
         return loaded_dict

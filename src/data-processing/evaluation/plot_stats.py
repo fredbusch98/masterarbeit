@@ -4,7 +4,7 @@ import os
 import numpy as np
 
 # List of all datasets to process
-DATASETS = ["DGS-BT2", "DGS-OG", "PHOENIX"]
+DATASETS = ["bt-2", "og-preprocessed", "phoenix"]
 BASE_STATS_DIR = "./dataset-stats"
 BASE_PLOTS_DIR = "./dataset-plots"
 

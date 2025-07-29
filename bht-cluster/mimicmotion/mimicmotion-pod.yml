@@ -11,7 +11,6 @@ spec:
     command: ["bash", "-c", "while true; do sleep 30; done"]
     resources:
       limits:
-        # Request exactly one GPU (V100) for the container.
         nvidia.com/gpu: "1"
     volumeMounts:
     - name: fbusch-volume
@@ -23,4 +22,3 @@ spec:
   # Node selector to ensure the pod is scheduled only on nodes with a V100 GPU.
   nodeSelector:
     gpu: a100
-    #kubernetes.io/hostname: cl-worker29

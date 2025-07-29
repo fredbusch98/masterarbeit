@@ -43,9 +43,17 @@ exec_in_pod "cd storage/MimicMotion && conda env create -f environment.yaml && \
 # Activate the environment for a given command. (Could be used to later automatically activate the environment and pass the pose-sequence output of the gloss2pose module?!)
 ENV_ACTIVATION="source /opt/miniconda/etc/profile.d/conda.sh && conda activate mimicmotion"
 
-# Ensure sed is installed
-echo "Checking and installing sed if necessary..."
-exec_in_pod "apt-get update && apt-get install -y sed"
+# Ensure sed is installed (with retries in case the NVIDIA mirror is mid‑sync)
+echo "Checking and installing sed (with retries) if necessary..."
+exec_in_pod "\
+  apt-get clean && rm -rf /var/lib/apt/lists/* ; \
+  n=0; until [ \$n -ge 5 ]; do \
+    apt-get update && break; \
+    n=\$((n+1)); \
+    echo \"apt-get update failed (attempt \$n), retrying in 5s...\"; \
+    sleep 5; \
+  done ; \
+  apt-get install -y sed"
 
 # Step 4: Patch dynamic_modules_utils.py by removing any line containing 'cached_download'
 echo "Patching dynamic_modules_utils.py..."

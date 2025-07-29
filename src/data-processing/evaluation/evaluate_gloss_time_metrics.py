@@ -11,17 +11,21 @@ def read_raw_metrics(file_path):
 
 def aggregate_metrics(df):
     """
-    Group by gloss and compute average and median metrics and counts.
+    Group by gloss and compute average, median, standard deviation metrics and counts.
     """
     agg = df.groupby("gloss").agg(
         avg_gd=("gd", "mean"),
-        median_gd=("gd", "median"),  # Added median
+        median_gd=("gd", "median"),
+        std_gd=("gd", "std"),
         avg_igt=("igt", "mean"),
-        median_igt=("igt", "median"),  # Added median
+        median_igt=("igt", "median"),
+        std_igt=("igt", "std"),
         avg_ogt=("ogt", "mean"),
-        median_ogt=("ogt", "median"),  # Added median
+        median_ogt=("ogt", "median"),
+        std_ogt=("ogt", "std"),
         avg_tgt=("tgt", "mean"),
-        median_tgt=("tgt", "median"),  # Added median
+        median_tgt=("tgt", "median"),
+        std_tgt=("tgt", "std"),
         count=("gloss", "count")
     ).reset_index()
     return agg
@@ -105,7 +109,11 @@ def main():
     raw_csv = os.path.join(base_path, "dgs-gloss-times", "raw_gloss_metrics.csv")
     df = read_raw_metrics(raw_csv)
     
-    # Compute overall averages and medians
+    # Compute overall averages, medians and standard deviations
+    overall_std_gd = df["gd"].std()
+    overall_std_igt = df["igt"].std()
+    overall_std_ogt = df["ogt"].std()
+    overall_std_tgt = df["tgt"].std()
     overall_avg_gd = df["gd"].mean()
     overall_median_gd = df["gd"].median()  # Added median
     overall_avg_igt = df["igt"].mean()
@@ -114,13 +122,26 @@ def main():
     overall_median_ogt = df["ogt"].median()  # Added median
     overall_avg_tgt = df["tgt"].mean()
     overall_median_tgt = df["tgt"].median()  # Added median
+
+    # Compute overall quantiles
+    gd_q25 = df["gd"].quantile(0.25)
+    gd_q75 = df["gd"].quantile(0.75)
+
+    igt_q25 = df["igt"].quantile(0.25)
+    igt_q75 = df["igt"].quantile(0.75)
+
+    ogt_q25 = df["ogt"].quantile(0.25)
+    ogt_q75 = df["ogt"].quantile(0.75)
+
+    tgt_q25 = df["tgt"].quantile(0.25)
+    tgt_q75 = df["tgt"].quantile(0.75)
     
     print("Overall Statistics:")
-    print(f"  GD: Avg = {overall_avg_gd:.2f} ms, Median = {overall_median_gd:.2f} ms")
-    print(f"  IGT: Avg = {overall_avg_igt:.2f} ms, Median = {overall_median_igt:.2f} ms")
-    print(f"  OGT: Avg = {overall_avg_ogt:.2f} ms, Median = {overall_median_ogt:.2f} ms")
-    print(f"  TGT: Avg = {overall_avg_tgt:.2f} ms, Median = {overall_median_tgt:.2f} ms")
-    
+    print(f"  GD: Avg = {overall_avg_gd:.2f} ms, Median = {overall_median_gd:.2f} ms, Std = {overall_std_gd:.2f} ms, Q25 = {gd_q25:.2f} ms, Q75 = {gd_q75:.2f} ms")
+    print(f"  IGT: Avg = {overall_avg_igt:.2f} ms, Median = {overall_median_igt:.2f} ms, Std = {overall_std_igt:.2f} ms, Q25 = {igt_q25:.2f} ms, Q75 = {igt_q75:.2f} ms")
+    print(f"  OGT: Avg = {overall_avg_ogt:.2f} ms, Median = {overall_median_ogt:.2f} ms, Std = {overall_std_ogt:.2f} ms, Q25 = {ogt_q25:.2f} ms, Q75 = {ogt_q75:.2f} ms")
+    print(f"  TGT: Avg = {overall_avg_tgt:.2f} ms, Median = {overall_median_tgt:.2f} ms, Std = {overall_std_tgt:.2f} ms, Q25 = {tgt_q25:.2f} ms, Q75 = {tgt_q75:.2f} ms")
+
     # Aggregate per-gloss averages, medians and counts
     agg = aggregate_metrics(df)
     
@@ -128,6 +149,12 @@ def main():
     eval_csv = os.path.join(base_path, "dgs-gloss-times", "evaluated_gloss_metrics.csv")
     agg.to_csv(eval_csv, index=False)
     print(f"\nEvaluation metrics written to {eval_csv}")
+
+    # Write the aggregated evaluation summary with std to CSV
+    eval_csv_with_std = os.path.join(base_path, "dgs-gloss-times", "evaluated_gloss_metrics_with_std.csv")
+    agg.to_csv(eval_csv_with_std, index=False)
+    print(f"Evaluation metrics (with std) written to {eval_csv_with_std}")
+
 
     # Extract and save filtered columns (gloss, median_igt, median_ogt)
     filtered_csv = os.path.join(base_path, "dgs-gloss-times", "evaluated_gloss_metrics_filtered.csv")

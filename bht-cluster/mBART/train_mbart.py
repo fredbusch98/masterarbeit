@@ -97,7 +97,7 @@ def evaluate_bleu(model, tokenizer, data_frame, mode):
 
 def main():
     try:
-        train_csv = 'train.csv'
+        train_csv = '../text2gloss_data/bt-2/train.csv'
         dev_csv = 'dev.csv'
         test_csv = 'test.csv'
 

@@ -3,6 +3,14 @@ import json
 import csv
 from tqdm import tqdm
 
+# Expected lengths for keypoint arrays
+EXPECTED_LENGTHS = {
+    'pose_keypoints_2d': 39, # 39 instead of 75 because we removed the lower-body keypoints in gloss2pose_mapper.py
+    'face_keypoints_2d': 210,
+    'hand_left_keypoints_2d': 63,
+    'hand_right_keypoints_2d': 63
+}
+
 def read_unique_glosses(csv_path):
     """Read unique glosses from a CSV file."""
     with open(csv_path, 'r', encoding='utf-8') as csvfile:
@@ -24,6 +32,14 @@ def calculate_avg_conf(poses):
                 sum_conf += sum(pose_object[key][2::3])  # Sum confidence scores (every 3rd element)
         total_sum += sum_conf
     return total_sum / len(poses)
+
+def is_corrupted(pose_sequence):
+    """Check if a pose sequence is corrupted based on keypoint array lengths."""
+    for pose_object in pose_sequence:
+        for key, expected_length in EXPECTED_LENGTHS.items():
+            if key in pose_object and len(pose_object[key]) != expected_length:
+                return True
+    return False
 
 def update_output_file(best_poses, output_json_path):
     """Save the current best poses to a JSON file."""
@@ -55,6 +71,8 @@ def collect_best_poses_in_batches(root_folder, unique_glosses, output_json_path,
                                     gloss = item['gloss']
                                     if gloss in unique_glosses:
                                         poses = item['pose_sequence']
+                                        if is_corrupted(poses):
+                                            continue
                                         avg_conf = calculate_avg_conf(poses)
                                         # Update best pose if higher confidence
                                         if gloss not in best_poses or avg_conf > best_poses[gloss][0]:
@@ -75,13 +93,16 @@ def collect_best_poses_in_batches(root_folder, unique_glosses, output_json_path,
 def validate_final_dictionary(output_json_path, unique_glosses):
     """
     Validates that the final JSON file contains the same number of glosses as in the unique_glosses.
+    Prints missing glosses if validation fails.
     """
     with open(output_json_path, 'r', encoding='utf-8') as f:
         final_dict = json.load(f)
     num_final = len(final_dict)
     num_unique = len(unique_glosses)
     if num_final != num_unique:
+        missing_glosses = set(unique_glosses) - set(final_dict.keys())
         print(f"Validation FAILED: Final dictionary contains {num_final} glosses but expected {num_unique}.")
+        print("Missing glosses:", missing_glosses)
     else:
         print(f"Validation PASSED: Final dictionary contains the expected {num_final} glosses.")
 
@@ -96,7 +117,7 @@ if __name__ == "__main__":
     print(f"Loaded {len(unique_glosses)} unique glosses")
     
     # Step 2: Process folders and save results in batches
-    output_json_path = os.path.join(root_folder, "gloss_dictionary.json")
+    output_json_path = os.path.join(root_folder, "gloss2pose_dictionary.json")
     print("Collecting best pose sequences and saving in batches...")
     best_poses = collect_best_poses_in_batches(root_folder, unique_glosses, output_json_path, batch_size=10)
     print(f"Collected best pose sequences for {len(best_poses)} glosses")
