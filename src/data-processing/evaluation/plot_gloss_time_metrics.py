@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 import os
+from matplotlib.patches import Patch
+from matplotlib.lines import Line2D
 
 # Provided statistics in milliseconds
 metrics = {
@@ -48,14 +50,10 @@ def plot_metrics(metrics, convert_to_frames=False, save_name="metrics_boxplot.pn
     positions = range(1, len(labels) + 1)
 
     for i, data in enumerate(box_data):
-        # IQR bar
         ax.broken_barh([(data["q1"], data["q3"] - data["q1"])], (i + 0.75, 0.5),
                        facecolors='skyblue', edgecolors='black', label='Q25–Q75' if i == 0 else "")
-        # Median (red dot)
         ax.plot(data["median"], i + 1, 'ro', label='Median' if i == 0 else "")
-        # Mean (green dot)
         ax.plot(data["mean"], i + 1, 'go', label='Mean' if i == 0 else "")
-        # Std (blue dot)
         ax.plot(data["std"], i + 1, 'bo', label='Std Dev' if i == 0 else "")
 
     ax.set_yticks(positions)
@@ -71,58 +69,32 @@ def plot_metrics(metrics, convert_to_frames=False, save_name="metrics_boxplot.pn
     print(f"Saved plot to {save_name}")
     plt.close()
 
-# New: Plot per-gloss std dev distribution (boxplot + dots, no labels)
-def plot_std_per_gloss(df, metric_base, output_dir):
-    import matplotlib.patches as mpatches
-
-    std_col = f"std_{metric_base}"
-
-    # --- Plot in milliseconds ---
+# Generalized per-gloss metric plot (boxplot + jitter)
+def plot_per_gloss_metric(df, metric_col, label, unit, output_path):
     plt.figure(figsize=(8, 4))
-    sns.boxplot(x=df[std_col], color='skyblue', showfliers=False)
-    sns.stripplot(x=df[std_col], color='black', size=3, jitter=0.2)
-    plt.title(f"{metric_base.upper()} Std Dev per Unique Gloss (ms)")
-    plt.xlabel("Milliseconds")
+    sns.boxplot(x=df[metric_col], color='skyblue', showfliers=False)
+    sns.stripplot(x=df[metric_col], color='black', size=3, jitter=0.2)
+    plt.title(f"{label} per Unique Gloss ({unit})")
+    plt.xlabel(unit)
     plt.yticks([])
 
-    # Legend: Box = IQR, Dots = Gloss values
-    box_patch = mpatches.Patch(color='skyblue', label='Q25–Q75')
-    dot_patch = mpatches.Patch(color='black', label='Unique Gloss Std Dev')
-    plt.legend(handles=[box_patch, dot_patch], loc='upper right')
+    legend_elements = [
+        Patch(facecolor='skyblue', edgecolor='black', label='Q25–Q75'),
+        Line2D([0], [0], marker='o', color='black', linestyle='None', markersize=5, label='Unique Gloss')
+    ]
+    plt.legend(handles=legend_elements, loc='upper right')
 
     plt.tight_layout()
-    ms_plot_path = os.path.join(output_dir, f"{metric_base}_std_per_gloss_ms.png")
-    plt.savefig(ms_plot_path)
-    print(f"Saved plot to {ms_plot_path}")
-    plt.close()
-
-    # --- Convert to frames ---
-    df[f"{std_col}_frames"] = df[std_col] / 20.0
-
-    plt.figure(figsize=(8, 4))
-    sns.boxplot(x=df[f"{std_col}_frames"], color='skyblue', showfliers=False)
-    sns.stripplot(x=df[f"{std_col}_frames"], color='black', size=3, jitter=0.2)
-    plt.title(f"{metric_base.upper()} Std Dev per Unique Gloss (frames @50FPS)")
-    plt.xlabel("Frames")
-    plt.yticks([])
-
-    # Legend: Box = IQR, Dots = Gloss values
-    box_patch = mpatches.Patch(color='skyblue', label='Q25–Q75')
-    dot_patch = mpatches.Patch(color='black', label='Unique Gloss Std Dev')
-    plt.legend(handles=[box_patch, dot_patch], loc='upper right')
-
-    plt.tight_layout()
-    frames_plot_path = os.path.join(output_dir, f"{metric_base}_std_per_gloss_frames.png")
-    plt.savefig(frames_plot_path)
-    print(f"Saved plot to {frames_plot_path}")
+    plt.savefig(output_path)
+    print(f"Saved plot to {output_path}")
     plt.close()
 
 if __name__ == "__main__":
-    # Plot overall statistics in ms and frames
+    # Plot overall metrics (in ms and frames)
     plot_metrics(metrics, convert_to_frames=False, save_name="metrics_boxplot_ms.png")
     plot_metrics(metrics, convert_to_frames=True, save_name="metrics_boxplot_frames.png")
 
-    # New: Per-gloss std dev distribution plots
+    # Per-gloss metric distribution plots
     base_path = "/Volumes/IISY/DGSKorpus/dgs-gloss-times"
     csv_file = os.path.join(base_path, "evaluated_gloss_metrics_with_std.csv")
     output_dir = os.path.join(base_path, "plots")
@@ -130,5 +102,27 @@ if __name__ == "__main__":
 
     df = pd.read_csv(csv_file)
 
-    for metric in ["gd", "igt", "ogt", "tgt"]:
-        plot_std_per_gloss(df, metric, output_dir)
+    for base_metric in ["gd", "igt", "ogt", "tgt"]:
+        # --- STD Dev (ms and frames)
+        std_col = f"std_{base_metric}"
+        df[f"{std_col}_frames"] = df[std_col] / 20.0
+        plot_per_gloss_metric(df, std_col, f"{base_metric.upper()} Std Dev", "Milliseconds",
+                              os.path.join(output_dir, f"{base_metric}_std_per_gloss_ms.png"))
+        plot_per_gloss_metric(df, f"{std_col}_frames", f"{base_metric.upper()} Std Dev", "Frames",
+                              os.path.join(output_dir, f"{base_metric}_std_per_gloss_frames.png"))
+
+        # --- MEDIAN (ms and frames)
+        median_col = f"median_{base_metric}"
+        df[f"{median_col}_frames"] = df[median_col] / 20.0
+        plot_per_gloss_metric(df, median_col, f"{base_metric.upper()} Median", "Milliseconds",
+                              os.path.join(output_dir, f"{base_metric}_median_per_gloss_ms.png"))
+        plot_per_gloss_metric(df, f"{median_col}_frames", f"{base_metric.upper()} Median", "Frames",
+                              os.path.join(output_dir, f"{base_metric}_median_per_gloss_frames.png"))
+
+        # --- AVERAGE (ms and frames)
+        avg_col = f"avg_{base_metric}"
+        df[f"{avg_col}_frames"] = df[avg_col] / 20.0
+        plot_per_gloss_metric(df, avg_col, f"{base_metric.upper()} Average", "Milliseconds",
+                              os.path.join(output_dir, f"{base_metric}_avg_per_gloss_ms.png"))
+        plot_per_gloss_metric(df, f"{avg_col}_frames", f"{base_metric.upper()} Average", "Frames",
+                              os.path.join(output_dir, f"{base_metric}_avg_per_gloss_frames.png"))
