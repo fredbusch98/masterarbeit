@@ -10,11 +10,11 @@ from gloss2pose_dict import run_from_list
 
 # Argument parsing
 p = argparse.ArgumentParser(description='🔍 Robust 1:1 gloss matcher that will generate a pose sequence video for the given gloss sequence!')
-p.add_argument('--glosses', required=True,
+p.add_argument('-g', '--glosses', required=True,
                help='Comma-separated gloss list')
-p.add_argument('--output-filename', required=True,
+p.add_argument('-o', '--output-filename', required=True,
                help='Output filename of the final pose sequence video.')
-p.add_argument('--config-filename', required=True,
+p.add_argument('-c', '--config-filename', required=True,
                help='Output filename of the configuration .yaml file for MimicMotion inference.')
 args = p.parse_args()
 queries = [g.strip().upper() for g in args.glosses.split(',') if g.strip()]

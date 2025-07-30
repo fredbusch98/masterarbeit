@@ -1,19 +1,21 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: mimicmotion
+  name: mimicmotion-gen4
   namespace: s85468
 spec:
+  restartPolicy: OnFailure
   containers:
-  - name: mimicmotion-container
+  - name: mimicmotion-container-gen4
     image: fredbln98/mimicmotion:latest
     env:
     - name: PYTORCH_CUDA_ALLOC_CONF
       value: "max_split_size_mb:256"
     # This command keeps the container alive so you can later exec into it.
-    command: ["bash", "-c", "while true; do sleep 30; done"]
+    command: ["bash", "-c", "cd /storage/MimicMotion && ./start_gen_missing.sh 4"]
     resources:
       limits:
+        # Request exactly one GPU (V100) for the container.
         nvidia.com/gpu: "1"
     volumeMounts:
     - name: fbusch-volume

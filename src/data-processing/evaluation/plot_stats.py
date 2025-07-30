@@ -8,6 +8,13 @@ DATASETS = ["bt-2", "og-preprocessed", "phoenix"]
 BASE_STATS_DIR = "./dataset-stats"
 BASE_PLOTS_DIR = "./dataset-plots"
 
+# Fixed color for each dataset
+DATASET_COLORS = {
+    "bt-2": "tab:blue",
+    "og-preprocessed": "tab:orange",
+    "phoenix": "tab:green"
+}
+
 # List of CSV metrics to plot: (filename, x-axis label, output filename)
 METRICS = [
     ("sentence_lengths.csv", "Sentence Length (words)", "sentence-length-distribution.png"),
@@ -45,12 +52,12 @@ def annotate_bars(bars):
         )
 
 
-def plot_distribution(lengths, counts, x_label, title, output_path, annotate=True, log_scale=False):
+def plot_distribution(lengths, counts, x_label, title, output_path, color=None, annotate=True, log_scale=False, x_ticks=None):
     """
     Plot a bar chart of length distribution with optional annotations and logarithmic scale.
     """
     plt.figure(figsize=(10, 6))
-    bars = plt.bar(lengths, counts)
+    bars = plt.bar(lengths, counts, color=color)
 
     if annotate and not log_scale:
         annotate_bars(bars)
@@ -60,6 +67,9 @@ def plot_distribution(lengths, counts, x_label, title, output_path, annotate=Tru
     plt.title(title + (" (logarithmic scale)" if log_scale else ""))
     if log_scale:
         plt.yscale('log')
+    if x_ticks is not None:
+        plt.xticks(x_ticks)
+        plt.xlim(min(x_ticks) - 0.5, max(x_ticks) + 0.5)
     plt.grid(axis='y', linestyle='--', alpha=0.5)
     plt.tight_layout()
 
@@ -77,10 +87,9 @@ def main():
     combined_data = {metric[0]: {} for metric in METRICS}
     all_lengths = {metric[0]: set() for metric in METRICS}
 
-    # Generate individual plots
+    # Load all data first and record all unique lengths
     for ds in DATASETS:
         stats_dir = os.path.join(BASE_STATS_DIR, ds)
-        plots_dir = os.path.join(BASE_PLOTS_DIR, ds)
 
         for csv_file, x_label, output_filename in METRICS:
             csv_path = os.path.join(stats_dir, csv_file)
@@ -90,17 +99,36 @@ def main():
             combined_data[csv_file][ds] = dict(zip(lengths, counts))
             all_lengths[csv_file].update(lengths)
 
-            # Plot individual
+    # Determine global sorted lengths for consistent x-axis
+    sorted_lengths_per_metric = {
+        csv_file: sorted(all_lengths[csv_file]) for csv_file in all_lengths
+    }
+
+    # Generate individual plots with consistent x-axis
+    for ds in DATASETS:
+        stats_dir = os.path.join(BASE_STATS_DIR, ds)
+        plots_dir = os.path.join(BASE_PLOTS_DIR, ds)
+
+        for csv_file, x_label, output_filename in METRICS:
+            csv_path = os.path.join(stats_dir, csv_file)
+            data_dict = combined_data[csv_file][ds]
+            sorted_lengths = sorted_lengths_per_metric[csv_file]
+
+            # Ensure all lengths are represented (fill missing with 0)
+            counts = [data_dict.get(l, 0) for l in sorted_lengths]
+
+            # Plot individual with consistent x-axis
             title = f"{x_label} Distribution - {ds}"
             out_path = os.path.join(plots_dir, output_filename)
-            plot_distribution(lengths, counts, x_label, title, out_path)
+            color = DATASET_COLORS[ds]
+            plot_distribution(sorted_lengths, counts, x_label, title, out_path, color=color, x_ticks=sorted_lengths)
 
     # Generate combined plots (regular and log-scale)
     for csv_file, x_label, output_filename in METRICS:
         combined_dir = os.path.join(BASE_PLOTS_DIR, "combined")
         os.makedirs(combined_dir, exist_ok=True)
 
-        sorted_lengths = sorted(all_lengths[csv_file])
+        sorted_lengths = sorted_lengths_per_metric[csv_file]
 
         # Prepare x positions for grouped bars
         x = np.arange(len(sorted_lengths))
@@ -111,7 +139,7 @@ def main():
         plt.figure(figsize=(12, 7))
         for i, ds in enumerate(DATASETS):
             counts = [combined_data[csv_file][ds].get(l, 0) for l in sorted_lengths]
-            plt.bar(x + i * width, counts, width=width, label=ds)
+            plt.bar(x + i * width, counts, width=width, label=ds, color=DATASET_COLORS[ds])
         plt.xlabel(x_label)
         plt.ylabel("Number of Sentences")
         plt.title(f"{x_label} Distribution - All Datasets")
@@ -129,7 +157,7 @@ def main():
         plt.figure(figsize=(12, 7))
         for i, ds in enumerate(DATASETS):
             counts = [combined_data[csv_file][ds].get(l, 0) for l in sorted_lengths]
-            plt.bar(x + i * width, counts, width=width, label=ds)
+            plt.bar(x + i * width, counts, width=width, label=ds, color=DATASET_COLORS[ds])
         plt.xlabel(x_label)
         plt.ylabel("Number of Sentences")
         plt.title(f"{x_label} Distribution - All Datasets (logarithmic scale)")
