@@ -44,6 +44,7 @@ Under `bht-cluster/` there are all the pod configurations used to communicate an
 Under `bht-cluster/deepseek-finetuning/` there is the `train_deepseek_distill.py` script which was used to finetune the Text2Gloss LLM. Here you can also find the `text2gloss.py` script which was deployed on the cluster to start inference of the finetuned Text2Gloss LLM to translate German sentences into gloss sequences for the initial part of the SLP pipeline.
 
 ### 5. Using the Gloss2Pose module
+0. If you want to skip the data collection and preprocessing steps but still test the Gloss2Pose model, you can simply download the [`gloss2pose_dictionary.json`](https://drive.google.com/file/d/1rd0UQKMvWefWksdAw8MifO6U9qEM5fZD/view?usp=sharing) from Google Drive and save it under `src/pipeline/resources/`!
 1. Under `src/pipeline/gloss-similarity` you need to execute `get_unique_glosses_from_dictionary.py` and then `build_gloss_embeddings.py` for the Gloss Matcher at the beginning of the Gloss2Pose module to work correctly.
 2. The resulting files: `gloss_embeddings.npz` and `gloss_to_idx.json` need to be placed under `src/pipeline/resources/` alongside the Gloss2Pose dictionary.
 
@@ -65,6 +66,9 @@ Under `src/more/` you can find various utility scripts that have been implemente
 ### Rest of the SLP pipeline
 As previously mentioned, using the Text2Gloss LLM and the Pose2Sign module requires access to high-end GPUs, such as those available on the BHT Data Science Cluster. Training the Text2Gloss model is a time-consuming process due to its large size, and unfortunately, I was unable to upload the pretrained model to the Git repository. Additionally, running inference with both the Text2Gloss and Pose2Sign models also demands significant GPU resources. I hope it's understandable that these features cannot be easily tested without the appropriate hardware.
 
+### Text2Gloss Data
+If you want to see the Text2Gloss datasets that were extracted, created and augmented without going through the entire data collection and preprocessing procedure, you can simply download them [here](https://drive.google.com/file/d/1g76BcB9G071Mh6nQa2wuDnc-JRSHKpnj/view?usp=sharing).
+
 
 ## Project Structure Tree
 ```text
@@ -75,7 +79,6 @@ As previously mentioned, using the Text2Gloss LLM and the Pose2Sign module requi
     │   │   ├── data-augmentation
     │   │   ├── k-cross-validation
     │   │   ├── phoenix-weather
-    │   │   ├── text2gloss_data
     │   │   └── gloss2text
     │   ├── mBART
     │   └── mimicmotion/
