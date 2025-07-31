@@ -2,6 +2,12 @@
 
 This repository contains all source code developed for the master thesis "Text2Gloss2Pose2Sign: Gloss- and Pose-guided Sign Language Production with LLMs", including data collection, preprocessing, augmentation, analysis, evaluation, training scripts, pod configurations for communication and execution on the BHT cluster, and more.
 
+* Author: Frederik Busch
+* E-mail: frederik.bln98@gmail.com
+* BHT Student ID: 925110
+* Submission Date: August 31, 2025
+* Berliner Hochschule für Technik (BHT)
+
 ## Getting Started
 
 ### 0. Initial Setup
