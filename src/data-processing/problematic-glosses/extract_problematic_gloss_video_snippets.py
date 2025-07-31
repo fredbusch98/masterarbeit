@@ -14,7 +14,7 @@ if not os.path.exists(output_dir):
     print(f"Created directory: {output_dir}")
 
 # The string to search for in SRT blocks
-search_string = "$PMS"
+search_string = "$PMS" # here we can set any problematic gloss described in the section Excluded Glosses in the thesis!
 
 # Iterate through all subdirectories in base_path
 entry_folders = [os.path.join(base_path, d) for d in os.listdir(base_path) if os.path.isdir(os.path.join(base_path, d))]

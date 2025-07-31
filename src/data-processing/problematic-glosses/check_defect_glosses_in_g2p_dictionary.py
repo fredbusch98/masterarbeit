@@ -1,14 +1,14 @@
 import json
 
 # read gloss data
-with open('gloss_dictionary.json') as lf:
+with open('../../pipeline/resources/gloss2pose_dictionary.json') as lf:
     gloss_data: dict = json.load(lf)
 
 # write all findings into txt
 with open('debugging_log.txt', 'a') as wf:
 
     keypoints_meta: list[tuple[int, str]] = [
-        (39, 'pose_keypoints_2d'),
+        (39, 'pose_keypoints_2d'), # 39 instead of the original 75 because we removed the lower-body keypoints in gloss2pose_mapper.py
         (210, 'face_keypoints_2d'),
         (63, 'hand_left_keypoints_2d'),
         (63, 'hand_right_keypoints_2d')
