@@ -1,0 +1,2 @@
+This was implemented at some point during development to test the feasibility of translating in the reverse direction—Text2Gloss followed by Gloss2Text to translate back to full German sentences given a gloss sequence as the input.
+Although this approach was eventually abandoned, it could still hold potential for future work.

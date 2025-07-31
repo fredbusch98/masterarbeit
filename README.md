@@ -58,3 +58,29 @@ Under `src/more/` you can find various utility scripts that have been implemente
 
 ### Rest of the SLP pipeline
 As previously mentioned, using the Text2Gloss LLM and the Pose2Sign module requires access to high-end GPUs, such as those available on the BHT Data Science Cluster. Training the Text2Gloss model is a time-consuming process due to its large size, and unfortunately, I was unable to upload the pretrained model to the Git repository. Additionally, running inference with both the Text2Gloss and Pose2Sign models also demands significant GPU resources. I hope it's understandable that these features cannot be easily tested without the appropriate hardware.
+
+
+## Project Structure Tree
+.
+└── text2gloss2pose2sign/
+    ├── bht-cluster/
+    │   ├── deepseek-finetuning/
+    │   │   ├── data-augmentation
+    │   │   ├── k-cross-validation
+    │   │   ├── phoenix-weather
+    │   │   ├── text2gloss_data
+    │   │   └── gloss2text
+    │   ├── mBART
+    │   └── mimicmotion/
+    │       ├── docker
+    │       └── human-eval-gen
+    ├── src/
+    │   ├── data-processing/
+    │   │   ├── evaluation
+    │   │   ├── problematic-glosses
+    │   │   └── scraping
+    │   ├── mimicmotion
+    │   ├── pipeline/
+    │   │   └── gloss-similarity
+    │   └── visualization
+    └── more
