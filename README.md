@@ -61,6 +61,7 @@ As previously mentioned, using the Text2Gloss LLM and the Pose2Sign module requi
 
 
 ## Project Structure Tree
+```text
 .
 └── text2gloss2pose2sign/
     ├── bht-cluster/
@@ -84,3 +85,4 @@ As previously mentioned, using the Text2Gloss LLM and the Pose2Sign module requi
     │   │   └── gloss-similarity
     │   └── visualization
     └── more
+```
