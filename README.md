@@ -48,7 +48,10 @@ Under `bht-cluster/deepseek-finetuning/` there is the `train_deepseek_distill.py
 0. If you want to skip the data collection and preprocessing steps but still test the Gloss2Pose model, you can simply download the [`gloss2pose_dictionary.json`](https://drive.google.com/file/d/1rd0UQKMvWefWksdAw8MifO6U9qEM5fZD/view?usp=sharing) from Google Drive and save it under `src/pipeline/resources/`! Also download [`evaluated_gloss_time_metrics_filtered.csv`](https://drive.google.com/file/d/1qP9mZyNJlpuUjV2IuOsCBPXOx7gKX-J9/view?usp=sharing) from the Google Drive and save it under `src/pipeline/resources/`!
 
 1. Under `src/pipeline/setup` you need to first execute `get_unique_glosses_from_dictionary.py`.
-2. And then next `build_gloss_embeddings.py` for the Gloss Matcher at the beginning of the Gloss2Pose module to work correctly.
+2. Then run the following to build the gloss embeddings needed for the Gloss Matche of the Gloss2Pose module to work correctly:
+```sh
+python build_gloss_embeddings.py
+```
 3. Finally you also need to run `get_gloss_times_for_frame_interpolation.py` und `src/pipeline/`. (Previously you must download [`evaluated_gloss_time_metrics_filtered.csv`](https://drive.google.com/file/d/1qP9mZyNJlpuUjV2IuOsCBPXOx7gKX-J9/view?usp=sharing) from the Google Drive and save it under `src/pipeline/resources/` if you haven't done all the data collection and preprocessing steps described above which would create this file!)
 
 **Usage Example:**
