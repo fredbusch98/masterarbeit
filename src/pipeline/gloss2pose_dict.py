@@ -3,7 +3,6 @@ import json
 import sys
 import cv2
 from datetime import datetime
-from scipy.signal import savgol_filter
 from tqdm import tqdm
 import shutil
 import csv
@@ -21,7 +20,7 @@ dict_path = "./resources/gloss2pose_dictionary.json"
 gloss_output_dir = "outputs/gloss2pose_dictionary_output"
 # Final output directory for pose sequence video and MimicMotion config
 final_output_dir = "./outputs/pose-sequence-videos"
-# Input directory for testing with the main method instead of gloss2pose_query_dict_gloss_similarity.py (using the intermediary gloss output directory)
+# Input directory for testing/debugging with the main method instead of gloss2pose.py (using the intermediary gloss output directory)
 input_sentence_path = gloss_output_dir
 
 use_default_num_intermediate_frames = False  # Set to False to use CSV values for frame interpolation
