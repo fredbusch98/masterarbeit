@@ -124,5 +124,14 @@ if __name__ == "__main__":
     
     # Step 3: Validate the final JSON file against the unique glosses
     validate_final_dictionary(output_json_path, unique_glosses)
+
+    # Step 4: Also save a copy in ../pipeline/resources/ for direct use in the Gloss2Pose module
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    target_path = os.path.abspath(os.path.join(script_dir, "../pipeline/resources/gloss2pose_dictionary.json"))
+    os.makedirs(os.path.dirname(target_path), exist_ok=True)
+    with open(target_path, 'w', encoding='utf-8') as f:
+        json.dump({gloss: pose_seq for gloss, (avg_conf, pose_seq) in best_poses.items()}, f)
+    print(f"Copied final dictionary to {target_path}")
+
     
     print(f"Final dictionary saved to {output_json_path}")

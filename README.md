@@ -12,8 +12,16 @@ This repository contains all source code developed for the master thesis "Text2G
 
 ### 0. Initial Setup
 * Use Python Version `3.12.2`
-* Install dependencies: `conda env create -f environment.yaml` - There may be some unnecessary dependencies included, as I used the same Conda environment for multiple projects during development and unfortunately lost track of which packages belong to which project. I didn’t have time to create a clean, dedicated environment. Feel free to delete the environment afterward to avoid cluttering your storage with unrelated packages from my other work.
-* Actiavte the conda environment `conda activate cv`.
+* Install dependencies: 
+```sh
+conda env create -f environment.yaml
+``` 
+**Important Note:** There may be some unnecessary dependencies included, as I used the same Conda environment for multiple projects during development and unfortunately lost track of which packages belong to which project. I didn’t have time to create a clean, dedicated environment. Feel free to delete the environment afterward to avoid cluttering your storage with unrelated packages from my other work.
+* Actiavte the conda environment:
+
+```sh
+conda activate cv`
+```
 
 The following scripts need to be executed in order to get the desired results and to be able to use the SLP pipelines functionality in the end.
 
@@ -21,18 +29,66 @@ The following scripts need to be executed in order to get the desired results an
 
 ### 1. Data Collection
 Under `src/data-processing/scraping`...
-1. there is the `dgs_webscraper.py` which scrapes all raw data from DGS-Korpus Release 3 web pages.
-2. there is the `dgs_types_webscraper.py` which scrapes all types defined in the DGS-Korpus Release 3 web pages. Types are synonym with glosses.
+1. there is the `dgs_webscraper.py` which scrapes all raw data from DGS-Korpus Release 3 web pages:
+
+```sh
+python dgs_webscraper.py
+```
+
+2. there is the `dgs_types_webscraper.py` which scrapes all types defined in the DGS-Korpus Release 3 web pages. Types are synonym with glosses:
+
+```sh
+python dgs_types_webscraper.py
+```
 
 ### 2. Data Preprocessing
 Under `src/data-processing/`...
-1. there is `filter_transcripts.py`. This applies initial filtering of the DGS-Korpus transcripts.
-2. there is `split_transcripts_by_speaker.py`. Further preprocessing and splitting of the transcripts into speaker A and speaker B.
-3. `exclude_problematic_glosses.py`. This filters the transcripts further and excludes problematic glosses.
-4. `text2gloss_mapper.py`. Maps full sentences to their corresponding gloss sequences, creating the training data for the Text2Gloss LLM.
-5. `gloss2pose_mapper.py`. Maps glosses to their corresponding frames in the OpenPose json files.
-6. `create_gloss2pose_dictionary.py`. Creates the final 1:1 lookup Gloss2Pose dictionary used later for the Gloss2Pose mdoule of the SLP pipeline. The resulting `gloss2pose_dictionary.json` needs to be saved under `src/pipeline/resources/` for later use!
+1. there is `filter_transcripts.py`. This applies initial filtering of the DGS-Korpus transcripts:
+
+```sh
+python filter_transcripts.py
+```
+
+2. there is `split_transcripts_by_speaker.py`. Further preprocessing and splitting of the transcripts into speaker A and speaker B:
+
+```sh
+python split_transcripts_by_speaker.py
+```
+
+3. `exclude_problematic_glosses.py`. This filters the transcripts further and excludes problematic glosses:
+
+```sh
+python exclude_problematic_glosses.py
+```
+
+4. `text2gloss_mapper.py`. Maps full sentences to their corresponding gloss sequences, creating the training data for the Text2Gloss LLM:
+
+```sh
+python text2gloss_mapper.py
+```
+
+5. `gloss2pose_mapper.py`. Maps glosses to their corresponding frames in the OpenPose json files:
+
+```sh
+python gloss2pose_mapper.py
+```
+
+6. `create_gloss2pose_dictionary.py`. Creates the final 1:1 lookup Gloss2Pose dictionary used later for the Gloss2Pose mdoule of the SLP pipeline. The resulting `gloss2pose_dictionary.json` should have been saved under `src/pipeline/resources/` for later use!
+
+```sh
+python create_gloss2pose_dictionary.py
+```
+
 7. Under `src/data-processing/evaluation` run `calculate_gloss_time_metrics.py` followed by `evaluate_gloss_time_metrics.py`. These scripts calculate and evaluate the Gloss Time Metrics described in the thesis and the results of the scripts will be used in the Gloss2Pose module of the pipeline for smooth frame interpolation.
+
+```sh
+python calculate_gloss_time_metrics.py
+```
+
+```sh
+python evaluate_gloss_time_metrics.py
+```
+
 8. (OPTIONAL) `sentence2pose_mapper.py`. Additional preprocessing script that creates mappings between entire sentences, their corresponding gloss sequence and the correpsonding pose sequences from the OpenPose json files. This was implemented to have data for the Sign-Language Back-Translation which was not evaluate in the end. The resulting data could also be used for training a data-driven, generative Gloss2Pose model in the future.
 9. (OPTIONAL) `sentence2vide_mapper.py`. Additional preprocessing script that creates mappings between entire sentences, their corresponding gloss sequence and the correpsonding timestamps in the video files from the DGS-Korpus Release 3. This was implemented to have data for the Sign-Language Back-Translation which was not evaluate in the end.
 
@@ -47,14 +103,21 @@ Under `bht-cluster/deepseek-finetuning/` there is the `train_deepseek_distill.py
 ### 5. Using the Gloss2Pose module
 0. If you want to skip the data collection and preprocessing steps but still test the Gloss2Pose model, you can simply download the [`gloss2pose_dictionary.json`](https://drive.google.com/file/d/1rd0UQKMvWefWksdAw8MifO6U9qEM5fZD/view?usp=sharing) from Google Drive and save it under `src/pipeline/resources/`! Also download [`evaluated_gloss_time_metrics_filtered.csv`](https://drive.google.com/file/d/1qP9mZyNJlpuUjV2IuOsCBPXOx7gKX-J9/view?usp=sharing) from the Google Drive and save it under `src/pipeline/resources/`!
 
-1. Under `src/pipeline/setup` you need to first execute `get_unique_glosses_from_dictionary.py`.
-2. Then run the following to build the gloss embeddings needed for the Gloss Matche of the Gloss2Pose module to work correctly:
+1. Under `src/pipeline/setup` you need to first execute the following script:
+```sh
+python get_unique_glosses_from_dictionary.py
+```
+2. Then run the following script in the same directory to build the gloss embeddings needed for the Gloss Matche of the Gloss2Pose module to work correctly:
 ```sh
 python build_gloss_embeddings.py
 ```
-3. Finally you also need to run `get_gloss_times_for_frame_interpolation.py` und `src/pipeline/`. (Previously you must download [`evaluated_gloss_time_metrics_filtered.csv`](https://drive.google.com/file/d/1qP9mZyNJlpuUjV2IuOsCBPXOx7gKX-J9/view?usp=sharing) from the Google Drive and save it under `src/pipeline/resources/` if you haven't done all the data collection and preprocessing steps described above which would create this file!)
+3. Finally you also need to run the following script (also under `src/pipeline/`):
+```sh
+python get_gloss_times_for_frame_interpolation.py
+```
+**Important Note:** Previously you must download [`evaluated_gloss_time_metrics_filtered.csv`](https://drive.google.com/file/d/1qP9mZyNJlpuUjV2IuOsCBPXOx7gKX-J9/view?usp=sharing) from the Google Drive and save it under `src/pipeline/resources/` if you haven't done all the data collection and preprocessing steps described above which would create this file!
 
-**Usage Example:**
+**Gloss2Pose Module Usage Examples:**
 
 ```sh
 python gloss2pose.py --glosses 'BEREICH1A,INTERESSE1A,MERKWÜRDIG1,GEBÄRDEN1A,FASZINIEREND2,GEBÄRDEN1A,SPIELEN2,BEREICH1A,INTERESSE1A,SPIELEN2' --output-filename example-video --config-filename example-config.yml
