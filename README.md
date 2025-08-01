@@ -54,11 +54,11 @@ Under `bht-cluster/deepseek-finetuning/` there is the `train_deepseek_distill.py
 **Usage Example:**
 
 ```sh
-`python gloss2pose.py --glosses 'BEREICH1A,INTERESSE1A,MERKWÜRDIG1,GEBÄRDEN1A,FASZINIEREND2,GEBÄRDEN1A,SPIELEN2,BEREICH1A,INTERESSE1A,SPIELEN2' --output-filename example-video --config-filename example-config.yml`
+python gloss2pose.py --glosses 'BEREICH1A,INTERESSE1A,MERKWÜRDIG1,GEBÄRDEN1A,FASZINIEREND2,GEBÄRDEN1A,SPIELEN2,BEREICH1A,INTERESSE1A,SPIELEN2' --output-filename example-video --config-filename example-config.yml
 ```
 
 ```sh
-`python gloss2pose.py -g 'BEREICH1A,INTERESSE1A,MERKWÜRDIG1,GEBÄRDEN1A,FASZINIEREND2,GEBÄRDEN1A,SPIELEN2,BEREICH1A,INTERESSE1A,SPIELEN2' -o example-video -c example-config.yml`
+python gloss2pose.py -g 'BEREICH1A,INTERESSE1A,MERKWÜRDIG1,GEBÄRDEN1A,FASZINIEREND2,GEBÄRDEN1A,SPIELEN2,BEREICH1A,INTERESSE1A,SPIELEN2' -o example-video -c example-config.yml
 ```
 
 Results will be saved under `src/pipeline/outputs/pose-sequence-videos`.
