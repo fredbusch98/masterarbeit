@@ -10,7 +10,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from visualization.pose_utils import create_upper_body_pose_image
 from scale_keypoint_proportions import scale_all_files
 
-skip_interpolation = False
+skip_interpolation = False # this flag is for debugging and also to create figures/videos where no interpolation is used for comparison!
 
 # ---------------------- Configuration ----------------------
 # Path to gloss dictionary JSON

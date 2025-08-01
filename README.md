@@ -168,3 +168,10 @@ If you want to see the Text2Gloss datasets that were extracted, created and augm
     │   └── visualization
     └── more
 ```
+
+
+### Pose Sequence Smoothness Evaluation
+If you want to use the script `src/data-processing/evaluation/pose_sequence_smoothness_evaluation.py` you have to download the pose sequence data that was generated during the Human Evaluation from [here](https://drive.google.com/file/d/1W8Z7ODe_GldW_cH95_kysVin2m6CoUzR/view?usp=sharing) and save the extracted folder in the `src/data-processing/evaluation/` directory before running the script.
+```sh
+python pose_sequence_smoothness_evaluation.py
+```

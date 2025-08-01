@@ -18,3 +18,4 @@ augmented_dataset.csv
 *.csv
 fine_tuned_deepseek
 text2gloss_model_deepseek
+pose-sequence-eval
