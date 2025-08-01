@@ -229,7 +229,7 @@ def main():
         print(f"{entry} processed.")
     
     # Convert raw_rows to a pandas DataFrame and write to CSV.
-    output_csv = os.path.join(base_path, "dgs-gloss-times", "raw_gloss_metrics.csv")
+    output_csv = os.path.join(base_path, "dgs-gloss-times", "raw_gloss_time_metrics.csv")
     os.makedirs(os.path.dirname(output_csv), exist_ok=True)
     df = pd.DataFrame(raw_rows)
     df.to_csv(output_csv, index=False)

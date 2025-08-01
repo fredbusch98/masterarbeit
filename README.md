@@ -11,7 +11,7 @@ This repository contains all source code developed for the master thesis "Text2G
 ## Getting Started
 
 ### 0. Initial Setup
-* Use Python Version 3.12.2
+* Use Python Version `3.12.2`
 * Install dependencies: `conda env create -f environment.yaml` - There may be some unnecessary dependencies included, as I used the same Conda environment for multiple projects during development and unfortunately lost track of which packages belong to which project. I didn’t have time to create a clean, dedicated environment. Feel free to delete the environment afterward to avoid cluttering your storage with unrelated packages from my other work.
 * Actiavte the conda environment `conda activate cv`.
 
@@ -32,8 +32,9 @@ Under `src/data-processing/`...
 4. `text2gloss_mapper.py`. Maps full sentences to their corresponding gloss sequences, creating the training data for the Text2Gloss LLM.
 5. `gloss2pose_mapper.py`. Maps glosses to their corresponding frames in the OpenPose json files.
 6. `create_gloss2pose_dictionary.py`. Creates the final 1:1 lookup Gloss2Pose dictionary used later for the Gloss2Pose mdoule of the SLP pipeline. The resulting `gloss2pose_dictionary.json` needs to be saved under `src/pipeline/resources/` for later use!
-7. (OPTIONAL) `sentence2pose_mapper.py`. Additional preprocessing script that creates mappings between entire sentences, their corresponding gloss sequence and the correpsonding pose sequences from the OpenPose json files. This was implemented to have data for the Sign-Language Back-Translation which was not evaluate in the end. The resulting data could also be used for training a data-driven, generative Gloss2Pose model in the future.
-8. (OPTIONAL) `sentence2vide_mapper.py`. Additional preprocessing script that creates mappings between entire sentences, their corresponding gloss sequence and the correpsonding timestamps in the video files from the DGS-Korpus Release 3. This was implemented to have data for the Sign-Language Back-Translation which was not evaluate in the end.
+7. Under `src/data-processing/evaluation` run `calculate_gloss_time_metrics.py` followed by `evaluate_gloss_time_metrics.py`. These scripts calculate and evaluate the Gloss Time Metrics described in the thesis and the results of the scripts will be used in the Gloss2Pose module of the pipeline for smooth frame interpolation.
+8. (OPTIONAL) `sentence2pose_mapper.py`. Additional preprocessing script that creates mappings between entire sentences, their corresponding gloss sequence and the correpsonding pose sequences from the OpenPose json files. This was implemented to have data for the Sign-Language Back-Translation which was not evaluate in the end. The resulting data could also be used for training a data-driven, generative Gloss2Pose model in the future.
+9. (OPTIONAL) `sentence2vide_mapper.py`. Additional preprocessing script that creates mappings between entire sentences, their corresponding gloss sequence and the correpsonding timestamps in the video files from the DGS-Korpus Release 3. This was implemented to have data for the Sign-Language Back-Translation which was not evaluate in the end.
 
 ### 3. Data Augmentation (only needed if you really want to train the model again)
 1. Under `src/data-processing/`there is the `back_translation.py` script which implements data augmentation of the Text2Gloss data resulting from the previous data preprocessing step 4. This takes a long time to finish and is only needed if you want to train the Text2Gloss model on the final augmented Text2Gloss data.
@@ -44,17 +45,23 @@ Under `bht-cluster/` there are all the pod configurations used to communicate an
 Under `bht-cluster/deepseek-finetuning/` there is the `train_deepseek_distill.py` script which was used to finetune the Text2Gloss LLM. Here you can also find the `text2gloss.py` script which was deployed on the cluster to start inference of the finetuned Text2Gloss LLM to translate German sentences into gloss sequences for the initial part of the SLP pipeline.
 
 ### 5. Using the Gloss2Pose module
-0. If you want to skip the data collection and preprocessing steps but still test the Gloss2Pose model, you can simply download the [`gloss2pose_dictionary.json`](https://drive.google.com/file/d/1rd0UQKMvWefWksdAw8MifO6U9qEM5fZD/view?usp=sharing) from Google Drive and save it under `src/pipeline/resources/`!
-1. Under `src/pipeline/gloss-similarity` you need to execute `get_unique_glosses_from_dictionary.py` and then `build_gloss_embeddings.py` for the Gloss Matcher at the beginning of the Gloss2Pose module to work correctly.
-2. The resulting files: `gloss_embeddings.npz` and `gloss_to_idx.json` need to be placed under `src/pipeline/resources/` alongside the Gloss2Pose dictionary.
+0. If you want to skip the data collection and preprocessing steps but still test the Gloss2Pose model, you can simply download the [`gloss2pose_dictionary.json`](https://drive.google.com/file/d/1rd0UQKMvWefWksdAw8MifO6U9qEM5fZD/view?usp=sharing) from Google Drive and save it under `src/pipeline/resources/`! Also download [`evaluated_gloss_time_metrics_filtered.csv`](https://drive.google.com/file/d/1qP9mZyNJlpuUjV2IuOsCBPXOx7gKX-J9/view?usp=sharing) from the Google Drive and save it under `src/pipeline/resources/`!
 
-Usage Example:
+1. Under `src/pipeline/setup` you need to first execute `get_unique_glosses_from_dictionary.py`.
+2. And then next `build_gloss_embeddings.py` for the Gloss Matcher at the beginning of the Gloss2Pose module to work correctly.
+3. Finally you also need to run `get_gloss_times_for_frame_interpolation.py` und `src/pipeline/`. (Previously you must download [`evaluated_gloss_time_metrics_filtered.csv`](https://drive.google.com/file/d/1qP9mZyNJlpuUjV2IuOsCBPXOx7gKX-J9/view?usp=sharing) from the Google Drive and save it under `src/pipeline/resources/` if you haven't done all the data collection and preprocessing steps described above which would create this file!)
 
+**Usage Example:**
+
+```sh
 `python gloss2pose.py --glosses 'BEREICH1A,INTERESSE1A,MERKWÜRDIG1,GEBÄRDEN1A,FASZINIEREND2,GEBÄRDEN1A,SPIELEN2,BEREICH1A,INTERESSE1A,SPIELEN2' --output-filename example-video --config-filename example-config.yml`
+```
 
+```sh
 `python gloss2pose.py -g 'BEREICH1A,INTERESSE1A,MERKWÜRDIG1,GEBÄRDEN1A,FASZINIEREND2,GEBÄRDEN1A,SPIELEN2,BEREICH1A,INTERESSE1A,SPIELEN2' -o example-video -c example-config.yml`
+```
 
-Results will be saved under `pipeline/outputs/pose-sequence-videos`.
+Results will be saved under `src/pipeline/outputs/pose-sequence-videos`.
 
 ### Additional scripts:
 Under `src/data-processing/evaluation` you can find the scripts that calculate the gloss time metrics and various scripts that were implemented to visualize and plot some of the data for figures used in the thesis.
@@ -91,7 +98,7 @@ If you want to see the Text2Gloss datasets that were extracted, created and augm
     │   │   └── scraping
     │   ├── mimicmotion
     │   ├── pipeline/
-    │   │   └── gloss-similarity
+    │   │   └── setup
     │   └── visualization
     └── more
 ```

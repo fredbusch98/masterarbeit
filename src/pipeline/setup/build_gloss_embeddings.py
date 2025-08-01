@@ -8,9 +8,9 @@ import pandas as pd
 from sentence_transformers import SentenceTransformer
 
 # Configuration
-CSV_PATH = './resources/unique-glosses.csv'
-EMBEDDINGS_OUT = './resources/gloss_embeddings.npz'
-MAPPING_OUT = './resources/gloss_to_idx.json'
+CSV_PATH = '../resources/unique-glosses.csv'
+EMBEDDINGS_OUT = '../resources/gloss_embeddings.npz'
+MAPPING_OUT = '../resources/gloss_to_idx.json'
 MODEL_NAME = 'distiluse-base-multilingual-cased-v1'  # multilingual SBERT
 
 print("📂 Step 1: Loading glosses from CSV...")

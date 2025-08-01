@@ -112,7 +112,7 @@ def save_per_occurrence_with_aggregated_stats(df, output_path):
 
 def main():
     base_path = "/Volumes/IISY/DGSKorpus/"
-    raw_csv = os.path.join(base_path, "dgs-gloss-times", "raw_gloss_metrics.csv")
+    raw_csv = os.path.join(base_path, "dgs-gloss-times", "raw_gloss_time_metrics.csv")
     df = read_raw_metrics(raw_csv)
     
     # Overall statistics
@@ -129,17 +129,24 @@ def main():
     agg = aggregate_metrics(df)
 
     # Save aggregated evaluation metrics
-    eval_csv = os.path.join(base_path, "dgs-gloss-times", "evaluated_gloss_metrics.csv")
+    eval_csv = os.path.join(base_path, "dgs-gloss-times", "evaluated_gloss_time_metrics.csv")
     agg.to_csv(eval_csv, index=False)
     print(f"\nEvaluation metrics written to {eval_csv}")
 
-    eval_csv_with_std = os.path.join(base_path, "dgs-gloss-times", "evaluated_gloss_metrics_with_std.csv")
+    eval_csv_with_std = os.path.join(base_path, "dgs-gloss-times", "evaluated_gloss_time_metrics_with_std.csv")
     agg.to_csv(eval_csv_with_std, index=False)
     print(f"Evaluation metrics (with std) written to {eval_csv_with_std}")
 
     # Save filtered columns
-    filtered_csv = os.path.join(base_path, "dgs-gloss-times", "evaluated_gloss_metrics_filtered.csv")
+    filtered_csv = os.path.join(base_path, "dgs-gloss-times", "evaluated_gloss_time_metrics_filtered.csv")
     extract_filtered_columns(eval_csv, filtered_csv)
+
+    # Save filtered columns relative to this script's directory: ../../pipeline/resources/
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    pipeline_resources_path = os.path.abspath(os.path.join(script_dir, "../../pipeline/resources/"))
+    os.makedirs(pipeline_resources_path, exist_ok=True)
+    filtered_csv_pipeline = os.path.join(pipeline_resources_path, "evaluated_gloss_time_metrics_filtered.csv")
+    extract_filtered_columns(eval_csv, filtered_csv_pipeline)
 
     # Save per-occurrence data with gloss-level aggregates
     detailed_csv = os.path.join(base_path, "dgs-gloss-times", "raw_with_gloss_aggregates.csv")
