@@ -3,7 +3,7 @@ import json
 import numpy as np
 import csv
 from statistics import mean, median, stdev
-from tabulate import tabulate  # Make sure to install this: pip install tabulate
+from tabulate import tabulate
 
 def extract_xy(flat_array):
     x = flat_array[0::3]
@@ -111,34 +111,40 @@ def get_stats(values):
 
 # === PATHS ===
 folder_no_interp = "./pose-sequence-eval/no_interpolation"
-folder_interp = "./pose-sequence-eval/with_interpolation"
+folder_interp = "./pose-sequence-eval/linear_interpolation"
+folder_bspline = "./pose-sequence-eval/bspline_interpolation"
 csv_output = "./pose-sequence-eval/sal_msj_results.csv"
 
 # === PROCESS DATA ===
 results_no_interp, sals_no, msjs_no = process_folder(folder_no_interp, "no_interpolation")
-results_interp, sals_interp, msjs_interp = process_folder(folder_interp, "with_interpolation")
+results_interp, sals_interp, msjs_interp = process_folder(folder_interp, "linear_interpolation")
+results_bspline, sals_bspline, msjs_bspline = process_folder(folder_bspline, "bspline_interpolation")
 
 # === SAVE TO CSV ===
-all_results = results_no_interp + results_interp
+all_results = results_no_interp + results_interp + results_bspline
 with open(csv_output, 'w', newline='') as csvfile:
     writer = csv.writer(csvfile)
     writer.writerow(["filename", "type", "SAL", "MSJ"])
     writer.writerows(all_results)
 
-# === COMPARISON TABLE ===
+# === STATS ===
 sal_stats_no = get_stats(sals_no)
 sal_stats_interp = get_stats(sals_interp)
+sal_stats_bspline = get_stats(sals_bspline)
+
 msj_stats_no = get_stats(msjs_no)
 msj_stats_interp = get_stats(msjs_interp)
+msj_stats_bspline = get_stats(msjs_bspline)
 
+# === COMPARISON TABLE ===
 table = [
-    ["Metric", "Better Direction", "Stat", "No Interpolation", "With Interpolation"],
-    ["SAL", "Higher (closer to 0)", "Mean", sal_stats_no[0], sal_stats_interp[0]],
-    ["SAL", "", "Median", sal_stats_no[1], sal_stats_interp[1]],
-    ["SAL", "", "Std Dev", sal_stats_no[2], sal_stats_interp[2]],
-    ["MSJ", "Lower", "Mean", msj_stats_no[0], msj_stats_interp[0]],
-    ["MSJ", "", "Median", msj_stats_no[1], msj_stats_interp[1]],
-    ["MSJ", "", "Std Dev", msj_stats_no[2], msj_stats_interp[2]],
+    ["Metric", "Better Direction", "Stat", "No Interpolation", "Linear Interpolation", "B-spline Interpolation"],
+    ["SAL", "Higher (closer to 0)", "Mean", sal_stats_no[0], sal_stats_interp[0], sal_stats_bspline[0]],
+    ["SAL", "", "Median", sal_stats_no[1], sal_stats_interp[1], sal_stats_bspline[1]],
+    ["SAL", "", "Std Dev", sal_stats_no[2], sal_stats_interp[2], sal_stats_bspline[2]],
+    ["MSJ", "Lower", "Mean", msj_stats_no[0], msj_stats_interp[0], msj_stats_bspline[0]],
+    ["MSJ", "", "Median", msj_stats_no[1], msj_stats_interp[1], msj_stats_bspline[1]],
+    ["MSJ", "", "Std Dev", msj_stats_no[2], msj_stats_interp[2], msj_stats_bspline[2]],
 ]
 
 print("\n📊 Motion Smoothness Metrics Comparison\n")
