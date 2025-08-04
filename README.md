@@ -8,6 +8,33 @@ This repository contains all source code developed for the master thesis "Text2G
 * Submission Date: August 31, 2025
 * Berliner Hochschule für Technik (BHT)
 
+## Project Structure Tree
+
+```text
+.
+└── text2gloss2pose2sign/
+    ├── bht-cluster/
+    │   ├── deepseek-finetuning/
+    │   │   ├── data-augmentation
+    │   │   ├── k-cross-validation
+    │   │   ├── phoenix-weather
+    │   │   └── gloss2text
+    │   ├── mBART
+    │   └── mimicmotion/
+    │       ├── docker
+    │       └── human-eval-gen
+    ├── src/
+    │   ├── data-processing/
+    │   │   ├── evaluation
+    │   │   ├── problematic-glosses
+    │   │   └── scraping
+    │   ├── mimicmotion
+    │   ├── pipeline/
+    │   │   └── setup
+    │   └── visualization
+    └── more
+```
+
 ## Getting Started
 
 ### 0. Initial Setup
@@ -129,49 +156,21 @@ python gloss2pose.py -g 'BEREICH1A,INTERESSE1A,MERKWÜRDIG1,GEBÄRDEN1A,FASZINIE
 
 Results will be saved under `src/pipeline/outputs/pose-sequence-videos`.
 
-### Additional scripts:
-Under `src/data-processing/evaluation` you can find the scripts that calculate the gloss time metrics and various scripts that were implemented to visualize and plot some of the data for figures used in the thesis.
-
-Under `src/mimicmotion/` you can find the `inference.py` script that was adapted for the SLP pipeline proposed in this thesis. If you want to run the entrie MimicMotion pipeline you need at least an NVIDIA A100 and should first follow their [installation guide](https://github.com/Tencent/MimicMotion?tab=readme-ov-file#quickstart) and finally replace their `inference.py` with the one provided here!
-
-Under `src/more/` you can find various utility scripts that have been implemented at some point during the development but which can not be clearly grouped to any specific purpose so they are just dumped here. Feel free to check them out as well.
-
 ### Rest of the SLP pipeline
 As previously mentioned, using the Text2Gloss LLM and the Pose2Sign module requires access to high-end GPUs, such as those available on the BHT Data Science Cluster. Training the Text2Gloss model is a time-consuming process due to its large size, and unfortunately, I was unable to upload the pretrained model to the Git repository. Additionally, running inference with both the Text2Gloss and Pose2Sign models also demands significant GPU resources. I hope it's understandable that these features cannot be easily tested without the appropriate hardware.
 
 ### Text2Gloss Data
 If you want to see the Text2Gloss datasets that were extracted, created and augmented without going through the entire data collection and preprocessing procedure, you can simply download them [here](https://drive.google.com/file/d/1g76BcB9G071Mh6nQa2wuDnc-JRSHKpnj/view?usp=sharing).
 
-
-## Project Structure Tree
-```text
-.
-└── text2gloss2pose2sign/
-    ├── bht-cluster/
-    │   ├── deepseek-finetuning/
-    │   │   ├── data-augmentation
-    │   │   ├── k-cross-validation
-    │   │   ├── phoenix-weather
-    │   │   └── gloss2text
-    │   ├── mBART
-    │   └── mimicmotion/
-    │       ├── docker
-    │       └── human-eval-gen
-    ├── src/
-    │   ├── data-processing/
-    │   │   ├── evaluation
-    │   │   ├── problematic-glosses
-    │   │   └── scraping
-    │   ├── mimicmotion
-    │   ├── pipeline/
-    │   │   └── setup
-    │   └── visualization
-    └── more
-```
-
-
 ### Pose Sequence Smoothness Evaluation
 If you want to use the script `src/data-processing/evaluation/pose_sequence_smoothness_evaluation.py` you have to download the pose sequence data that was generated during the Human Evaluation from [here](https://drive.google.com/file/d/1W8Z7ODe_GldW_cH95_kysVin2m6CoUzR/view?usp=sharing) and save the extracted folder in the `src/data-processing/evaluation/` directory before running the script.
 ```sh
 python pose_sequence_smoothness_evaluation.py
 ```
+
+### Additional scripts:
+Under `src/data-processing/evaluation` you can find the scripts that calculate the gloss time metrics and various scripts that were implemented to visualize and plot some of the data for figures used in the thesis.
+
+Under `src/mimicmotion/` you can find the `inference.py` script that was adapted for the SLP pipeline proposed in this thesis. If you want to run the entrie MimicMotion pipeline you need at least an NVIDIA A100 and should first follow their [installation guide](https://github.com/Tencent/MimicMotion?tab=readme-ov-file#quickstart) and finally replace their `inference.py` with the one provided here!
+
+Under `src/more/` you can find various utility scripts that have been implemented at some point during the development but which can not be clearly grouped to any specific purpose so they are just dumped here. Feel free to check them out as well.
