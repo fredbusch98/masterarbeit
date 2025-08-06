@@ -145,7 +145,7 @@ def main():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     pipeline_resources_path = os.path.abspath(os.path.join(script_dir, "../../pipeline/resources/"))
     os.makedirs(pipeline_resources_path, exist_ok=True)
-    filtered_csv_pipeline = os.path.join(pipeline_resources_path, "evaluated_gloss_time_metrics_filtered.csv")
+    filtered_csv_pipeline = os.path.join(pipeline_resources_path, "gloss_times_for_frame_interpolation.csv")
     extract_filtered_columns(eval_csv, filtered_csv_pipeline)
 
     # Save per-occurrence data with gloss-level aggregates
