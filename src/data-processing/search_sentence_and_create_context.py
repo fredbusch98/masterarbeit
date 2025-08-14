@@ -6,6 +6,10 @@ import unicodedata
 from collections import defaultdict
 import json
 
+# Toggle this to enable burned-in subtitles on the extracted snippets
+ADD_SUBTITLES = True
+
+
 def parse_srt_blocks(srt_path):
     with open(srt_path, encoding='utf-8-sig') as f:
         content = f.read()
@@ -23,19 +27,23 @@ def parse_srt_blocks(srt_path):
             text = ' '.join(lines[2:]).strip()
             is_full_sentence = text.endswith("_FULL_SENTENCE")
             if is_full_sentence:
+                # remove the suffix before returning (so downstream uses cleaned text)
                 text = text.replace("_FULL_SENTENCE", "").strip()
             yield idx, start_ts, end_ts, text, is_full_sentence
+
 
 def srt_ts_to_seconds(ts):
     hh, mm, rest = ts.split(':')
     ss, ms = rest.split(',')
     return int(hh) * 3600 + int(mm) * 60 + int(ss) + int(ms) / 1000.0
 
+
 def format_ff_time(seconds):
     hh = int(seconds // 3600)
     mm = int((seconds % 3600) // 60)
     ss = seconds % 60
     return f"{hh:02d}:{mm:02d}:{ss:06.3f}"
+
 
 def get_video_duration(video_path):
     cmd = [
@@ -46,12 +54,20 @@ def get_video_duration(video_path):
         str(video_path)
     ]
     result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode != 0:
+        raise RuntimeError(f"ffprobe failed for {video_path}: {result.stderr}")
     data = json.loads(result.stdout)
     return float(data["format"]["duration"])
 
-def extract_snippet(video_path, start_sec, duration, out_path):
+
+def extract_snippet(video_path, start_sec, duration, out_path, srt_path=None):
+    """
+    Extract a snippet starting at start_sec for duration seconds from video_path,
+    optionally burning subtitles from srt_path if ADD_SUBTITLES is True and srt_path exists.
+    Returns True on success, False otherwise.
+    """
     video_duration = get_video_duration(video_path)
-    
+
     # Adapt start time if it exceeds video duration
     if start_sec >= video_duration:
         print(f"Start time {start_sec}s exceeds video duration {video_duration}s for {out_path}. Setting start time to 0.")
@@ -61,23 +77,39 @@ def extract_snippet(video_path, start_sec, duration, out_path):
     elif start_sec + duration > video_duration:
         duration = video_duration - start_sec
         print(f"Adjusted duration for {out_path} to {duration}s to fit video duration {video_duration}s")
-    
+
     if duration <= 0:
         print(f"Skipping extraction for {out_path}: duration <= 0 after adjustments")
         return False
-    
+
     start_ff = format_ff_time(start_sec)
     dur_ff = format_ff_time(duration)
+
+    # Build FFmpeg command.
+    # Use -i <input> then -ss <start> (accurate seek), so subtitle timing aligns with original SRT timestamps.
     cmd = [
         "ffmpeg",
         "-y",
-        "-ss", start_ff,
         "-i", str(video_path),
+        "-ss", start_ff,
         "-t", dur_ff,
+    ]
+
+    # If subtitles requested and srt_path exists, add subtitles filter
+    if ADD_SUBTITLES and srt_path is not None and Path(srt_path).exists():
+        # ffmpeg subtitles filter expects the filename — keep quoting to handle spaces/special chars.
+        vf_arg = f"subtitles='{str(srt_path)}'"
+        cmd += ["-vf", vf_arg]
+    elif ADD_SUBTITLES and (srt_path is None or not Path(srt_path).exists()):
+        print(f"Warning: ADD_SUBTITLES is True but subtitle file {srt_path} is missing. Proceeding without subtitles for {out_path}.")
+
+    # Encode to common codecs (re-encode to allow filters to apply)
+    cmd += [
         "-c:v", "libx264",
         "-c:a", "aac",
         str(out_path)
     ]
+
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:
         print(f"Extraction failed for {out_path}: {result.stderr}")
@@ -86,6 +118,7 @@ def extract_snippet(video_path, start_sec, duration, out_path):
         print(f"Extraction produced empty file for {out_path}")
         return False
     return True
+
 
 def combine_snippets(snippet_a, snippet_b, out_path):
     if not snippet_a.exists() or not snippet_b.exists():
@@ -108,6 +141,7 @@ def combine_snippets(snippet_a, snippet_b, out_path):
     ]
     subprocess.run(cmd, check=True)
 
+
 def sanitize_filename(text):
     text = unicodedata.normalize('NFKD', text)
     text = text.encode('ascii', 'ignore').decode('ascii')
@@ -115,10 +149,39 @@ def sanitize_filename(text):
     text = re.sub(r'_+', '_', text).strip('_')
     return text or "snippet"
 
+
 def load_sentences(txt_file):
     with open(txt_file, encoding='utf-8') as f:
         sentences = [line.strip() for line in f if line.strip()]
     return sentences
+
+
+def write_temp_srt_for_window(blocks, window_start, window_end, out_srt_path):
+    """
+    Given blocks (from parse_srt_blocks) write an SRT file containing only blocks
+    that are _FULL_SENTENCE (parse already flags these) and that overlap the
+    interval [window_start, window_end). Returns True if file written (and non-empty),
+    False otherwise.
+    """
+    selected = []
+    for _, start_ts, end_ts, text, is_full in blocks:
+        if not is_full:
+            continue
+        s = srt_ts_to_seconds(start_ts)
+        e = srt_ts_to_seconds(end_ts)
+        # overlap test
+        if s < window_end and e > window_start:
+            selected.append((start_ts, end_ts, text))
+
+    if not selected:
+        return False
+
+    with open(out_srt_path, "w", encoding="utf-8") as f:
+        for i, (start_ts, end_ts, text) in enumerate(selected, start=1):
+            # write sequential index, original timestamps, and cleaned text (parse removed suffix)
+            f.write(f"{i}\n{start_ts} --> {end_ts}\n{text}\n\n")
+    return True
+
 
 def main():
     p = argparse.ArgumentParser(description="Extract video snippets before sentences found in SRTs and collect relevant _FULL_SENTENCE texts")
@@ -207,14 +270,35 @@ def main():
                 if fs_start < T and fs_end > initial_start:
                     full_sentences_per_sentence[sentence].add(fs_text)
 
+            # Create temporary filtered SRTs containing only overlapping _FULL_SENTENCE blocks (and with suffix removed)
+            temp_srt_a = output_dir / f"temp_subs_a_{entry.name}_{idx}.srt"
+            temp_srt_b = output_dir / f"temp_subs_b_{entry.name}_{idx}.srt"
+
+            has_subs_a = write_temp_srt_for_window(blocks_a, initial_start, end_time, temp_srt_a) if ADD_SUBTITLES else False
+            has_subs_b = write_temp_srt_for_window(blocks_b, initial_start, end_time, temp_srt_b) if ADD_SUBTITLES else False
+
+            srt_for_a = str(temp_srt_a) if has_subs_a else None
+            srt_for_b = str(temp_srt_b) if has_subs_b else None
+
             # Extract snippets for both speakers with adjustments
             snippet_a_path = output_dir / f"temp_snippet_a_{entry.name}_{idx}.mp4"
             snippet_b_path = output_dir / f"temp_snippet_b_{entry.name}_{idx}.mp4"
-            success_a = extract_snippet(video_a, initial_start, duration, snippet_a_path)
-            success_b = extract_snippet(video_b, initial_start, duration, snippet_b_path)
+
+            success_a = extract_snippet(video_a, initial_start, duration, snippet_a_path, srt_for_a)
+            success_b = extract_snippet(video_b, initial_start, duration, snippet_b_path, srt_for_b)
 
             if not (success_a and success_b):
                 print(f"Skipping combination for {entry.name} index {idx}: extraction failed")
+                # Clean up any partial files
+                if snippet_a_path.exists():
+                    snippet_a_path.unlink()
+                if snippet_b_path.exists():
+                    snippet_b_path.unlink()
+                # clean up temp srt files
+                if temp_srt_a.exists():
+                    temp_srt_a.unlink()
+                if temp_srt_b.exists():
+                    temp_srt_b.unlink()
                 continue
 
             # Combine snippets
@@ -233,6 +317,10 @@ def main():
                 snippet_a_path.unlink()
             if snippet_b_path.exists():
                 snippet_b_path.unlink()
+            if temp_srt_a.exists():
+                temp_srt_a.unlink()
+            if temp_srt_b.exists():
+                temp_srt_b.unlink()
 
     # Write _FULL_SENTENCE texts to separate files for each sentence
     for sentence in sentences:
@@ -243,7 +331,7 @@ def main():
         with open(txt_path, "w", encoding="utf-8") as f:
             for fs in fs_list:
                 f.write(fs + "\n")
-    
+
     # Combine all full_sentences into a final grouped file
     final_combined_path = output_dir / "all_full_sentences_combined.txt"
     with open(final_combined_path, "w", encoding="utf-8") as final_file:
@@ -256,6 +344,7 @@ def main():
                     final_file.write(sf.read().strip() + "\n\n")
 
     print("\n🎉 Done! All matching snippets have been processed and relevant _FULL_SENTENCE texts collected.\n")
+
 
 if __name__ == "__main__":
     main()
