@@ -52,7 +52,7 @@ conda activate cv`
 
 The following scripts need to be executed in order to get the desired results and to be able to use the SLP pipelines functionality in the end.
 
-*Important Note:* To gather and preprocess all data you need about 400 GB of free storage. I suggest using some kind of hard drive. In most scripts the `base directory` where everything is happening is set to `/Volumes/IISY/DGSKorpus/` this needs to be adapated according to your used storage location!
+*Important Note:* Gathering and preprocessing all required data will need about 400 GB of free storage. I recommend using a dedicated hard drive. Wherever the file path `/Volumes/IISY/DGSKorpus` (hard drive used for DGS-Korpus data storage) appears in the scripts, you must adapt it to match your own file system, folder structure and selected storage option for everything to work correctly.
 
 ### 1. Data Collection
 Under `src/data-processing/scraping`...
@@ -174,3 +174,64 @@ Under `src/data-processing/evaluation` you can find the scripts that calculate t
 Under `src/mimicmotion/` you can find the `inference.py` script that was adapted for the SLP pipeline proposed in this thesis. If you want to run the entire MimicMotion pipeline you need at least an NVIDIA V100 and should first follow their [installation guide](https://github.com/Tencent/MimicMotion?tab=readme-ov-file#quickstart) and finally replace their `inference.py` with the one provided here! Additionally you need to replace their `environment.yaml` with one provided under `src/mimicmotion/` since their original one had some flaws and needed to be updated to be running correctly with the setup on the BHT cluster. Finally check the `how-to-run-setup.txt` under `bht-cluster/deepseek-finetuning/` for further instructions.
 
 Under `src/more/` you can find various utility scripts that have been implemented at some point during the development but which can not be clearly grouped to any specific purpose so they are just dumped here. Feel free to check them out as well.
+
+## End-to-End Workflow of the Text2Gloss2Pose2Sign SLP Pipeline
+
+### 1. Text → Gloss
+1. In the `bht-cluster/deepseek-finetuning/` directory, run:
+   ```bash
+   ./setup.sh
+   ```
+   Wait until it completes successfully.
+
+2. Start bash in the pod:
+   ```bash
+   kubectl -n [your_namespace] exec -it deepseek-finetune -- bash
+   ```
+
+3. Navigate to the correct directory:
+   ```bash
+   cd /storage/text2gloss-finetune/
+   ```
+
+4. Generate gloss sequence with finetuned DeepSeek:
+   ```bash
+   python text2gloss.py "Ein deutscher Satz."
+   ```
+   This runs inference with the finetuned DeepSeek model and prints the generated gloss sequence.
+
+5. **Copy** the generated gloss sequence from the console output.
+
+---
+
+### 2. Gloss → Pose
+6. In the `src/pipeline/` directory, run:
+   ```bash
+   python gloss2pose.py -g "INSERT GLOSS SEQUENCE" -o example-video -c example-config.yml
+   ```
+   Follow the console log instructions to finally generate the realistic video with MimicMotion.
+
+---
+
+### 3. Pose → Sign Video
+7. In the `bht-cluster/mimicmotion/` directory, run:
+   ```bash
+   ./setup.sh
+   ```
+   - Generate your own HuggingFace token for the required diffusion model used by MimicMotion.
+   - Add the token to a `.env` file.
+
+8. Navigate to the correct directory:
+   ```bash
+   cd /storage/MimicMotion/
+   ```
+
+9. Start inference:
+   ```bash
+   python inference.py configs/example-config.yml
+   ```
+
+10. After successful inference, follow the console log instructions to **copy the generated sign video from the BHT cluster to your local device**.
+
+**Important Note:** All Kubernetes pods and the associated PVC (PersistentVolumeClaim) must be created within your personal namespace on the BHT cluster. Any scripts intended for execution on the cluster must be uploaded to this PVC volume. Additionally, the MimicMotion project must be cloned from its official GitHub repository directly into the PVC volume. Once cloned, replace the `environment.yaml` and `inference.py` files with the custom versions adapted for the _Text2Gloss2Pose2Sign_ pipeline as described in this thesis. Both replacement files are located under `src/mimicmotion/`.
+
