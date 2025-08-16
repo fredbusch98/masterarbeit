@@ -1,26 +1,8 @@
-#!/usr/bin/env python3
 """
-sentence2video_mapper.py
-
-This script processes folders containing:
-  - video-a.mp4
-  - video-b.mp4
-  - speaker-a-final.srt
-  - speaker-b-final.srt
-
-For each “full sentence” entry in the SRTs (marked with `_FULL_SENTENCE` and ending with `_END_SENTENCE`),
-it outputs:
-  1) A per-folder CSV file (`sentence2video.csv`) in each entry_X folder, with one row per full sentence,
-     containing:
-       - full_sentence: the text without the `_FULL_SENTENCE` suffix
-       - gloss_sequence: comma-joined component glosses (no `_END_SENTENCE` suffix)
-       - video_path: relative path to the speaker’s video (e.g., entry_X/video-a.mp4 or entry_X/video-b.mp4)
-       - start_time: timestamp in `HH:MM:SS.mmm` format (milliseconds precision)
-       - end_time: timestamp in `HH:MM:SS.mmm` format (milliseconds precision)
-
-  2) A combined CSV (`sentence2video-mapping-combined.csv`) saved under the DGSKorpus root, merging all per-folder rows.
+Parses speaker-specific SRT subtitle files to extract full-sentence segments and their gloss sequences, 
+then maps them to corresponding video clips. Generates per-folder CSVs and optionally combines them 
+into a master CSV for all entries.
 """
-
 import os
 import csv
 from pysrt import SubRipFile

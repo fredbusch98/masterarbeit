@@ -1,10 +1,15 @@
+"""
+Generates 2D pose visualizations from body, hand, and face keypoints.
+Supports full-body or upper-body poses, normalizes keypoints, and draws them as colored skeletons on a blank canvas using OpenCV.
+
+#### IMPORTANT NOTE: Script is highly inspired and partly copied from the following sources:
+# https://github.com/huggingface/controlnet_aux
+"""
+
 import numpy as np
 import cv2
 import math
 from typing import List, Union, NamedTuple, Tuple
-
-#### IMPORTANT NOTE: Script is highly inspired and partly copied from the following sources:
-# https://github.com/huggingface/controlnet_aux
 
 eps = 0.01
 show_body_keypoint_ids = False

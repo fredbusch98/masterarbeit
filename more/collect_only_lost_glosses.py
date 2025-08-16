@@ -1,3 +1,7 @@
+"""
+Extracts all entries marked as 'Only Lost' from a CSV file and writes their 'Gloss' values 
+to a plain text file, one per line.
+"""
 import csv
 
 # Define input and output file paths

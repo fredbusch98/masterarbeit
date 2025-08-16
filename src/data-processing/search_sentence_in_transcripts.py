@@ -1,3 +1,8 @@
+"""
+🔍 Search through SRT subtitle files for specific terms and automatically extract matching video snippets.
+🎞️ Supports single-term or multi-term searches and optionally burns matched text onto the clips.
+📁 Organizes extracted snippets in a structured output folder for easy review.
+"""
 import re
 import argparse
 import subprocess

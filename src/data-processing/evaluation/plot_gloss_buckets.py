@@ -1,3 +1,8 @@
+"""
+Creates a log-scaled bar chart showing the distribution of unique glosses across different 
+frequency buckets for multiple datasets, converting percentage data into actual counts. 
+Saves the chart as a PNG file.
+"""
 import pandas as pd
 import matplotlib.pyplot as plt
 

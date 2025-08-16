@@ -1,3 +1,9 @@
+"""
+Robustly maps a user-provided sequence of glosses to known variants using exact, prefix, fuzzy, and embedding-based matching, 
+then generates a corresponding pose sequence video and MimicMotion config for inference. 
+Outputs commands to transfer and run the generated files on a MimicMotion pod.
+Basically the initial script for the Gloss2Pose Translator: Gloss Matcher.
+"""
 import os
 import json
 import re

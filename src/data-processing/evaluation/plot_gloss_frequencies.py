@@ -1,3 +1,8 @@
+"""
+Generates a combined horizontal boxplot with jittered scatter points showing gloss occurrence distributions
+for multiple datasets on a log scale. Saves the plot with customized colors, median, and interquartile range highlights. 
+Designed for quick comparison of gloss frequency across datasets.
+"""
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns

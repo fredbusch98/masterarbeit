@@ -1,3 +1,8 @@
+"""
+Extracts video snippets from speaker-specific MP4 files based on matching subtitle lines in SRT files.
+Searches for a target string in subtitles and saves corresponding clips to a designated output folder.
+This was used to create video snippets of glosses that were suspected problematic.
+"""
 import os
 import unicodedata
 import pysrt

@@ -1,3 +1,8 @@
+"""
+Collects the highest-confidence pose sequences for each unique DGS-Korpus gloss. 
+Processes multiple folders of gloss2pose JSON files, filters corrupted sequences, 
+and saves the best poses to a JSON file - the gloss2pose_dictionary - for downstream use.
+"""
 import os
 import json
 import csv

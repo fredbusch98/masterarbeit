@@ -1,3 +1,8 @@
+"""
+Scans all entry folders in a dataset, aggregates sizes and frame counts from `openpose.json` 
+and `gloss2pose.json` files, and summarizes gloss statistics including totals and unique counts. 
+Also reports info from `gloss2pose_dictionary.json`. Provides a quick dataset overview in GB, frames, and gloss counts.
+"""
 import os
 import json
 

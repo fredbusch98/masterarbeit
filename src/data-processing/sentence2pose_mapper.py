@@ -1,3 +1,7 @@
+"""
+Processes video and OpenPose data to map signed-language full sentences to corresponding pose sequences.
+Parses speaker SRTs, normalizes 2D keypoints, filters lower-body joints, and outputs sentence-to-pose JSON per folder.
+"""
 import os
 import cv2
 import json

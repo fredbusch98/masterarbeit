@@ -1,3 +1,8 @@
+"""
+Scans all 'entry_*' folders in the specified base path for 'openpose.json' files,
+counts unique (width, height) pairs, and logs any files with inconsistent sizes. 
+Prints a summary of occurrences and warnings for quick inspection.
+"""
 import os
 import json
 from collections import defaultdict

@@ -1,3 +1,9 @@
+"""
+Generates pose sequences from a list of glosses using the gloss2pose dictionary, 
+linearly interpolates and scales pose skeleton frames, and produces both a pose sequence video 
+and a MimicMotion config file for sign language synthesis (Pose2Sign with MimicMotion). 
+Basically the main script for the Gloss2Pose Translator.
+"""
 import os
 import json
 import sys
@@ -20,8 +26,6 @@ dict_path = "./resources/gloss2pose_dictionary.json"
 gloss_output_dir = "outputs/gloss2pose_dictionary_output"
 # Final output directory for pose sequence video and MimicMotion config
 final_output_dir = "./outputs/pose-sequence-videos"
-# Input directory for testing/debugging with the main method instead of gloss2pose.py (using the intermediary gloss output directory)
-input_sentence_path = gloss_output_dir
 
 use_default_num_intermediate_frames = False  # Set to False to use CSV values for frame interpolation
 DEFAULT_NUM_INTERMEDIATE_FRAMES = 7 # Seven Because the Median IGT/OGT over all glosses in the entire DGS Korpus Release 3 is 7 Frames!

@@ -1,3 +1,9 @@
+"""
+Extracts every 10th dual-gloss subtitle from transcript-aligned videos, 
+creates short video snippets with burned-in subtitles, 
+and saves them into a structured output directory. 
+For manual analysis/inspection of the dual glosses.
+"""
 import os
 import unicodedata
 import pysrt

@@ -1,3 +1,7 @@
+"""
+Counts missing SRT transcripts and OpenPose links in the main table of the DGS-Korpus Release 3 webpage.
+Fetches the page, parses the table, and reports totals and missing entries for quick overview.
+"""
 import requests
 from bs4 import BeautifulSoup
 

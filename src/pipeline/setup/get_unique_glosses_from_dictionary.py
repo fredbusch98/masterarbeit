@@ -1,3 +1,6 @@
+"""
+Extracts all unique gloss keys from the gloss2pose_dictionary and saves them into a CSV file.
+"""
 import json
 import csv
 import os

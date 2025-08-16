@@ -1,3 +1,7 @@
+"""
+Scans transcript.srt files in DGS-Korpus entries to count dual-gloss (e.g. GLOSS1||GLOSS2) lines, 
+excluding predefined gloss markers and non-sentence entries.
+"""
 import os
 import re
 

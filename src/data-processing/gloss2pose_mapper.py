@@ -1,3 +1,7 @@
+"""
+Processes video and subtitle data to map spoken glosses to corresponding upper-body 2D pose sequences
+from OpenPose JSON, normalizing keypoints and saving the results as gloss2pose.json for each folder.
+"""
 import os
 import cv2
 import json

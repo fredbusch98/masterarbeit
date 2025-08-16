@@ -1,3 +1,7 @@
+"""
+Loads a list of glosses and their filtered median time metrics, merges them, fills missing values with 0, 
+and outputs a CSV ready for frame interpolation. Those times are used for linear interpolation in the Gloss2Pose Translator module.
+"""
 import pandas as pd
 
 # Paths

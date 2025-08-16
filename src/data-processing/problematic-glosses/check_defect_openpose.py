@@ -1,3 +1,8 @@
+"""
+Validates OpenPose JSON files from the DGS-Korpus Release 3 in entry folders 
+by checking that body, face, and hand keypoint arrays have the expected lengths. 
+Reports and logs any mismatches per frame and per person.
+"""
 import os
 import json
 from pathlib import Path

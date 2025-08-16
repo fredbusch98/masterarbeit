@@ -1,3 +1,8 @@
+"""
+Splits SRT transcripts by speaker, corrects overlapping gloss/sentence timestamps, 
+and marks sentence boundaries for sequential mapping in the DGS Korpus. 
+Handles `_FULL_SENTENCE` and `_END_SENTENCE` annotations automatically.
+"""
 import os
 import re
 

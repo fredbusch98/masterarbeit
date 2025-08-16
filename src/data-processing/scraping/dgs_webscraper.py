@@ -1,3 +1,9 @@
+"""
+Downloads videos, SRT transcripts, and OpenPose data from the DGS-Korpus Release 3 webpage, 
+saving each entry in separate folders on an external drive, 
+and decompresses any OpenPose .gz files automatically.
+Essentially doing the Data Collection part.
+"""
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin

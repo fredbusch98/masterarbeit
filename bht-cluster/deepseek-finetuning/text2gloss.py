@@ -1,3 +1,9 @@
+"""
+Text2Gloss Translation Script for DGS
+
+This script loads a fine-tuned DeepSeek-based language model to automatically
+convert full German sentences into corresponding DGS sign gloss sequences.
+"""
 import sys
 import logging
 from unsloth import FastLanguageModel

@@ -1,3 +1,8 @@
+"""
+Processes DGS SRT subtitle files to extract gloss time metrics per speaker.
+Computes gloss duration, inter-gloss gaps, and total gloss time, handling lost or sentence-ending glosses.
+Outputs a CSV with detailed per-gloss timing and index information for further analysis.
+"""
 import os
 import re
 import pandas as pd

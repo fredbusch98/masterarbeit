@@ -1,3 +1,9 @@
+"""
+Processes speaker SRT transcripts from the DGS-Korpus, 
+extracting full sentences with their corresponding glosses, 
+and outputs per-folder and combined CSV files. 
+Essentially creates the initial Text2Gloss dataset!
+"""
 import os
 import csv
 from pysrt import SubRipFile

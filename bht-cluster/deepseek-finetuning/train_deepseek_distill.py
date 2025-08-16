@@ -1,3 +1,10 @@
+"""
+Text2Gloss LLM Fine-Tuning and Evaluation Script for DGS-Korpus Release 3
+
+This script fine-tunes a large language model (DeepSeek-R1-Distill-Llama-8B) 
+for German-to-German Sign Language (DGS) Text2Gloss translation using LoRA. 
+It handles training, evaluation, and saving of the fine-tuned model.
+"""
 import sys
 import logging
 import threading

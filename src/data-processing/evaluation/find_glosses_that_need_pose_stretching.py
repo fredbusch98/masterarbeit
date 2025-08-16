@@ -1,3 +1,7 @@
+"""
+Analyzes gloss pose sequences by comparing their durations to median gloss durations, 
+counts which ones need stretching, and generates a pie chart summarizing the results.
+"""
 import json
 import csv
 import matplotlib.pyplot as plt

@@ -1,3 +1,12 @@
+"""
+Trains and evaluates a Text2Gloss translation model using mBART with a custom
+SentencePiece tokenizer. Handles dataset preparation, fine-tuning, BLEU evaluation,
+and saving of the final model and tokenizer. 
+
+Based on the implementation guide from:
+Zuo, Ronglai, et al. "A simple baseline for spoken language to sign language translation with 3d avatars." 
+European Conference on Computer Vision. Cham: Springer Nature Switzerland, 2024.
+"""
 import os
 import pandas as pd
 import sentencepiece as spm

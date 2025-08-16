@@ -1,3 +1,8 @@
+"""
+Performs back-translation data augmentation on the DGS-Korpus Text2Gloss dataset. 
+Generates multiple paraphrases per sentence while avoiding degeneracy, and saves 
+the combined original and augmented sentences to a new CSV file.
+"""
 import logging
 import pandas as pd
 from transformers import pipeline

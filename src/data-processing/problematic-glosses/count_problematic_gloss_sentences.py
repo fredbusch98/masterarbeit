@@ -1,3 +1,7 @@
+"""
+Counts sentences in a the Text2Gloss csv where specified problematic glosses ($PROD, $ORAL, $ALPHA) appear, 
+individually or in combination. Supports checking for single glosses, pairs, or all three at once.
+"""
 import csv
 
 def count_sentences_with_target(filename, target_gloss="$PROD"):

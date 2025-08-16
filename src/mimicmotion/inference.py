@@ -1,3 +1,8 @@
+"""
+Adapted for the SLP pipeline of this thesis; replaces the original `inference.py` of the MimicMotion project.
+Preprocesses a reference image and video (or precomputed poses) to generate motion-synced output using MimicMotion.
+Handles pose extraction, tensor preparation, and saves the generated video as MP4 for batch inference.
+"""
 import os
 import argparse
 import logging

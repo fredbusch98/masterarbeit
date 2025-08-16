@@ -1,4 +1,7 @@
-#!/usr/bin/env python3
+"""
+Burns subtitles from a .srt file directly into a video using FFmpeg. 
+Takes an input video and subtitle file, producing an output video with embedded subtitles.
+"""
 import subprocess
 import os
 import sys

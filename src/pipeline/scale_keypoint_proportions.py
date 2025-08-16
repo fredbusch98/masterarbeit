@@ -1,3 +1,8 @@
+"""
+Scales and aligns 2D pose, hand, and face keypoints in JSON files to match the reference dimensions 
+from the first file (1.json), ensuring consistent body proportions and neck length across frames. 
+Useful for normalizing skeleton dimensions during Gloss2Pose translation to prevent unnatural morphing.
+"""
 import os
 import json
 import glob

@@ -1,16 +1,10 @@
-#!/usr/bin/env python3
 """
-count_sign_language_papers.py
-
 Queries the Semantic Scholar Graph API to report the TOTAL
 (raw) hit count for each of:
-  • Sign Language Production
+  • Sign Language Production / Generation
   • Sign Language Recognition
   • Sign Language Translation
-
-Uses exponential back-off on 429 errors ⚠️ and emojis 🎉.
 """
-
 import requests
 import time
 

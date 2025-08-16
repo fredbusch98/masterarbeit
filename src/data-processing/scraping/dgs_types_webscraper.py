@@ -1,3 +1,7 @@
+"""
+Scrapes unique glosses and types from the DGS-Korpus Release 3 website and saves them as a UTF-8 CSV file.
+Provides a ready-to-use list of DGS gloss/type entries.
+"""
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd

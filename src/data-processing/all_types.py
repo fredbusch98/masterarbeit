@@ -2,7 +2,7 @@ import csv
 
 def load_gloss_types(csv_path):
     """
-    Load gloss types from a CSV file.
+    Load gloss types from a CSV file that were scraped from the DGS-Korpus Release 3 web page!
 
     Parameters:
         csv_path (str): Path to the CSV file.

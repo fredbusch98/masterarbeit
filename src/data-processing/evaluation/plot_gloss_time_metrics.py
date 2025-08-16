@@ -1,4 +1,7 @@
-#!/usr/bin/env python3
+"""
+Generates visualizations of gloss time metrics (Avg, Median, Std, Q25–Q75) in milliseconds and frames.
+Includes overall summary plots and per-gloss distributions from a CSV of evaluated gloss metrics.
+"""
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns

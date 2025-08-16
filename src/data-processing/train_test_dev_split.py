@@ -1,3 +1,9 @@
+"""
+Generates three independent train/dev/test splits (80/10/10) from a CSV dataset using different random seeds.
+Saves each split as separate CSV files in the same directory as the original dataset.
+Used to create the splits for the Text2Gloss training.
+"""
+
 import pandas as pd
 import os
 from sklearn.model_selection import train_test_split

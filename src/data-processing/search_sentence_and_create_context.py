@@ -1,3 +1,8 @@
+"""
+Extracts context video snippets showing ~15 seconds before specified sentences appear 
+in paired speaker videos, optionally burning in relevant subtitles. 
+Also collects overlapping _FULL_SENTENCE texts to provide context for each snippet.
+"""
 import re
 import argparse
 import subprocess
@@ -8,7 +13,6 @@ import json
 
 # Toggle this to enable burned-in subtitles on the extracted snippets
 ADD_SUBTITLES = True
-
 
 def parse_srt_blocks(srt_path):
     with open(srt_path, encoding='utf-8-sig') as f:

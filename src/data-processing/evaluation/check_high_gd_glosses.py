@@ -1,3 +1,7 @@
+"""
+This script processes a CSV of high-duration glosses from the DGS Korpus, comparing speaker SRT blocks to the original transcript.srt.
+It separates rows where the end timestamp matches a different transcript block into matching vs. non-matching CSVs for analysis.
+"""
 import csv
 import os
 

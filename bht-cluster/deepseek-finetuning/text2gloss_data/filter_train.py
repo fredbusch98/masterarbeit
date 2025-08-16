@@ -1,3 +1,11 @@
+"""
+This script filters out overlapping sentence–gloss pairs from the training data
+to prevent data leakage into evaluation. It:
+  - Loads test and dev CSV files and collects all (full_sentence, glosses) pairs.
+  - Reads the training CSV(s) and removes any rows that exactly match a test/dev pair.
+  - Saves the cleaned training data to new CSV files prefixed with 'filtered_'.
+Use this to ensure that evaluation sets remain unseen during training.
+"""
 import pandas as pd
 
 # Load all files

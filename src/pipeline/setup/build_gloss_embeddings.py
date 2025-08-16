@@ -1,5 +1,7 @@
 """
-Build embeddings for unique DGS glosses and save mappings.
+Builds sentence embeddings for unique DGS glosses using a multilingual SBERT model 
+and saves both the embeddings and a gloss-to-index mapping for later retrieval.
+These embeddings are used for the Gloss Matcher at the beginning of the Gloss2Pose Translator module!
 """
 import os
 import json

@@ -1,3 +1,8 @@
+"""
+Reads JSON files containing frame-by-frame x and y coordinates for a transition, 
+then plots and compares the coordinates with and without interpolation. 
+Saves the comparison as a PNG plot.
+"""
 import os
 import json
 import matplotlib.pyplot as plt

@@ -1,3 +1,8 @@
+"""
+Preprocesses DGS-Korpus Release 3 SRT transcripts by cleaning text lines, 
+splitting dual-glosses, adjusting timestamps, and marking full sentences. 
+Generates filtered speaker-specific SRT files ready for further dataset processing.
+"""
 import os
 import re
 from all_types import load_gloss_types

@@ -1,3 +1,8 @@
+"""
+Checks gloss2pose keypoint data in the gloss2pose_dictionary for inconsistencies 
+in the number of keypoints per body part across frames, and logs any defects to a debugging file.
+"""
+
 import json
 
 # read gloss data

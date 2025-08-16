@@ -1,3 +1,8 @@
+"""
+Filters SRT subtitle files of the DGS-Korpus by removing specified glosses and sentences, 
+preserving sentence boundaries, and generating cleaned speaker-specific output files. 
+Handles both full sentences and individual entries.
+"""
 import os
 
 # Main folder path

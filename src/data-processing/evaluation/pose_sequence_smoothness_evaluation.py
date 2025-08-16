@@ -1,3 +1,7 @@
+"""
+Analyzes 2D pose sequences from JSON files to evaluate motion smoothness.
+Computes Spectral Arc Length (SAL) and Mean Squared Jerk (MSJ) per sequence, compares interpolation methods, and saves results to CSV.
+"""
 import os
 import json
 import numpy as np

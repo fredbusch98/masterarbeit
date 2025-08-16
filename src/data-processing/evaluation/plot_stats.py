@@ -1,3 +1,8 @@
+"""
+Generates bar charts of sentence and gloss sequence length distributions for multiple datasets.
+Creates individual plots per dataset and combined plots (regular and log-scale) with consistent x-axes.
+Saves all figures to structured output directories for easy comparison.
+"""
 import csv
 import matplotlib.pyplot as plt
 import os

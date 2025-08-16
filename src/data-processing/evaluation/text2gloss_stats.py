@@ -1,3 +1,8 @@
+"""
+Computes comprehensive statistics for the Text2Gloss datasets of sentences and gloss sequences, 
+including lengths, word/gloss frequencies, n-grams, lexical diversity, and detailed gloss metrics, 
+and exports results as CSV files. Useful for quick dataset profiling and analysis.
+"""
 import os
 import csv
 import math

@@ -1,4 +1,8 @@
-#!/usr/bin/env python3
+"""
+Reads raw gloss time CSVs, computes per-gloss and overall statistics (mean, median, std), 
+identifies top and outlier occurrences, and saves aggregated and filtered results for analysis 
+and potential downstream processing.
+"""
 import os
 import pandas as pd
 
