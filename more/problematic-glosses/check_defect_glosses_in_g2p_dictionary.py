@@ -6,7 +6,7 @@ in the number of keypoints per body part across frames, and logs any defects to 
 import json
 
 # read gloss data
-with open('../../pipeline/resources/gloss2pose_dictionary.json') as lf:
+with open('../src/pipeline/resources/gloss2pose_dictionary.json') as lf:
     gloss_data: dict = json.load(lf)
 
 # write all findings into txt
