@@ -218,7 +218,7 @@ Under `src/more/` you can find various utility scripts that have been implemente
    ```bash
    ./setup.sh
    ```
-   - Generate your own HuggingFace token for the required diffusion model used by MimicMotion.
+   - Generate your own HuggingFace token for the required [diffusion model](https://huggingface.co/stabilityai/stable-video-diffusion-img2vid-xt-1-1) used by MimicMotion.
    - Add the token to a `.env` file.
 
 8. Navigate to the correct directory:
