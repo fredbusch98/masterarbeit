@@ -23,7 +23,7 @@ import argparse
 # Argument parsing
 p = argparse.ArgumentParser(description='LLM finetuning training script for Text2Gloss translation')
 p.add_argument('--train_dir', type=str, default='og',required=True,
-               help='Name of the train directory, e.g.: og, bt-1 or bt-2')
+               help='Name of the train directory, e.g.: og, bt-1 or bt-2 OR in case of k-cross validation the number of the k-cross split')
 p.add_argument('--num_epochs', type=int, default='6', help='Number of epochs for the LLM fine-tuning')
 args = p.parse_args()
 

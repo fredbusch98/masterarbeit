@@ -174,8 +174,6 @@ def draw_facepose(canvas: np.ndarray, keypoints: Union[List[Keypoint], None]) ->
     
     H, W, C = canvas.shape
     for keypoint in keypoints:
-        if keypoint.id in {68, 69}:  # Skip keypoints with ID 68 and 69 (these are the pupil keypoints which do not exist in DWPose)
-            continue
         if keypoint.score < CONFIDENCE_THRESHOLD or (keypoint.x == 0.0 and keypoint.y == 0.0):
             continue  # Skip invalid keypoints
         x, y = keypoint.x, keypoint.y
